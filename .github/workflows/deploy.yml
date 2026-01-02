@@ -21,14 +21,14 @@ jobs:
       # 2. 백엔드 빌드 및 푸시
       - name: Build and Push Backend
         run: |
-          docker build -t ${{ secrets.DOCKERHUB_USERNAME }}/kino-backend ./backend
-          docker push ${{ secrets.DOCKERHUB_USERNAME }}/kino-backend
+          docker build -t ${{ secrets.DOCKERHUB_USERNAME }}/backend ./backend
+          docker push ${{ secrets.DOCKERHUB_USERNAME }}/backend
 
       # 3. 프론트엔드 빌드 및 푸시
       - name: Build and Push Frontend
         run: |
-          docker build -t ${{ secrets.DOCKERHUB_USERNAME }}/kino-frontend ./frontend
-          docker push ${{ secrets.DOCKERHUB_USERNAME }}/kino-frontend
+          docker build -t ${{ secrets.DOCKERHUB_USERNAME }}/frontend ./frontend
+          docker push ${{ secrets.DOCKERHUB_USERNAME }}/frontend
 
       # 4. EC2에 접속해서 배포 (이게 핵심!)
       - name: Deploy to EC2
@@ -38,8 +38,8 @@ jobs:
           username: ubuntu
           key: ${{ secrets.EC2_KEY }}
           script: |
-            sudo docker pull ${{ secrets.DOCKERHUB_USERNAME }}/kino-backend
-            sudo docker pull ${{ secrets.DOCKERHUB_USERNAME }}/kino-frontend
+            sudo docker pull ${{ secrets.DOCKERHUB_USERNAME }}/backend
+            sudo docker pull ${{ secrets.DOCKERHUB_USERNAME }}/frontend
             cd ~/KinoProject
             # RDS_PASSWORD 환경변수와 함께 도커 컴포즈 실행
             export RDS_PASSWORD=${{ secrets.RDS_PASSWORD }}
