@@ -2,7 +2,7 @@
 FROM eclipse-temurin:17-jdk AS build
 
 WORKDIR /app
-# 프로젝트 파일 전체 복사
+# 프로젝트 파일 전체 복사하기
 COPY . .
 # 실행 권한 부여 및 빌드
 RUN chmod +x ./gradlew
