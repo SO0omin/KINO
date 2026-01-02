@@ -1,0 +1,15 @@
+version: '3.8'
+services:
+  backend:
+    build: ./backend # 스프링 폴더 경로
+    ports:
+      - "8080:8080"
+    environment:
+      - RDS_PASSWORD=25168832 # 환경변수 처리
+
+  frontend:
+    build: ./kino-frontend # 리액트 폴더 경로
+    ports:
+      - "5173:80" # 외부 5173 포트를 Nginx 80 포트로 연결
+    depends_on:
+      - backend
