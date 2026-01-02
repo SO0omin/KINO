@@ -2,7 +2,7 @@ name: CI/CD Pipeline
 
 on:
   push:
-    branches: [ main ] # 메인 브랜치에 푸시되면 실행
+    branches: [ main ]
 
 jobs:
   build-and-deploy:
@@ -11,26 +11,22 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
 
-      # 1. 도커 허브 로그인
       - name: Login to Docker Hub
         uses: docker/login-action@v2
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      # 2. 백엔드 빌드 및 푸시
       - name: Build and Push Backend
         run: |
-          docker build -t ${{ secrets.DOCKERHUB_USERNAME }}/backend ./backend
-          docker push ${{ secrets.DOCKERHUB_USERNAME }}/backend
+          docker build -t so0omin/backend ./backend
+          docker push so0omin/backend
 
-      # 3. 프론트엔드 빌드 및 푸시
       - name: Build and Push Frontend
         run: |
-          docker build -t ${{ secrets.DOCKERHUB_USERNAME }}/frontend ./frontend
-          docker push ${{ secrets.DOCKERHUB_USERNAME }}/frontend
+          docker build -t so0omin/frontend ./frontend
+          docker push so0omin/frontend
 
-      # 4. EC2에 접속해서 배포 (이게 핵심!)
       - name: Deploy to EC2
         uses: appleboy/ssh-action@master
         with:
@@ -38,9 +34,14 @@ jobs:
           username: ubuntu
           key: ${{ secrets.EC2_KEY }}
           script: |
-            sudo docker pull ${{ secrets.DOCKERHUB_USERNAME }}/backend
-            sudo docker pull ${{ secrets.DOCKERHUB_USERNAME }}/frontend
             cd ~/KinoProject
-            # RDS_PASSWORD 환경변수와 함께 도커 컴포즈 실행
-            export RDS_PASSWORD=${{ secrets.RDS_PASSWORD }}
-            sudo -E docker-compose up -d
+            # .env 파일 생성 (변수 주입)
+            echo "RDS_PASSWORD=${{ secrets.RDS_PASSWORD }}" > .env
+            echo "RDS_USERNAME=${{ secrets.RDS_USERNAME }}" >> .env
+            echo "RDS_HOST=${{ secrets.RDS_HOST }}" >> .env
+            
+            # 최신 이미지 받고 컨테이너 재시작
+            sudo docker pull so0omin/backend
+            sudo docker pull so0omin/frontend
+            sudo docker-compose down
+            sudo docker-compose up -d
