@@ -5,7 +5,7 @@ services:
     ports:
       - "8080:8080"
     environment:
-      - RDS_PASSWORD=25168832 # 환경변수 처리
+      - RDS_PASSWORD=${RDS_PASSWORD} # 환경변수 처리
 
   frontend:
     build: ./kino-frontend # 리액트 폴더 경로
