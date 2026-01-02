@@ -11,7 +11,7 @@ RUN ./gradlew build -x test
 # 2. 실행 스테이지: 빌드된 JAR만 실행 (이미지 용량 최적화)
 FROM eclipse-temurin:17-jre
 WORKDIR /app
-# 빌드 스테이지에서 생성된 jar만 가져옴
+# 빌드 스테이지에서 생성된 jar만 가져오기
 COPY --from=build /app/build/libs/*.jar app.jar
 
 EXPOSE 8080
