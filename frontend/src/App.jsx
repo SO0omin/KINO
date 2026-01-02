@@ -5,12 +5,12 @@ function App() {
   const [message, setMessage] = useState("");
 
   useEffect(() => {
-    // 1. 스프링 부트 서버 주소로 요청을 보냅니다.
-    fetch("http://localhost:8080/") 
-      .then(response => response.text()) // 글자 형태로 받기
+    // localhost 대신 실제 EC2 서버의 공인 IP와 백엔드 포트를 적어주세요!
+    fetch("http://13.209.65.96:8080/") 
+      .then(response => response.text())
       .then(data => {
-        console.log(data); // 브라우저 콘솔창에서 확인용
-        setMessage(data);   // 받은 데이터를 변수에 저장
+        console.log(data);
+        setMessage(data);
       })
       .catch(error => console.log("에러 발생: ", error));
   }, []);
