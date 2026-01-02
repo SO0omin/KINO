@@ -7,7 +7,7 @@ out/
 bin/
 !gradle/wrapper/gradle-wrapper.jar
 
-# --- 설정 파일 (보안!) ---
+# --- 설정 파일 (보안!!) ---
 application.properties
 application.yml
 *.log
