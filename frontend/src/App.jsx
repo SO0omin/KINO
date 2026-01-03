@@ -1,4 +1,6 @@
 import React, { useEffect, useState } from 'react';
+import Gnb from './components/Gnb'; // Gnb 가져오기
+import Home from './pages/Home';    // Home 가져오기
 
 function App() {
   // 서버에서 받아온 데이터를 저장할 공간 (상태)
@@ -16,11 +18,18 @@ function App() {
   }, []);
 
   return (
-    <div style={{ textAlign: 'center', marginTop: '50px' }}>
-      <h1>KINO 프로젝트 메인</h1>
-      <p>서버에서 온 메시지:</p>
-      {/* 데이터가 있으면 보여주고, 없으면 로딩 중 표시 */}
-      <h2 style={{ color: 'blue' }}>{message || "서버 연결 중..."}</h2>
+    <div className="App">
+      <Gnb />
+      
+      {/* 서버에서 온 메시지가 있다면 상단에 작게 띄워보기 (연동 확인용) */}
+      {message && (
+        <div style={{ backgroundColor: '#e3f2fd', padding: '10px', textAlign: 'center' }}>
+          서버 응답: {message}
+        </div>
+      )}
+
+      {/* Home 페이지에 데이터를 넘겨주고 싶다면? (Props 사용) */}
+      <Home serverData={message} />
     </div>
   );
 }
