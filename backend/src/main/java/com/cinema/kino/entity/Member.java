@@ -1,19 +1,15 @@
 package com.cinema.kino.entity;
 
 import jakarta.persistence.*;
-import lombok.Getter;
-
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 @Entity
-@Getter
 @Table(name = "members")
 public class Member {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "id")
     private Long id;
 
     private String username;
@@ -26,7 +22,6 @@ public class Member {
     private String tel;
     private String email;
 
-    private String profileImage;
 
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;

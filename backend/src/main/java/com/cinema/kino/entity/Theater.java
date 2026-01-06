@@ -1,22 +1,26 @@
 package com.cinema.kino.entity;
 
 import jakarta.persistence.*;
-import lombok.Getter;
+import lombok.*;
 
 @Entity
-@Getter
 @Table(name = "theaters")
+@Getter @Setter @Builder
+@AllArgsConstructor
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class Theater {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "id")
     private Long id;
 
-    @ManyToOne
-    @JoinColumn(name = "region_id")
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "region_id", nullable = false)
     private Region region;
 
+    @Column(nullable = false, length = 100)
     private String name;
+
+    @Column(nullable = false, length = 200)
     private String address;
 }
