@@ -2,23 +2,29 @@ package com.cinema.kino.entity;
 
 import com.cinema.kino.entity.enums.ScreenType;
 import jakarta.persistence.*;
+import lombok.*;
 
 @Entity
 @Table(name = "screens")
+@Getter @Setter @Builder
+@AllArgsConstructor
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class Screen {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "id")
     private Long id;
 
-    @ManyToOne
-    @JoinColumn(name = "theater_id")
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "theater_id", nullable = false)
     private Theater theater;
 
-    @Enumerated(EnumType.STRING)
+    @Column(name = "screen_type", nullable = false)
     private ScreenType screenType;
 
-    private int totalSeats;
+    @Column(name = "total_seats", nullable = false)
+    private Integer totalSeats;
+
+    @Column(nullable = false, length = 100)
     private String name;
 }

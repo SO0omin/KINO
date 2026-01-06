@@ -7,29 +7,29 @@ import org.hibernate.annotations.UpdateTimestamp;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "screenings")
+@Table(name = "reviews")
 @Getter @Setter @Builder
 @AllArgsConstructor
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class Screening {
+public class Review {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "screen_id", nullable = false)
-    private Screen screen;
+    @JoinColumn(name = "member_id", nullable = false)
+    private Member member;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "movie_id", nullable = false)
     private Movie movie;
 
-    @Column(name = "start_time", nullable = false)
-    private LocalDateTime startTime;
+    @Column(nullable = false)
+    private Integer rating;
 
-    @Column(name = "end_time", nullable = false)
-    private LocalDateTime endTime;
+    @Column(columnDefinition = "TEXT")
+    private String content;
 
     @CreationTimestamp
     @Column(name = "created_at", updatable = false)

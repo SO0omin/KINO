@@ -2,45 +2,38 @@ package com.cinema.kino.entity;
 
 import com.cinema.kino.entity.enums.SeatType;
 import jakarta.persistence.*;
+import lombok.*;
 
 @Entity
-@Table(
-        name = "seats",
-        uniqueConstraints = {
-                @UniqueConstraint(columnNames = {
-                        "screen_id", "seat_row", "seat_number", "pos_x", "pos_y"
-                })
-        }
-)
+@Table(name = "seats", uniqueConstraints = {
+        @UniqueConstraint(name = "uk_screen_seat", columnNames = {"screen_id", "seat_row", "seat_number"})
+})
+@Getter @Setter @Builder
+@AllArgsConstructor
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class Seat {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "id")
     private Long id;
 
-    // 상영관
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "screen_id", nullable = false)
     private Screen screen;
 
-    // A, B, C ...
-    @Column(name = "seat_row", nullable = false)
+    @Column(name = "seat_row", nullable = false, length = 5)
     private String seatRow;
 
-    // 1, 2, 3 ...
     @Column(name = "seat_number", nullable = false)
-    private int seatNumber;
+    private Integer seatNumber;
 
-    // NORMAL / VIP / DISABLED
     @Enumerated(EnumType.STRING)
     @Column(name = "seat_type", nullable = false)
     private SeatType seatType;
 
-    // 좌석 배치용 X,Y
-    @Column(name = "pos_x", nullable = false)
+    @Column(name = "pos_x")
     private Integer posX;
 
-    @Column(name = "pos_y", nullable = false)
+    @Column(name = "pos_y")
     private Integer posY;
 }

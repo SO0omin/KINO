@@ -2,30 +2,44 @@ package com.cinema.kino.entity;
 
 import com.cinema.kino.entity.enums.ReservationStatus;
 import jakarta.persistence.*;
+import lombok.*;
+import org.hibernate.annotations.CreationTimestamp;
+import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "reservations")
+@Getter @Setter @Builder
+@AllArgsConstructor
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class Reservation {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "id")
     private Long id;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "member_id")
     private Member member;
 
-    @ManyToOne
-    @JoinColumn(name = "screening_id")
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "guest_id")
+    private Guest guest;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "screening_id", nullable = false)
     private Screening screening;
 
-    private String guestName;
-    private String guestTel;
+    @Column(name = "total_price")
+    private Integer totalPrice;
 
-    private int totalPrice;
-    private int totalNum;
+    @Column(name = "total_num")
+    private Integer totalNum;
 
     @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
     private ReservationStatus status;
+
+    @CreationTimestamp
+    @Column(name = "created_at", updatable = false)
+    private LocalDateTime createdAt;
 }
