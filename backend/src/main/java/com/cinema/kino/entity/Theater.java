@@ -1,8 +1,10 @@
 package com.cinema.kino.entity;
 
 import jakarta.persistence.*;
+import lombok.Getter;
 
 @Entity
+@Getter
 @Table(name = "theaters")
 public class Theater {
 

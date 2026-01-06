@@ -1,11 +1,13 @@
 package com.cinema.kino.entity;
 
 import jakarta.persistence.*;
+import lombok.Getter;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 @Entity
+@Getter
 @Table(name = "members")
 public class Member {
 

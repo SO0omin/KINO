@@ -2,8 +2,10 @@ package com.cinema.kino.entity;
 
 import com.cinema.kino.entity.enums.ReservationStatus;
 import jakarta.persistence.*;
+import lombok.Getter;
 
 @Entity
+@Getter
 @Table(name = "reservations")
 public class Reservation {
 

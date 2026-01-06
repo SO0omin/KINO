@@ -2,8 +2,10 @@ package com.cinema.kino.entity;
 
 import com.cinema.kino.entity.enums.SeatType;
 import jakarta.persistence.*;
+import lombok.Getter;
 
 @Entity
+@Getter
 @Table(
         name = "seats",
         uniqueConstraints = {
