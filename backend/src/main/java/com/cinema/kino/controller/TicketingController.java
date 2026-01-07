@@ -37,23 +37,21 @@ public class TicketingController {
     // 4. 특정 날짜/영화관에서 상영 중인 영화 ID 목록 조회
     @GetMapping("/available-movies")
     public ResponseEntity<List<Long>> getAvailableMovies(
-            @RequestParam(name = "theaterId") Long theaterId,
+            @RequestParam(name = "theaterIds", required = false) List<Long> theaterIds,
             @RequestParam(name = "date") String dateStr) {
 
         LocalDate date = LocalDate.parse(dateStr);
-        // screeningService -> ticketingService로 변경!
-        return ResponseEntity.ok(ticketingService.getAvailableMovieIds(theaterId, date));
+        return ResponseEntity.ok(ticketingService.getAvailableMovieIds(theaterIds, date));
     }
 
     // 5. 최종 선택된 조건에 맞는 상세 상영 시간표 조회
     @GetMapping("/screenings")
     public ResponseEntity<List<ScreeningDTO>> getScreenings(
-            @RequestParam(name = "theaterId") Long theaterId,
-            @RequestParam(name = "movieId") Long movieId,
+            @RequestParam(name = "theaterIds", required = false) List<Long> theaterIds,
+            @RequestParam(name = "movieIds", required = false) List<Long> movieIds,
             @RequestParam(name = "date") String dateStr) {
 
         LocalDate date = LocalDate.parse(dateStr);
-        // screeningService -> ticketingService로 변경!
-        return ResponseEntity.ok(ticketingService.getScreeningDetails(theaterId, movieId, date));
+        return ResponseEntity.ok(ticketingService.getScreeningDetails(theaterIds, movieIds, date));
     }
 }

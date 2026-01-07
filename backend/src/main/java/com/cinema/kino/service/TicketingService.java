@@ -15,6 +15,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.util.Collections;
 import java.util.List;
 
 @Service
@@ -25,7 +26,7 @@ public class TicketingService {
     private final RegionRepository regionRepository;
     private final TheaterRepository theaterRepository;
     private final MovieRepository movieRepository;
-    private final ScreeningRepository screeningRepository; // 상영 시간표 조회를 위해 추가!
+    private final ScreeningRepository screeningRepository;
 
     // 1. 모든 지역 목록 조회
     public List<RegionDTO> getAllRegions() {
@@ -48,19 +49,29 @@ public class TicketingService {
                 .toList();
     }
 
-    // 4. 특정 날짜/영화관에서 상영 중인 영화 ID 목록 조회 (검은색 글씨 활성화용)
-    public List<Long> getAvailableMovieIds(Long theaterId, LocalDate date) {
+    // 4. 여러 영화관 ID를 받아 상영 중인 영화 ID 목록 조회
+    public List<Long> getAvailableMovieIds(List<Long> theaterIds, LocalDate date) {
+        if (theaterIds == null || theaterIds.isEmpty()) {
+            return Collections.emptyList();
+        }
+
         LocalDateTime start = date.atStartOfDay();
         LocalDateTime end = date.atTime(LocalTime.MAX);
-        return screeningRepository.findMovieIdsByTheaterAndDate(theaterId, start, end);
+        // 리포지토리의 바뀐 메소드명 호출 (theaterIds 리스트 전달)
+        return screeningRepository.findMovieIdsByTheaterIdsAndDate(theaterIds, start, end);
     }
 
-    // 5. 최종 선택된 조건에 맞는 상세 상영 시간표 조회
-    public List<ScreeningDTO> getScreeningDetails(Long theaterId, Long movieId, LocalDate date) {
+    // 5. 여러 영화관 + 여러 영화에 대한 통합 시간표 조회
+    public List<ScreeningDTO> getScreeningDetails(List<Long> theaterIds, List<Long> movieIds, LocalDate date) {
+        if (theaterIds == null || theaterIds.isEmpty() || movieIds == null || movieIds.isEmpty()) {
+            return Collections.emptyList();
+        }
+
         LocalDateTime start = date.atStartOfDay();
         LocalDateTime end = date.atTime(LocalTime.MAX);
 
-        return screeningRepository.findScreeningsDetail(theaterId, movieId, start, end)
+        // 리포지토리의 바뀐 메소드명 호출 (theaterIds, movieIds 리스트 전달)
+        return screeningRepository.findScreeningsMultiDetail(theaterIds, movieIds, start, end)
                 .stream()
                 .map(ScreeningDTO::from)
                 .toList();
