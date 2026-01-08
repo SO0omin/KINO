@@ -7,12 +7,17 @@ import com.cinema.kino.entity.enums.ReservationStatus;
 import com.cinema.kino.entity.enums.SeatStatus;
 import com.cinema.kino.repository.*;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.client.RestTemplate;
 
+import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
 
 @Service
 @RequiredArgsConstructor
@@ -25,6 +30,10 @@ public class PaymentService {
     private final GuestRepository guestRepository;
     private final ScreeningRepository screeningRepository;
 
+    // 👇 [여기가 범인!!] 이 줄이 없어서 에러가 났던 겁니다.
+    @Value("${toss.secret-key}")
+    private String secretKey;
+
     // [단계 1] 결제 준비: 좌석 선점 + 가예매 생성 + 주문번호(UUID) 발급
     @Transactional
     public PaymentDTO.PrepareResponse preparePayment(PaymentDTO.PrepareRequest request) {
@@ -33,7 +42,7 @@ public class PaymentService {
         Screening screening = screeningRepository.findById(request.getScreeningId())
                 .orElseThrow(() -> new IllegalArgumentException("상영 정보를 찾을 수 없습니다."));
 
-        // 2. 회원/비회원 객체 조회 (둘 중 하나는 있어야 함)
+        // 2. 회원/비회원 객체 조회
         Member member = null;
         if (request.getMemberId() != null) {
             member = memberRepository.findById(request.getMemberId())
@@ -46,13 +55,11 @@ public class PaymentService {
                     .orElseThrow(() -> new IllegalArgumentException("비회원을 찾을 수 없습니다."));
         }
 
-        // 회원, 비회원 둘 다 없으면 예외 처리 (선택 사항)
         if (member == null && guest == null) {
             throw new IllegalArgumentException("예매자 정보(회원 또는 비회원)가 필요합니다.");
         }
 
-        // 3. 좌석 조회 및 락 걸기 (동시성 제어: 비관적 락 사용 전제)
-        // Repository에 @Lock(PESSIMISTIC_WRITE) 쿼리가 있어야 함
+        // 3. 좌석 조회 및 락 걸기
         List<ScreeningSeat> seats = screeningSeatRepository.findAllByScreeningIdAndSeatIdsWithLock(
                 request.getScreeningId(), request.getSeatIds());
 
@@ -68,14 +75,14 @@ public class PaymentService {
             }
             seat.setStatus(SeatStatus.HELD);
             seat.setHeldByMember(member);
-            seat.setHeldByGuest(guest); // 비회원 정보 입력
-            seat.setHoldExpiresAt(now.plusMinutes(10)); // 10분 선점
+            seat.setHeldByGuest(guest);
+            seat.setHoldExpiresAt(now.plusMinutes(10));
         }
 
-        // 5. 예매(Reservation) 생성 - PENDING 상태
+        // 5. 예매(Reservation) 생성
         Reservation reservation = Reservation.builder()
                 .member(member)
-                .guest(guest) // 비회원 정보 입력
+                .guest(guest)
                 .screening(screening)
                 .totalPrice(request.getTotalPrice())
                 .totalNum(seats.size())
@@ -84,17 +91,14 @@ public class PaymentService {
 
         Reservation savedReservation = reservationRepository.save(reservation);
 
-        // 좌석에 예매 정보 연결
         for (ScreeningSeat seat : seats) {
             seat.setReservation(savedReservation);
         }
 
-        // 6. 주문 ID 생성 (ID + UUID 조합으로 유니크성 보장)
-        // 예: "105-a1b2c3d4"
+        // 6. 주문 ID 생성
         String orderId = savedReservation.getId() + "-" + UUID.randomUUID().toString().substring(0, 8);
         String orderName = screening.getMovie().getTitle();
 
-        // DTO 반환 (orderId는 이제 UUID가 포함된 문자열)
         return new PaymentDTO.PrepareResponse(savedReservation.getId(), orderId, orderName);
     }
 
@@ -102,7 +106,7 @@ public class PaymentService {
     @Transactional
     public Long confirmPayment(PaymentDTO.ConfirmRequest request) {
 
-        // 1. 주문번호 파싱 ( "105-a1b2c3d4" -> 105 )
+        // 1. 주문번호 파싱
         String[] parts = request.getOrderId().split("-");
         Long reservationId = Long.parseLong(parts[0]);
 
@@ -123,27 +127,44 @@ public class PaymentService {
 
         LocalDateTime now = LocalDateTime.now();
         for (ScreeningSeat seat : seats) {
-            // HELD 상태가 아니거나, 만료 시간이 지났으면 오류
             if (seat.getStatus() != SeatStatus.HELD ||
                     (seat.getHoldExpiresAt() != null && seat.getHoldExpiresAt().isBefore(now))) {
                 throw new IllegalStateException("좌석 선점 시간이 만료되었거나 유효하지 않습니다. 다시 예매해주세요.");
             }
         }
 
-        // 5. [외부 연동] Toss Payments 승인 API 호출 (가상 코드)
-        /*
+        // 5. [외부 연동] Toss Payments 승인 API 호출
         try {
-            // orderId는 UUID가 포함된 전체 문자열을 보냄
-            tossPaymentClient.confirm(request.getPaymentKey(), request.getOrderId(), request.getAmount());
-        } catch (Exception e) {
-            throw new IllegalStateException("결제 승인 실패: " + e.getMessage());
-        }
-        */
+            RestTemplate restTemplate = new RestTemplate();
 
-        // 6. 예매 상태 확정 (PENDING -> PAID)
+            // 헤더 생성 (Basic Auth)
+            HttpHeaders headers = new HttpHeaders();
+            // 👇 이제 secretKey가 정의되어 있으니 에러가 안 날 겁니다.
+            String encodedAuth = Base64.getEncoder().encodeToString((secretKey + ":").getBytes(StandardCharsets.UTF_8));
+            headers.set("Authorization", "Basic " + encodedAuth);
+            headers.setContentType(MediaType.APPLICATION_JSON);
+
+            // 바디 생성
+            Map<String, Object> body = new HashMap<>();
+            body.put("paymentKey", request.getPaymentKey());
+            body.put("orderId", request.getOrderId());
+            body.put("amount", request.getAmount());
+
+            // 요청 전송
+            restTemplate.postForEntity(
+                    "https://api.tosspayments.com/v1/payments/confirm",
+                    new HttpEntity<>(body, headers),
+                    String.class
+            );
+
+        } catch (Exception e) {
+            throw new IllegalStateException("토스 결제 승인 실패: " + e.getMessage());
+        }
+
+        // 6. 예매 상태 확정
         reservation.setStatus(ReservationStatus.PAID);
 
-        // 7. 좌석 상태 확정 (HELD -> RESERVED)
+        // 7. 좌석 상태 확정
         for (ScreeningSeat seat : seats) {
             seat.setStatus(SeatStatus.RESERVED);
             seat.setHoldExpiresAt(null);
@@ -153,8 +174,8 @@ public class PaymentService {
         Payment payment = Payment.builder()
                 .reservation(reservation)
                 .member(reservation.getMember())
-                .guest(reservation.getGuest()) // 비회원 정보 저장
-                .merchantUid(request.getOrderId()) // UUID 포함된 주문번호 저장
+                .guest(reservation.getGuest())
+                .merchantUid(request.getOrderId())
                 .impUid(request.getPaymentKey())
                 .originalAmount(reservation.getTotalPrice())
                 .finalAmount(request.getAmount())
