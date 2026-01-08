@@ -1,7 +1,7 @@
 # --- Spring Boot ---
 HELP.md
 target/
-build/
+backend/build/
 out/
 .gradle/
 bin/
