@@ -4,13 +4,13 @@ import jakarta.persistence.*;
 import lombok.*;
 
 @Entity
-@Table(name = "likes", uniqueConstraints = {
+@Table(name = "movie_likes", uniqueConstraints = {
         @UniqueConstraint(name = "uk_member_movie", columnNames = {"member_id", "movie_id"})
 })
 @Getter @Setter @Builder
 @AllArgsConstructor
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class Like {
+public class MovieLike {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

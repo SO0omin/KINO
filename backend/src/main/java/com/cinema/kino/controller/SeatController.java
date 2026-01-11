@@ -1,3 +1,7 @@
+/* ========================
+좌석 상태 조회용
+HTTP REST API, 단방향
+======================== */
 package com.cinema.kino.controller;
 
 import com.cinema.kino.dto.SeatStatusResponseDto;

@@ -18,8 +18,8 @@ public class Movie {
     @Column(nullable = false, length = 255)
     private String title;
 
-    @Column(nullable = false)
-    private Rating rating;
+    @Column(name="age_rating",nullable = false)
+    private Rating ageRating;
 
     @Column(name = "duration_min", nullable = false)
     private Integer durationMin;
