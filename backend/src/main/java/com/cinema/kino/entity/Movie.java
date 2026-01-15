@@ -1,5 +1,6 @@
 package com.cinema.kino.entity;
 
+import com.cinema.kino.entity.enums.MovieStatus;
 import com.cinema.kino.entity.enums.Rating;
 import jakarta.persistence.*;
 import lombok.*;
@@ -18,8 +19,13 @@ public class Movie {
     @Column(nullable = false, length = 255)
     private String title;
 
-    @Column(name="age_rating",nullable = false)
+    @Column(name = "age_rating", nullable = false)
     private Rating ageRating;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    @Builder.Default
+    private MovieStatus status = MovieStatus.UPCOMING;
 
     @Column(name = "duration_min", nullable = false)
     private Integer durationMin;
