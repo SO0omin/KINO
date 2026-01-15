@@ -45,4 +45,36 @@ public class ScreeningSeat {
 
     @Column(name = "hold_expires_at")
     private LocalDateTime holdExpiresAt;
+
+    /* =========================
+       도메인 메서드
+       ========================= */
+    public void hold(Long memberId, Long guestId) {
+        if (this.status != SeatStatus.AVAILABLE) {
+            throw new IllegalStateException("이미 선택된 좌석입니다.");
+        }
+
+        this.status = SeatStatus.HELD;
+
+        if (memberId != null) {
+            this.heldByMember = new Member(memberId); // 프록시
+            this.heldByGuest = null;
+        } else {
+            this.heldByGuest = new Guest(guestId);
+            this.heldByMember = null;
+        }
+    }
+
+    public void release() {
+        this.status = SeatStatus.AVAILABLE;
+        this.heldByMember = null;
+        this.heldByGuest = null;
+    }
+
+    public void reserve() {
+        if (this.status != SeatStatus.HELD) {
+            throw new IllegalStateException("선택되지 않은 좌석은 예약할 수 없습니다.");
+        }
+        this.status = SeatStatus.RESERVED;
+    }
 }

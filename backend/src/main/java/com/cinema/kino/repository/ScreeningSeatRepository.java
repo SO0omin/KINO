@@ -6,16 +6,34 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
+
 import java.util.List;
+import java.util.Optional;
 
-public interface ScreeningSeatRepository extends JpaRepository<ScreeningSeat, Long> {
+public interface ScreeningSeatRepository
+        extends JpaRepository<ScreeningSeat, Long> {
 
-    // [중요] 동시성 제어를 위한 비관적 락(Pessimistic Lock)
-    // "지금 내가 이 좌석 건드리는 동안 아무도 손대지 마" 라고 락을 거는 겁니다.
+    // 상영관 기준 전체 좌석 조회
+    List<ScreeningSeat> findByScreeningId(Long screeningId);
+
+    // 특정 상영 + 특정 좌석 조회
+    Optional<ScreeningSeat> findByScreeningIdAndSeatId(
+            Long screeningId, Long seatId
+    );
+
+    // [중요] 좌석 선택 시 동시성 제어 (비관적 락)
     @Lock(LockModeType.PESSIMISTIC_WRITE)
-    @Query("SELECT ss FROM ScreeningSeat ss WHERE ss.screening.id = :screeningId AND ss.seat.id IN :seatIds")
-    List<ScreeningSeat> findAllByScreeningIdAndSeatIdsWithLock(@Param("screeningId") Long screeningId, @Param("seatIds") List<Long> seatIds);
+    @Query("""
+        SELECT ss
+        FROM ScreeningSeat ss
+        WHERE ss.screening.id = :screeningId
+          AND ss.seat.id IN :seatIds
+    """)
+    List<ScreeningSeat> findAllByScreeningIdAndSeatIdsWithLock(
+            @Param("screeningId") Long screeningId,
+            @Param("seatIds") List<Long> seatIds
+    );
 
-    // 결제 완료 후, 예매 ID로 묶인 좌석들을 찾아서 상태를 RESERVED로 바꿀 때 씁니다.
+    // 결제 완료 후 예매 단위로 좌석 조회
     List<ScreeningSeat> findByReservationId(Long reservationId);
 }

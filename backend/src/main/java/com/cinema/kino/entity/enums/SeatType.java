@@ -7,4 +7,4 @@ public enum SeatType {
     ENTRANCE,
     EXIT,
     ENTRANCE_EXIT_ALL
-}
+  }
