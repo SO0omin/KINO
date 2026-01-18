@@ -33,3 +33,13 @@ export interface Screening {
     availableSeats: number;
     totalSeats: number;
 }
+
+export interface Seat {
+  id: number;
+  seatRow: string;
+  seatNumber: number;
+  status: string;
+  type: string;
+  posX: number;
+  posY: number;
+}
