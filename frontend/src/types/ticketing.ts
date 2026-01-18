@@ -24,8 +24,10 @@ export interface Movie {
 export interface Screening {
     id: number;
     theaterName: string;
+    ageRating: string;
     screenName: string;
     movieTitle: string;
+    screenType: string;
     startTime: string;
     endTime: string;
     availableSeats: number;
