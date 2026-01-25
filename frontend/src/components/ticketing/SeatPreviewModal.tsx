@@ -1,4 +1,5 @@
 import React, { useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useSeatWebSocket } from '../../hooks/useSeatWebSocket';
 import { getSeatColor, getRatingDetails } from '../../mappers/ticketingMapper';
 import type { Screening, Seat } from '../../types/ticketing';
@@ -13,8 +14,29 @@ interface Props {
 const VINTAGE_NOISE_SVG = `url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")`;
 
 const SeatPreviewModal: React.FC<Props> = ({ isOpen, onClose, screening, seats: initialSeats }) => {
+
+  // 1. 네비게이트 함수 초기화
+  const navigate = useNavigate();
+
   // 훅을 통해 실시간 좌석 데이터 관리
   const { currentSeats } = useSeatWebSocket(isOpen, screening?.id, initialSeats);
+
+  // 2. 버튼 클릭 시 실행될 함수 정의
+  const handleBookingClick = () => {
+    if (!screening) return;
+
+    // /seat-booking 페이지로 필요한 정보를 봇짐(state)에 싸서 보냄(필요한 정보 여기에서 수정하면 된다 수민)
+    navigate('/seat-booking', {
+      state: {
+        screeningId: screening.id,
+        movieTitle: screening.movieTitle,
+        theaterName: screening.theaterName,
+        screenName: screening.screenName,
+        startTime: screening.startTime,
+        initialSeats: currentSeats 
+      }
+    });
+  };
 
   const maxCol = useMemo(() => Math.max(...currentSeats.map(s => s.posX), 0), [currentSeats]);
   const maxRow = useMemo(() => Math.max(...currentSeats.map(s => s.posY), 0), [currentSeats]);
@@ -117,7 +139,7 @@ const SeatPreviewModal: React.FC<Props> = ({ isOpen, onClose, screening, seats: 
         {/* 3. Footer Actions */}
         <div className="p-8 bg-black/5 border-t border-black flex gap-4 shrink-0">
           <button onClick={onClose} className="flex-1 py-4 border-4 border-black bg-white font-bold text-[12px] uppercase tracking-[0.2em] hover:bg-black hover:text-white transition-all">취소</button>
-          <button className="flex-[2] py-4 border-4 border-black bg-black text-white font-bold text-[12px] uppercase tracking-[0.2em] shadow-[6px_6px_0_0_#000] hover:translate-x-1 hover:translate-y-1 hover:shadow-none transition-all">인원/좌석 선택</button>
+          <button onClick={handleBookingClick} className="flex-[2] py-4 border-4 border-black bg-black text-white font-bold text-[12px] uppercase tracking-[0.2em] shadow-[6px_6px_0_0_#000] hover:translate-x-1 hover:translate-y-1 hover:shadow-none transition-all">인원/좌석 선택</button>
         </div>
       </div>
     </div>
