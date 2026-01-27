@@ -12,6 +12,12 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
 
     @Override
     public void registerStompEndpoints(StompEndpointRegistry registry) {
+        //1. 이류진이 쓰는 엔드포인트
+        registry.addEndpoint("/ws-kino")
+                .setAllowedOriginPatterns("*")
+                .withSockJS();
+
+        //2. 정수민이 쓰는 엔드포인트
         registry.addEndpoint("/ws-seat")
                 .setAllowedOriginPatterns("*")
                 .withSockJS();
@@ -22,4 +28,5 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
         registry.enableSimpleBroker("/topic"); // 구독
         registry.setApplicationDestinationPrefixes("/app"); // 전송
     }
+
 }
