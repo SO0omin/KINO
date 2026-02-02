@@ -9,30 +9,27 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequestMapping("/api/payments")
 @RequiredArgsConstructor
-@CrossOrigin(origins = "*") // React 개발 서버(localhost:3000 등)에서 접근 허용
+@CrossOrigin(origins = "*")
 public class PaymentController {
 
     private final PaymentService paymentService;
 
-    /**
-     * [단계 1] 결제 준비 API
-     * 기능: 좌석을 선점(HELD)하고, 예매 데이터(PENDING)를 미리 생성합니다.
-     * URL: POST /api/payments/prepare
-     */
+    @GetMapping("/{reservationId}")
+    public ResponseEntity<PaymentDTO.ReservationDetailResponse> getPaymentInfo(@PathVariable Long reservationId) {
+        return ResponseEntity.ok(paymentService.getReservationDetail(reservationId));
+    }
+
     @PostMapping("/prepare")
     public ResponseEntity<PaymentDTO.PrepareResponse> preparePayment(@RequestBody PaymentDTO.PrepareRequest request) {
-        PaymentDTO.PrepareResponse response = paymentService.preparePayment(request);
-        return ResponseEntity.ok(response);
+        return ResponseEntity.ok(paymentService.preparePayment(request));
     }
 
     /**
-     * [단계 2] 결제 승인 API
-     * 기능: 토스페이먼츠 인증이 완료되면 호출됩니다. 검증 후 최종 승인(PAID) 처리합니다.
-     * URL: POST /api/payments/confirm
+     * [수정] 서비스가 ConfirmResponse 객체를 반환하므로 타입을 일치시킵니다.
      */
     @PostMapping("/confirm")
-    public ResponseEntity<Long> confirmPayment(@RequestBody PaymentDTO.ConfirmRequest request) {
-        Long paymentId = paymentService.confirmPayment(request);
-        return ResponseEntity.ok(paymentId);
+    public ResponseEntity<PaymentDTO.ConfirmResponse> confirmPayment(@RequestBody PaymentDTO.ConfirmRequest request) {
+        PaymentDTO.ConfirmResponse response = paymentService.confirmPayment(request);
+        return ResponseEntity.ok(response);
     }
 }
