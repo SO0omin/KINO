@@ -12,6 +12,8 @@ public class MovieDTO {
     private String ageRating; // Enum을 문자열로 변환
     private Integer durationMin;
     private String posterUrl;
+    private String trailerUrl;
+    private String status;
 
     public static MovieDTO from(Movie movie) {
         return MovieDTO.builder()
@@ -20,6 +22,8 @@ public class MovieDTO {
                 .ageRating(movie.getAgeRating().name()) // Enum -> String
                 .durationMin(movie.getDurationMin())
                 .posterUrl(movie.getPosterUrl())
+                .trailerUrl(movie.getTrailerUrl())
+                .status(movie.getStatus().name())
                 .build();
     }
 }
