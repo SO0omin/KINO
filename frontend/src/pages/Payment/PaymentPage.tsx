@@ -41,6 +41,7 @@ export default function PaymentPage() {
       
       // 에러 해결: 이제 updateAmount가 숫자를 받을 수 있음
       updateAmount(newFinalAmount);
+      
     }
   }, [reservationDetail, usedPoints]);
 
