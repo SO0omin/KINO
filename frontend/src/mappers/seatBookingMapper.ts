@@ -10,7 +10,7 @@ export const toSeatViewModels = (dtos: SeatStatusDto[]): SeatViewModel[] => {
   return dtos.map(dto => {
     let icon = entranceExitAllImg;
     let label = "입/출구";
-    const isEntranceType = ["ENTRANCE", "EXIT", "ETRANCE_EXIT_ALL"].includes(dto.seatType);
+    const isEntranceType = ["ENTRANCE", "EXIT", "ENTRANCE_EXIT_ALL"].includes(dto.seatType);
 
     if (dto.seatType === "ENTRANCE") {
       icon = entranceImg; label = "입구";

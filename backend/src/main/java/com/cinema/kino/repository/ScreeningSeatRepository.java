@@ -5,10 +5,12 @@ import com.cinema.kino.entity.enums.SeatStatus;
 import jakarta.persistence.LockModeType;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Lock;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -45,4 +47,17 @@ public interface ScreeningSeatRepository extends JpaRepository<ScreeningSeat, Lo
 
     // 6. [수민] 결제 완료 후 예매 단위로 좌석 조회
     List<ScreeningSeat> findByReservationId(Long reservationId);
+
+    // 7. [수민]
+    @Modifying(clearAutomatically = true) //
+    @Query("""
+    UPDATE ScreeningSeat ss
+    SET ss.status = com.cinema.kino.entity.enums.SeatStatus.AVAILABLE,
+        ss.holdExpiresAt = null,
+        ss.heldByMember = null,
+        ss.heldByGuest = null
+    WHERE ss.status = com.cinema.kino.entity.enums.SeatStatus.HELD
+      AND ss.holdExpiresAt < :now
+""")
+    int releaseExpiredSeats(@Param("now") LocalDateTime now);
 }

@@ -4,7 +4,7 @@ export interface SeatStatusDto {
   seatRow: string;
   seatNumber: number;
   status: "AVAILABLE" | "HELD" | "RESERVED";
-  seatType: "NORMAL" | "DISABLED" | "COUPLE" | "ENTRANCE" | "EXIT" | "ETRANCE_EXIT_ALL";
+  seatType: "NORMAL" | "DISABLED" | "COUPLE" | "ENTRANCE" | "EXIT" | "ENTRANCE_EXIT_ALL";
   posX: number;
   posY: number;
 

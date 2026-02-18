@@ -5,7 +5,7 @@ import { getLocalDateString } from '../utils/dateUtils';
 import type { Region, Theater, Movie, Screening } from '../types/ticketing';
 
 const VISIBLE_COUNT = 10;
-const VISIBLE_HOUR_COUNT = 10;
+//const VISIBLE_HOUR_COUNT = 10;
 
 export const useTicketing = (dateList: any[]) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -108,7 +108,7 @@ export const useTicketing = (dateList: any[]) => {
       const targetName = name || theaters.find(t => t.id === id)?.name || "Theater";
       setSelectedTheaters(prev => [...prev, id]);
       setSelectedTheatersInfo(prev => [...prev, { id, name: targetName }]);
-    } else { alert("Up to 4 theaters can be selected."); }
+    } else { alert("최대 4개의 상영관을 선택하실 수 있습니다."); }
   };
 
   const toggleMovie = (id: number) => {
@@ -116,7 +116,7 @@ export const useTicketing = (dateList: any[]) => {
       setSelectedMovies(prev => prev.filter(mId => mId !== id));
     } else if (selectedMovies.length < 3) {
       setSelectedMovies(prev => [...prev, id]);
-    } else { alert("Up to 3 movies can be selected."); }
+    } else { alert("최대 3개의 영화를 선택하실 수 있습니다."); }
   };
 
   const movieSet = useMemo(() => new Set(availableMovieIds), [availableMovieIds]);

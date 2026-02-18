@@ -4,7 +4,7 @@ HTTP REST API, 단방향
 ======================== */
 package com.cinema.kino.controller;
 
-import com.cinema.kino.dto.SeatStatusResponseDto;
+import com.cinema.kino.dto.SeatStatusResponseDTO;
 import com.cinema.kino.service.SeatService;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -24,7 +24,7 @@ public class SeatController {
     }
 
     @GetMapping("/{screeningId}/seats")
-    public List<SeatStatusResponseDto> seats(
+    public List<SeatStatusResponseDTO> seats(
             @PathVariable Long screeningId
     ) {
         return seatService.getSeatStatus(screeningId);

@@ -1,10 +1,10 @@
 import { Client, type IMessage } from '@stomp/stompjs';
 import SockJS from 'sockjs-client';
-import type { SeatStatus } from "./types/dtos/SeatStatusDto";
+import type { SeatStatusDto } from "../types/dtos/SeatStatusDto";
 
 interface HoldSeatPayload {
   screeningId: number;
-  seatId: number;
+  seatIds: number[];
   memberId: number | null;
   guestId: number | null;
 }
@@ -13,15 +13,12 @@ class SeatSocket {
   private stompClient: Client | null = null;
   private currentSubscription: any = null;
 
-  connect(screeningId: number, onMessage: (seat: SeatStatus) => void) {
-    // 이미 연결되어 있고 같은 screeningId를 구독 중이라면 중복 실행 방지
-    if (this.stompClient?.connected) {
-      console.log('이미 소켓이 연결되어 있습니다.');
-      return;
+  connect(screeningId: number, onMessage: (seats: SeatStatusDto[]) => void) {
+    if (this.stompClient) {
+      this.disconnect();
     }
 
     this.stompClient = new Client({
-      // 💡 서버의 withSockJS() 설정과 맞추기 위해 SockJS 사용
       webSocketFactory: () => new SockJS('http://localhost:8080/ws-seat'),
       reconnectDelay: 5000,
       heartbeatIncoming: 4000,
@@ -33,7 +30,6 @@ class SeatSocket {
         const subscribeUrl = `/topic/screening/${screeningId}`;
         console.log("📍 구독 시도 주소:", subscribeUrl);
 
-        // 기존 구독이 있다면 해제
         if (this.currentSubscription) {
           this.currentSubscription.unsubscribe();
         }
@@ -42,8 +38,9 @@ class SeatSocket {
         this.currentSubscription = this.stompClient?.subscribe(subscribeUrl, (message: IMessage) => {
           console.log("📩 서버로부터 메시지 수신:", message.body);
           try {
-            const data: SeatStatus = JSON.parse(message.body);
-            onMessage(data);
+            // 💡 여기서 서버가 보낸 리스트(배열)를 파싱합니다.
+            const data: SeatStatusDto[] = JSON.parse(message.body);
+            onMessage(data); // 배열을 통째로 콜백 함수에 전달!
           } catch (error) {
             console.error("데이터 파싱 에러:", error);
           }
@@ -65,8 +62,6 @@ class SeatSocket {
 
   // 좌석 점유 요청 전송
   holdSeat(payload: HoldSeatPayload) {
-    console.log("🚀 [전송 시도] 페이로드:", payload);
-
     if (!this.stompClient || !this.stompClient.connected) {
       console.error("❌ 전송 실패: 소켓이 연결되어 있지 않습니다.");
       return;
@@ -74,8 +69,10 @@ class SeatSocket {
 
     try {
       this.stompClient.publish({
-        destination: '/app/seat/hold',
+        // 💡 주의: 백엔드 WebSocketConfig에 setApplicationDestinationPrefixes("/app") 설정이 되어있어야 함
+        destination: '/app/seat/hold', 
         body: JSON.stringify(payload),
+        headers: { 'content-type': 'application/json' }
       });
       console.log("✅ [성공] 서버로 전송 완료!");
     } catch (e) {
@@ -94,4 +91,5 @@ class SeatSocket {
   }
 }
 
+// 싱글톤으로 내보내기 (아주 좋은 패턴입니다!)
 export const seatService = new SeatSocket();

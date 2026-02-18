@@ -28,7 +28,7 @@ const TicketingPage: React.FC = () => {
     }
   }, []);
 
-  const vintageStyles = `
+  /*const vintageStyles = `
     .font-serif { font-family: 'Playfair Display', serif; }
     .font-mono { font-family: 'Courier Prime', monospace; }
     .font-typewriter { font-family: 'Special Elite', cursive; }
@@ -39,11 +39,11 @@ const TicketingPage: React.FC = () => {
     .custom-scrollbar::-webkit-scrollbar-track { background: #eee; }
     .custom-scrollbar::-webkit-scrollbar-thumb { background: #333; }
     .paper-texture { background-image: url('https://www.transparenttextures.com/patterns/p6.png'); }
-  `;
+  `;*/
 
   return (
     <div className="bg-[#f4f1ea] text-black min-h-screen relative overflow-x-hidden paper-texture">
-      <style dangerouslySetInnerHTML={{ __html: vintageStyles }} />
+      {/*<style dangerouslySetInnerHTML={{ __html: vintageStyles }} />*/}
 
       <div className="bg-black text-white pt-12 pb-8 relative">
         <div className="max-w-7xl mx-auto px-10 flex flex-col items-center projector-glow">
@@ -87,8 +87,8 @@ const TicketingPage: React.FC = () => {
             </div>
             <div className="flex flex-1 overflow-hidden">
               <div className="w-1/2 border-r-4 border-black/20 overflow-y-auto custom-scrollbar bg-white/40">
-                {states.activeTab === 'ALL' ? states.regions.map(r => (<div key={r.id} onClick={() => setters.setSelectedRegionId(r.id)} className={`p-5 cursor-pointer text-xs font-bold uppercase tracking-widest border-b border-black/5 transition-colors ${states.selectedRegionId === r.id ? 'bg-black text-white' : 'hover:bg-white'}`}>{r.name}</div>)) : states.specialTypes.map(type => (<div key={type} onClick={() => setters.setSelectedSpecialType(type)} className={`p-5 cursor-pointer text-xs font-bold uppercase tracking-widest border-b border-black/5 transition-colors ${states.selectedSpecialType === type ? 'bg-black text-white' : 'hover:bg-white'}`}>{type}</div>))}
-              </div>
+                {states.activeTab === 'ALL' ? states.regions.map(r => (<div key={r.id} onClick={() => setters.setSelectedRegionId(r.id)} className={`p-2 cursor-pointer text-xs font-bold uppercase tracking-widest border-b border-black/5 transition-colors ${states.selectedRegionId === r.id ? 'bg-black text-white' : 'hover:bg-white'}`}>{r.name}</div>)) : states.specialTypes.map(type => (<div key={type} onClick={() => setters.setSelectedSpecialType(type)} className={`p-5 cursor-pointer text-xs font-bold uppercase tracking-widest border-b border-black/5 transition-colors ${states.selectedSpecialType === type ? 'bg-black text-white' : 'hover:bg-white'}`}>{type}</div>))}
+              </div> {/* p-5 -> p-2로 일시 수정 */}
               <div className="w-1/2 overflow-y-auto custom-scrollbar bg-white">
                 {states.theaters.map(t => (
                   <div key={t.id} onClick={() => handlers.toggleTheater(t.id, t.name)} className={`p-5 cursor-pointer text-sm font-medium border-b border-black/5 transition-all ${states.selectedTheaters.includes(t.id) ? 'bg-red-700 text-white font-bold' : 'text-black hover:bg-[#f4f1ea]'} ${!memos.theaterSet.has(t.id) && states.selectedMovies.length > 0 ? 'opacity-50' : ''}`}>{t.name}</div>
@@ -186,8 +186,11 @@ const TicketingPage: React.FC = () => {
                                   <button key={s.id} onClick={() => handlers.handleTimeClick(s)} className="border-2 border-black p-2 !bg-white hover:!bg-black hover:!text-white transition-all shadow-[4px_4px_0_0_rgba(0,0,0,0.1)] flex flex-col gap-1 relative overflow-hidden group active:translate-x-0.5 active:translate-y-0.5 active:shadow-none">
                                     <div className="font-mono text-xl font-bold tracking-tighter group-hover:text-white">{time}</div>
                                     <div className="flex justify-between items-end border-t border-black/5 group-hover:border-white/20 pt-1">
-                                      <div className="text-[10px] font-bold"><span className="!text-red-700 group-hover:!text-red-400">{s.availableSeats}</span><span className="text-black/30 group-hover:text-white/30">/{s.totalSeats}</span></div>
-                                      <div className="text-[9px] font-mono text-black/40 group-hover:text-white/40">{s.screenName.replace('관', '')}관</div>
+                                      <div className="text-[10px] font-bold">
+                                        <span className="!text-red-700 group-hover:!text-red-400">{s.availableSeats}</span>
+                                        <span className="text-black/30 group-hover:text-white/30">/{s.totalSeats}</span>
+                                      </div>
+                                      <div className="text-[9px] font-mono text-black/40 group-hover:text-white/40">{s.screenName}</div> {/* .replace('관', '')}관 */}
                                     </div>
                                     {s.availableSeats === 0 && <div className="absolute inset-0 !bg-black/60 flex items-center justify-center rotate-[-10deg]"><span className="text-white text-[10px] font-bold border-2 border-white px-1 uppercase">Sold Out</span></div>}
                                   </button>

@@ -1,4 +1,4 @@
-@import "tailwindcss";
+/*@import "tailwindcss";
 
 :root {
   font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
@@ -54,7 +54,7 @@ button:hover {
 button:focus,
 button:focus-visible {
   outline: 4px auto -webkit-focus-ring-color;
-}*/
+}
 
 @media (prefers-color-scheme: light) {
   :root {
@@ -67,4 +67,35 @@ button:focus-visible {
   button {
     background-color: #f9f9f9;
   }
+}*/
+
+/* src/index.css */
+body {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
 }
+
+#root {
+  /* Vite 기본 설정에 있던 중앙 정렬 관련 코드 모두 제거 */
+  width: 100%;
+  min-height: 100vh;
+}
+
+/* 폰트 전역 설정 (!important를 넣어 Tailwind 기본값에 밀리지 않게 고정) */
+.font-serif { font-family: 'Playfair Display', serif !important; }
+.font-mono { font-family: 'Courier Prime', monospace !important; }
+.font-typewriter { font-family: 'Special Elite', cursive !important; }
+
+/* 빈티지 감성 효과들 (노이즈, 스크롤바, 종이 질감 등) */
+.grainy::before { 
+  content: ""; position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
+  pointer-events: none; z-index: 9999; opacity: 0.05; 
+  background-image: url('https://grainy-gradients.vercel.app/noise.svg'); 
+}
+@keyframes flicker { 0% { opacity: 0.97; } 100% { opacity: 1; } }
+.projector-glow { animation: flicker 0.15s infinite; }
+.custom-scrollbar::-webkit-scrollbar { width: 6px; }
+.custom-scrollbar::-webkit-scrollbar-track { background: #eee; }
+.custom-scrollbar::-webkit-scrollbar-thumb { background: #333; }
+.paper-texture { background-image: url('https://www.transparenttextures.com/patterns/p6.png'); }

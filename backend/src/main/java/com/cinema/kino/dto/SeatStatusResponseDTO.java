@@ -12,7 +12,7 @@ import java.time.LocalDateTime;
 
 @Getter
 @AllArgsConstructor
-public class SeatStatusResponseDto {
+public class SeatStatusResponseDTO {
 
     // 좌석 정보
     private Long seatId;
@@ -39,14 +39,14 @@ public class SeatStatusResponseDto {
     private Long memberId;         // 회원
     private Long guestId;         //  비회원
 
-    public static SeatStatusResponseDto from(ScreeningSeat ss) {
+    public static SeatStatusResponseDTO from(ScreeningSeat ss) {
         var seat = ss.getSeat();
         var screening = ss.getScreening();
         var movie = screening.getMovie();
         var screen = screening.getScreen();
         var theater = screen.getTheater();
 
-        return new SeatStatusResponseDto(
+        return new SeatStatusResponseDTO(
                 seat.getId(),
                 seat.getSeatRow(),
                 seat.getSeatNumber(),

@@ -1,5 +1,5 @@
 import { ticketingApi } from '../api/ticketingApi';
-import type { Region, Theater, Movie, Screening } from '../types/ticketing';
+import type { Region, Screening } from '../types/ticketing';
 
 export const ticketingService = {
   // 1. 지역 목록 가져오기 (ID 순 정렬)

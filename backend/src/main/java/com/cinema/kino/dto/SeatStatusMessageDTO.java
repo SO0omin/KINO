@@ -1,6 +1,6 @@
 package com.cinema.kino.dto;
 
-public class SeatStatusMessageDto {
+public class SeatStatusMessageDTO {
 
     private Long screeningId;      // screening_seats.screening_id
     private Long seatId;           // screening_seats.seat_id
