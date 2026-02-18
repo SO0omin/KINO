@@ -2,11 +2,14 @@ package com.cinema.kino.repository;
 
 import com.cinema.kino.entity.MemberCoupon;
 import com.cinema.kino.entity.Reservation;
+import jakarta.persistence.LockModeType;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
 import java.util.Optional;
 
 /**
@@ -59,4 +62,38 @@ public interface MemberCouponRepository extends JpaRepository<MemberCoupon, Long
      * @return 해당 예약에 연결된 쿠폰(Optional)
      */
     Optional<MemberCoupon> findByReservation(Reservation reservation);
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("""
+    SELECT mc FROM MemberCoupon mc
+    WHERE mc.id = :id
+      AND mc.member.id = :memberId
+      AND mc.status = com.cinema.kino.entity.enums.MemberCouponStatus.AVAILABLE
+      AND mc.isUsed = false
+      AND mc.expiresAt > CURRENT_TIMESTAMP
+""")
+    Optional<MemberCoupon> findHoldableCouponForUpdate(@Param("id") Long id,
+                                                       @Param("memberId") Long memberId);
+
+    @Query("""
+    SELECT mc FROM MemberCoupon mc
+    JOIN FETCH mc.coupon c
+    WHERE mc.member.id = :memberId
+      AND mc.status = com.cinema.kino.entity.enums.MemberCouponStatus.AVAILABLE
+      AND mc.isUsed = false
+      AND mc.expiresAt > CURRENT_TIMESTAMP
+    ORDER BY mc.expiresAt ASC
+""")
+    List<MemberCoupon> findAvailableCouponsByMemberId(@Param("memberId") Long memberId);
+    @Query("""
+    SELECT mc FROM MemberCoupon mc
+    JOIN FETCH mc.coupon c
+    WHERE mc.member.id = :memberId
+      AND mc.status = com.cinema.kino.entity.enums.MemberCouponStatus.AVAILABLE
+      AND mc.isUsed = false
+      AND mc.expiresAt > CURRENT_TIMESTAMP
+    ORDER BY mc.expiresAt ASC
+""")
+    Optional<MemberCoupon> findByMemberIdAndCouponId(Long memberId, Long couponId);
+
+
 }

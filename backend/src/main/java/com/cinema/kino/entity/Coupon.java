@@ -41,4 +41,8 @@ public class Coupon {
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
+
+    @Column(name = "code", nullable = false, unique = true, length = 50)
+    private String code;
+
 }
