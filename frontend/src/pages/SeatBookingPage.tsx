@@ -31,6 +31,7 @@ const SeatBooking = () => {
     isAlertOpen,
     alertMessage,
     showCoupleNotice,
+    totalPrice,
     setIsAlertOpen,
     setShowCoupleNotice,
     handleCountChange,
@@ -41,6 +42,8 @@ const SeatBooking = () => {
   } = useSeatBooking(screeningId);
 
   const [hoveredSeatId, setHoveredSeatId] = useState<number | null>(null);
+
+  
 
   return (
     // 전체 배경 (종이 질감)
@@ -248,7 +251,7 @@ const SeatBooking = () => {
                 <div className="flex justify-between items-end mb-6">
                   <span className="font-serif italic text-xl uppercase font-bold">Total</span>
                   <span className="font-mono text-4xl font-black">
-                    {(selectedSeats.length * 12000).toLocaleString()} <span className="text-sm">KRW</span>
+                    {totalPrice.toLocaleString()} <span className="text-sm">KRW</span>
                   </span>
                 </div>
 

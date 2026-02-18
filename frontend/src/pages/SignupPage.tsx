@@ -67,7 +67,7 @@ const SignupPage: React.FC = () => {
     }
 
     try {
-      const response = await axios.post('/api/auth/signup', formData);
+      await axios.post('/api/auth/signup', formData);
       alert("회원가입이 완료되었습니다.");
       navigate('/login');
     } catch (error: any) {

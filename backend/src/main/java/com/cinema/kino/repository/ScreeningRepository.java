@@ -1,6 +1,7 @@
 package com.cinema.kino.repository;
 
 import com.cinema.kino.entity.Screening;
+import com.cinema.kino.entity.ScreeningSeat;
 import com.cinema.kino.entity.enums.ScreenType;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;

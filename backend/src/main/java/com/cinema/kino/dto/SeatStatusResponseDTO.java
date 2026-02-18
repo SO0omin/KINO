@@ -9,6 +9,7 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 
 import java.time.LocalDateTime;
+import java.util.Map;
 
 @Getter
 @AllArgsConstructor
@@ -39,7 +40,12 @@ public class SeatStatusResponseDTO {
     private Long memberId;         // 회원
     private Long guestId;         //  비회원
 
-    public static SeatStatusResponseDTO from(ScreeningSeat ss) {
+    private Integer priceAdult;
+    private Integer priceYouth;
+    private Integer priceSenior;
+    private Integer priceSpecial;
+
+    public static SeatStatusResponseDTO from(ScreeningSeat ss, Map<String, Integer> prices) {
         var seat = ss.getSeat();
         var screening = ss.getScreening();
         var movie = screening.getMovie();
@@ -66,7 +72,11 @@ public class SeatStatusResponseDTO {
                 screening.getStartTime(),
                 screening.getEndTime(),
                 ss.getHeldByMember() != null ? ss.getHeldByMember().getId() : null,
-                ss.getHeldByGuest() != null ? ss.getHeldByGuest().getId() : null
+                ss.getHeldByGuest() != null ? ss.getHeldByGuest().getId() : null,
+                prices.getOrDefault("ADULT", 15000), // 기본값은 안전장치
+                prices.getOrDefault("YOUTH", 12000),
+                prices.getOrDefault("SENIOR", 10000),
+                prices.getOrDefault("SPECIAL", 10000)
         );
     }
 }

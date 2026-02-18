@@ -1,6 +1,6 @@
 import { Client, type IMessage } from '@stomp/stompjs';
 import SockJS from 'sockjs-client';
-import type { SeatStatusDto } from "../types/dtos/SeatStatusDto";
+import type { SeatInfoDto } from "../types/dtos/SeatBookingResponseDto";
 
 interface HoldSeatPayload {
   screeningId: number;
@@ -13,7 +13,7 @@ class SeatSocket {
   private stompClient: Client | null = null;
   private currentSubscription: any = null;
 
-  connect(screeningId: number, onMessage: (seats: SeatStatusDto[]) => void) {
+  connect(screeningId: number, callback: (data: SeatInfoDto[]) => void) {
     if (this.stompClient) {
       this.disconnect();
     }
@@ -39,10 +39,12 @@ class SeatSocket {
           console.log("📩 서버로부터 메시지 수신:", message.body);
           try {
             // 💡 여기서 서버가 보낸 리스트(배열)를 파싱합니다.
-            const data: SeatStatusDto[] = JSON.parse(message.body);
-            onMessage(data); // 배열을 통째로 콜백 함수에 전달!
+            const data: SeatInfoDto[] = JSON.parse(message.body);
+            console.log("🔍 [WS 파싱 완료] 업데이트 될 좌석 데이터:", data);
+            callback(data);
           } catch (error) {
             console.error("데이터 파싱 에러:", error);
+            
           }
         });
       },

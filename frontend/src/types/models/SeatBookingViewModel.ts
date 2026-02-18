@@ -34,4 +34,10 @@ export interface ScreeningInfoViewModel {
     start: string;
     end: string;
   };
+  prices: {
+    adult: number;
+    youth: number;
+    senior: number;
+    special: number;
+  };
 }

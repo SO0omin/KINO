@@ -21,7 +21,7 @@ const SeatPreviewModal: React.FC<Props> = ({ isOpen, onClose, screening, seats: 
 
   // 훅을 통해 실시간 좌석 데이터 관리
   const [currentSeats, setCurrentSeats] = useState<Seat[]>(initialSeats);
-  const [isLoading, setIsLoading] = useState(false);
+  const [, setIsLoading] = useState(false); 
 
   // 2. 버튼 클릭 시 실행될 함수 정의
   useEffect(() => {
@@ -29,9 +29,11 @@ const SeatPreviewModal: React.FC<Props> = ({ isOpen, onClose, screening, seats: 
       setIsLoading(true);
       
       seatBookingApi.getScreeningSeats(screening.id)
-        .then((data: any[]) => {
+        .then((data) => {
           // 서버에서 온 raw 데이터를 Seat 타입에 맞춰 매핑
-          const formattedSeats: Seat[] = data.map(item => ({
+          const formattedSeats: Seat[] = data.seats
+          .filter(item => item.seatRow !== "0") //실제 좌석만 통과
+          .map(item => ({
             id: item.seatId,
             seatRow: item.seatRow,
             seatNumber: item.seatNumber,
