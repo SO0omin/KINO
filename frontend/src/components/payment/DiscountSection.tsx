@@ -1,51 +1,89 @@
-import { useState } from 'react';
+import {  useState } from 'react';
 import type { DiscountTab } from '../../types/model/payment';
+import type { MyCouponResponse } from '../../api/paymentApi';
 
-// [수정 핵심] PaymentPage에서 전달하는 핸들러를 받기 위한 인터페이스 확장
 interface DiscountSectionProps {
   discountTab: DiscountTab;
   setDiscountTab: (tab: DiscountTab) => void;
-  isMember?: boolean;                          // 회원 여부 확인
-  onCouponSelect?: (couponId: number | null) => void; // 쿠폰 선택 시 호출
-  onPointChange?: (points: number) => void;         // 포인트 변경 시 호출
+
+  isMember?: boolean;
+
+  
+  coupons: MyCouponResponse[];
+  couponLoading?: boolean;
+
+  
+  onRedeemCoupon: (code: string) => Promise<void>;
+
+  
+  onCouponSelect?: (couponId: number | null) => void; // memberCouponId
+  onPointChange?: (points: number) => void;
 }
 
-export function DiscountSection({ 
-  discountTab, 
-  setDiscountTab, 
-  isMember, 
-  onCouponSelect, 
-  onPointChange 
+export function DiscountSection({
+  discountTab,
+  setDiscountTab,
+  isMember,
+  coupons,
+  couponLoading,
+  onRedeemCoupon,
+  onCouponSelect,
+  onPointChange,
 }: DiscountSectionProps) {
   const [pointInput, setPointInput] = useState<string>('');
-  const [activeCoupon, setActiveCoupon] = useState<number | null>(null);
+  const [activeMemberCouponId, setActiveMemberCouponId] = useState<number | null>(null);
+
+  const [couponCode, setCouponCode] = useState('');
+  const [redeemBusy, setRedeemBusy] = useState(false);
 
   // 포인트 입력 핸들러
   const handlePointInput = (val: string) => {
-    const num = parseInt(val.replace(/[^0-9]/g, '')) || 0;
+    const num = parseInt(val.replace(/[^0-9]/g, ''), 10) || 0;
     setPointInput(num.toLocaleString());
-    if (onPointChange) onPointChange(num); // 부모 상태 업데이트
+    onPointChange?.(num);
   };
 
-  // 쿠폰 선택 핸리러 (임시 PK 1번 적용 예시)
-  const handleCouponClick = (id: number) => {
-    const newId = activeCoupon === id ? null : id;
-    setActiveCoupon(newId);
-    if (onCouponSelect) onCouponSelect(newId); // 부모 상태 업데이트
+  // 쿠폰 선택
+  const handleCouponClick = (memberCouponId: number) => {
+    const newId = activeMemberCouponId === memberCouponId ? null : memberCouponId;
+    setActiveMemberCouponId(newId);
+    onCouponSelect?.(newId);
+  };
+
+  // 초기화
+  const handleReset = () => {
+    setPointInput('');
+    setActiveMemberCouponId(null);
+    setCouponCode('');
+    onPointChange?.(0);
+    onCouponSelect?.(null);
+  };
+
+  // 쿠폰 등록
+  const handleRedeem = async () => {
+    const code = couponCode.trim();
+    if (!code) {
+      alert('쿠폰 코드를 입력해주세요.');
+      return;
+    }
+    setRedeemBusy(true);
+    try {
+      await onRedeemCoupon(code);
+      setCouponCode('');
+    } catch (e: any) {
+      alert(e?.message ?? '쿠폰 등록 실패');
+    } finally {
+      setRedeemBusy(false);
+    }
   };
 
   return (
     <section className="mb-8">
       <div className="flex justify-between items-center mb-4 pb-3 border-b-2 border-gray-300">
         <h2 className="text-xl font-bold">할인정보</h2>
-        <button 
+        <button
           className="text-sm text-gray-600 hover:text-[#eb4d32]"
-          onClick={() => {
-            setPointInput('');
-            setActiveCoupon(null);
-            if (onPointChange) onPointChange(0);
-            if (onCouponSelect) onCouponSelect(null);
-          }}
+          onClick={handleReset}
         >
           초기화
         </button>
@@ -58,17 +96,21 @@ export function DiscountSection({
       ) : (
         <div className="bg-white rounded-lg p-6 shadow-sm border border-gray-100">
           <div className="grid grid-cols-2 gap-3 mb-6">
-            <button 
+            <button
               className={`py-3 border rounded font-medium transition-all ${
-                discountTab === 'coupon' ? 'border-[#eb4d32] bg-[#fdf4e3] text-[#eb4d32]' : 'border-gray-300 text-gray-600'
+                discountTab === 'coupon'
+                  ? 'border-[#eb4d32] bg-[#fdf4e3] text-[#eb4d32]'
+                  : 'border-gray-300 text-gray-600'
               }`}
               onClick={() => setDiscountTab('coupon')}
             >
               쿠폰
             </button>
-            <button 
+            <button
               className={`py-3 border rounded font-medium transition-all ${
-                discountTab === 'point' ? 'border-[#eb4d32] bg-[#fdf4e3] text-[#eb4d32]' : 'border-gray-300 text-gray-600'
+                discountTab === 'point'
+                  ? 'border-[#eb4d32] bg-[#fdf4e3] text-[#eb4d32]'
+                  : 'border-gray-300 text-gray-600'
               }`}
               onClick={() => setDiscountTab('point')}
             >
@@ -76,37 +118,70 @@ export function DiscountSection({
             </button>
           </div>
 
-          {/* 쿠폰 섹션 */}
+          {/* 쿠폰 탭 */}
           {discountTab === 'coupon' && (
-            <div className="animate-fadeIn">
-              <div className="grid grid-cols-2 gap-3 mb-4">
-                <button 
-                  onClick={() => handleCouponClick(1)} // 실제 DB의 Coupon ID 연동 지점
-                  className={`py-4 border rounded text-sm transition-all ${
-                    activeCoupon === 1 ? 'border-[#eb4d32] bg-[#fdf4e3]' : 'border-gray-200 hover:border-gray-400'
-                  }`}
+            <div className="animate-fadeIn space-y-4">
+              {/* 쿠폰 등록 */}
+              <div className="flex gap-2">
+                <input
+                  value={couponCode}
+                  onChange={(e) => setCouponCode(e.target.value)}
+                  placeholder="쿠폰 코드 입력 (예: WELCOME-2000)"
+                  className="flex-1 py-3 px-4 border border-gray-300 rounded focus:ring-1 focus:ring-[#eb4d32] outline-none"
+                />
+                <button
+                  className="px-4 py-3 bg-gray-800 text-white rounded text-sm hover:bg-black transition-colors disabled:opacity-50"
+                  onClick={handleRedeem}
+                  disabled={redeemBusy}
                 >
-                  <p className="font-bold">신규 가입 2,000원 할인</p>
-                  <p className="text-xs text-gray-500 mt-1">~ 2026.12.31까지</p>
+                  {redeemBusy ? '등록중' : '등록'}
                 </button>
-                <button 
-                  onClick={() => handleCouponClick(2)}
-                  className={`py-4 border rounded text-sm transition-all ${
-                    activeCoupon === 2 ? 'border-[#eb4d32] bg-[#fdf4e3]' : 'border-gray-200 hover:border-gray-400'
-                  }`}
-                >
-                  <p className="font-bold">평일 관람 10% 할인</p>
-                  <p className="text-xs text-gray-500 mt-1">평일 월~목 사용 가능</p>
-                </button>
+              </div>
+
+              {/* 내 쿠폰 목록 */}
+              <div>
+                <div className="flex items-center justify-between mb-2">
+                  <p className="text-sm font-bold text-gray-700">보유 쿠폰</p>
+                  {couponLoading && <p className="text-xs text-gray-500">불러오는 중...</p>}
+                </div>
+
+                {coupons.length === 0 ? (
+                  <div className="bg-gray-50 rounded p-6 text-sm text-gray-500">
+                    사용 가능한 쿠폰이 없습니다.
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-2 gap-3">
+                    {coupons.map((c) => (
+                      <button
+                        key={c.memberCouponId}
+                        onClick={() => handleCouponClick(c.memberCouponId)}
+                        className={`py-4 border rounded text-sm transition-all text-left px-4 ${
+                          activeMemberCouponId === c.memberCouponId
+                            ? 'border-[#eb4d32] bg-[#fdf4e3]'
+                            : 'border-gray-200 hover:border-gray-400'
+                        }`}
+                      >
+                        <p className="font-bold">{c.couponName}</p>
+                        <p className="text-xs text-gray-500 mt-1">
+                          {c.discountType === 'FIXED'
+                            ? `${c.discountValue.toLocaleString()}원 할인`
+                            : `${c.discountValue}% 할인`}
+                          {c.minPrice > 0 ? ` (최소 ${c.minPrice.toLocaleString()}원)` : ''}
+                        </p>
+                        <p className="text-xs text-gray-500 mt-1">~ {c.expiresAt}</p>
+                      </button>
+                    ))}
+                  </div>
+                )}
               </div>
             </div>
           )}
 
-          {/* 포인트 섹션 */}
+          {/* 포인트 탭(기존 유지) */}
           {discountTab === 'point' && (
             <div className="animate-fadeIn">
               <div className="flex gap-2 items-center">
-                <input 
+                <input
                   type="text"
                   value={pointInput}
                   onChange={(e) => handlePointInput(e.target.value)}
@@ -114,9 +189,9 @@ export function DiscountSection({
                   className="flex-1 py-3 px-4 border border-gray-300 rounded focus:ring-1 focus:ring-[#eb4d32] outline-none text-right font-mono"
                 />
                 <span className="text-gray-600">P</span>
-                <button 
+                <button
                   className="px-4 py-3 bg-gray-800 text-white rounded text-sm hover:bg-black transition-colors"
-                  onClick={() => handlePointInput('5000')} // 예시: 전액 사용
+                  onClick={() => handlePointInput('5000')}
                 >
                   전액사용
                 </button>
@@ -130,8 +205,8 @@ export function DiscountSection({
           <div className="mt-6 pt-6 border-t border-gray-100">
             <ul className="text-xs text-gray-500 space-y-1.5 leading-relaxed">
               <li>• 쿠폰과 포인트는 중복 적용이 가능합니다.</li>
-              <li>• 최종 결제 금액이 0원 미만일 경우 포인트 사용이 제한될 수 있습니다.</li>
-              <li>• 사용하신 쿠폰은 예매 취소 시 자동 복구됩니다.</li>
+              <li>• 최종 결제 금액은 서버 계산이 기준입니다.</li>
+              <li>• 결제 실패 시 쿠폰은 자동으로 복구됩니다.</li>
             </ul>
           </div>
         </div>
