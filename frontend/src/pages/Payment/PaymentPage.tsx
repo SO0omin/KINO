@@ -13,6 +13,7 @@ import {
   preparePayment,
   getMyCoupons,
   redeemCoupon,
+  getMyPoints,
   type MyCouponResponse,
 } from '../../api/paymentApi';
 
@@ -50,7 +51,8 @@ export default function PaymentPage() {
   const [searchParams] = useSearchParams();
   const reservationId = parseInt(searchParams.get('reservationId') || '0', 10);
 
-  const { isLoading, reservationDetail, fetchReservationDetail, requestPayment, updateAmount } = usePayment();
+  const { isLoading, reservationDetail, fetchReservationDetail, requestPayment, updateAmount } =
+    usePayment();
 
   const [discountTab, setDiscountTab] = useState<DiscountTab>('coupon');
   const [selectedCouponId, setSelectedCouponId] = useState<number | null>(null);
@@ -68,10 +70,14 @@ export default function PaymentPage() {
   const [serverUsedPoints, setServerUsedPoints] = useState<number>(0);
   const [currentFinalAmount, setCurrentFinalAmount] = useState<number>(0);
 
+  // 추가: 보유 포인트
+  const [availablePoints, setAvailablePoints] = useState<number>(0);
+
   useEffect(() => {
     if (reservationId) fetchReservationDetail(reservationId);
   }, [reservationId, fetchReservationDetail]);
 
+  // 쿠폰 목록 조회
   useEffect(() => {
     const memberId = reservationDetail?.memberId ?? null;
 
@@ -91,6 +97,32 @@ export default function PaymentPage() {
         setCoupons([]);
       } finally {
         setCouponLoading(false);
+      }
+    })();
+  }, [reservationDetail?.memberId]);
+
+  // 추가: 보유 포인트 조회
+  useEffect(() => {
+    const memberId = reservationDetail?.memberId ?? null;
+
+    if (!memberId) {
+      setAvailablePoints(0);
+      setUsedPoints(0); // 비회원이면 사용 포인트도 0으로 정리
+      return;
+    }
+
+    (async () => {
+      try {
+        const p = await getMyPoints(memberId);
+        const n = Number(p) || 0;
+        setAvailablePoints(n);
+
+        // 현재 입력된 usedPoints가 보유 포인트보다 크면 자동 보정
+        setUsedPoints((prev) => Math.min(prev, n));
+      } catch (e) {
+        console.error('포인트 조회 실패:', e);
+        setAvailablePoints(0);
+        setUsedPoints(0);
       }
     })();
   }, [reservationDetail?.memberId]);
@@ -120,6 +152,7 @@ export default function PaymentPage() {
     return buildTicketsFromReservationDetail(reservationDetail);
   }, [reservationDetail]);
 
+  // 쿠폰/포인트 변경 시 prepare 재계산
   useEffect(() => {
     const recalc = async () => {
       if (!reservationDetail) return;
@@ -238,6 +271,8 @@ export default function PaymentPage() {
               coupons={coupons}
               couponLoading={couponLoading}
               onRedeemCoupon={handleRedeemCoupon}
+              availablePoints={availablePoints}
+              pointUnit={1000}
             />
 
             <PaymentMethodSection

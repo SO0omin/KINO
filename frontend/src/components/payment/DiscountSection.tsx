@@ -1,4 +1,4 @@
-import {  useState } from 'react';
+import { useState } from 'react';
 import type { DiscountTab } from '../../types/model/payment';
 import type { MyCouponResponse } from '../../api/paymentApi';
 
@@ -8,16 +8,19 @@ interface DiscountSectionProps {
 
   isMember?: boolean;
 
-  
   coupons: MyCouponResponse[];
   couponLoading?: boolean;
 
-  
   onRedeemCoupon: (code: string) => Promise<void>;
 
-  
-  onCouponSelect?: (couponId: number | null) => void; // memberCouponId
+  onCouponSelect?: (couponId: number | null) => void;
   onPointChange?: (points: number) => void;
+
+  // 추가: 서버에서 조회한 보유 포인트
+  availablePoints?: number;
+
+  // 옵션: 포인트 사용 단위(기본 1000)
+  pointUnit?: number;
 }
 
 export function DiscountSection({
@@ -29,6 +32,8 @@ export function DiscountSection({
   onRedeemCoupon,
   onCouponSelect,
   onPointChange,
+  availablePoints = 0,
+  pointUnit = 1000,
 }: DiscountSectionProps) {
   const [pointInput, setPointInput] = useState<string>('');
   const [activeMemberCouponId, setActiveMemberCouponId] = useState<number | null>(null);
@@ -36,21 +41,30 @@ export function DiscountSection({
   const [couponCode, setCouponCode] = useState('');
   const [redeemBusy, setRedeemBusy] = useState(false);
 
-  // 포인트 입력 핸들러
-  const handlePointInput = (val: string) => {
-    const num = parseInt(val.replace(/[^0-9]/g, ''), 10) || 0;
-    setPointInput(num.toLocaleString());
-    onPointChange?.(num);
+  const normalizePoint = (raw: string) => {
+    const num = parseInt(raw.replace(/[^0-9]/g, ''), 10) || 0;
+
+    // 보유 포인트 초과 방지
+    const clamped = Math.min(num, availablePoints);
+
+    // 단위 강제(예: 1000P 단위)
+    const unitApplied = pointUnit > 1 ? Math.floor(clamped / pointUnit) * pointUnit : clamped;
+
+    return unitApplied;
   };
 
-  // 쿠폰 선택
+  const handlePointInput = (val: string) => {
+    const points = normalizePoint(val);
+    setPointInput(points > 0 ? points.toLocaleString() : '');
+    onPointChange?.(points);
+  };
+
   const handleCouponClick = (memberCouponId: number) => {
     const newId = activeMemberCouponId === memberCouponId ? null : memberCouponId;
     setActiveMemberCouponId(newId);
     onCouponSelect?.(newId);
   };
 
-  // 초기화
   const handleReset = () => {
     setPointInput('');
     setActiveMemberCouponId(null);
@@ -59,7 +73,6 @@ export function DiscountSection({
     onCouponSelect?.(null);
   };
 
-  // 쿠폰 등록
   const handleRedeem = async () => {
     const code = couponCode.trim();
     if (!code) {
@@ -118,10 +131,8 @@ export function DiscountSection({
             </button>
           </div>
 
-          {/* 쿠폰 탭 */}
           {discountTab === 'coupon' && (
             <div className="animate-fadeIn space-y-4">
-              {/* 쿠폰 등록 */}
               <div className="flex gap-2">
                 <input
                   value={couponCode}
@@ -138,7 +149,6 @@ export function DiscountSection({
                 </button>
               </div>
 
-              {/* 내 쿠폰 목록 */}
               <div>
                 <div className="flex items-center justify-between mb-2">
                   <p className="text-sm font-bold text-gray-700">보유 쿠폰</p>
@@ -177,7 +187,6 @@ export function DiscountSection({
             </div>
           )}
 
-          {/* 포인트 탭(기존 유지) */}
           {discountTab === 'point' && (
             <div className="animate-fadeIn">
               <div className="flex gap-2 items-center">
@@ -191,13 +200,15 @@ export function DiscountSection({
                 <span className="text-gray-600">P</span>
                 <button
                   className="px-4 py-3 bg-gray-800 text-white rounded text-sm hover:bg-black transition-colors"
-                  onClick={() => handlePointInput('5000')}
+                  onClick={() => handlePointInput(String(availablePoints))}
                 >
                   전액사용
                 </button>
               </div>
               <p className="text-xs text-gray-500 mt-3 ml-1">
-                보유 포인트: <span className="text-black font-bold">5,000</span> P (1,000P 단위로 사용 가능)
+                보유 포인트:{' '}
+                <span className="text-black font-bold">{availablePoints.toLocaleString()}</span> P
+                {pointUnit > 1 ? ` (${pointUnit.toLocaleString()}P 단위로 사용 가능)` : ''}
               </p>
             </div>
           )}
