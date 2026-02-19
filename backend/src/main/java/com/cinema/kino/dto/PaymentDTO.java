@@ -143,6 +143,7 @@ public class PaymentDTO {
         public static class SeatDetail {
             private Long seatId;
             private String seatName;
+            private PriceType priceType;
         }
     }
 }

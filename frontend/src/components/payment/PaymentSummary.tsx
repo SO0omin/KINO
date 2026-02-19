@@ -22,7 +22,7 @@ export function PaymentSummary({
         <div className="bg-[#f5e6d3] rounded-lg p-4 mb-3">
           <div className="space-y-3">
             <div className="flex justify-between">
-              <span>성인</span>
+              <span>인원</span>
               <span>{paymentData.adultCount}</span>
             </div>
             

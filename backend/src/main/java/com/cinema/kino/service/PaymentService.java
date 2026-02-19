@@ -19,23 +19,6 @@ import java.time.LocalTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
-/**
- * 결제(Payment) 도메인 서비스
- *
- * 담당 흐름:
- * 1) 결제 화면 진입용 예약 상세 조회(getReservationDetail)
- * 2) 결제 준비(preparePayment)
- *    - 서버 기준 금액 재계산(프론트 금액 신뢰 금지)
- *    - 쿠폰 HOLD(선점) / 포인트 사용 가능 검증
- *    - 좌석 비관적 락 조회 후 HOLD 처리(10분)
- *    - Payment 레코드 생성/갱신(READY)
- * 3) 결제 승인/확정(confirmPayment)
- *    - 주문번호(merchantUid) 기준 결제 레코드 락 조회(동시 confirm 방지)
- *    - 멱등성 보장(이미 PAID면 즉시 성공 반환)
- *    - 금액 검증 후 토스 S2S 승인 호출
- *    - DB 후처리(예약 PAID, 좌석 RESERVED, 쿠폰 USED, 포인트 차감)
- *    - DB 후처리 실패 시 보상취소(전액취소) 시도 + 쿠폰 RELEASE
- */
 @Slf4j
 @Service
 @RequiredArgsConstructor
@@ -52,11 +35,8 @@ public class PaymentService {
     @Value("${toss.secret-key}")
     private String secretKey;
 
-    // Toss Payments 승인/취소 API 엔드포인트
     private static final String TOSS_CONFIRM_URL = "https://api.tosspayments.com/v1/payments/confirm";
-    private static final String TOSS_CANCEL_URL_PREFIX = "https://api.tosspayments.com/v1/payments/"; // + {paymentKey}/cancel
-
-    // ========= 조회 =========
+    private static final String TOSS_CANCEL_URL_PREFIX = "https://api.tosspayments.com/v1/payments/";
 
     @Transactional(readOnly = true)
     public PaymentDTO.ReservationDetailResponse getReservationDetail(Long reservationId) {
@@ -68,9 +48,14 @@ public class PaymentService {
         List<PaymentDTO.ReservationDetailResponse.SeatDetail> seatDetails =
                 screeningSeatRepository.findByReservationId(reservationId)
                         .stream()
-                        .map(ss -> new PaymentDTO.ReservationDetailResponse.SeatDetail(
-                                ss.getSeat().getId(),
-                                ss.getSeat().getSeatRow() + ss.getSeat().getSeatNumber()))
+                        .map(ss -> {
+                            PriceType pt = (ss.getPriceType() != null) ? ss.getPriceType() : PriceType.ADULT;
+                            return new PaymentDTO.ReservationDetailResponse.SeatDetail(
+                                    ss.getSeat().getId(),
+                                    ss.getSeat().getSeatRow() + ss.getSeat().getSeatNumber(),
+                                    pt
+                            );
+                        })
                         .collect(Collectors.toList());
 
         return PaymentDTO.ReservationDetailResponse.builder()
@@ -89,18 +74,18 @@ public class PaymentService {
                 .build();
     }
 
-    // ========= 가격 타입 판별 =========
-
     private ScreeningType determineScreeningType(LocalTime time) {
         if (time.isBefore(LocalTime.of(10, 0))) return ScreeningType.MORNING;
         if (time.isAfter(LocalTime.of(22, 0))) return ScreeningType.NIGHT;
         return ScreeningType.NORMAL;
     }
 
-    // ========= Prepare =========
-
     @Transactional
     public PaymentDTO.PrepareResponse preparePayment(PaymentDTO.PrepareRequest request) {
+
+        if (request.getTickets() == null || request.getTickets().isEmpty()) {
+            throw new IllegalArgumentException("좌석/요금 정보(tickets)가 비어있습니다.");
+        }
 
         // 1) 예약/상영 존재 검증
         Reservation reservation = reservationRepository.findById(request.getReservationId())
@@ -110,34 +95,52 @@ public class PaymentService {
 
         // 2) 원가 재계산
         int originalPrice = 0;
-        List<Long> seatIds = new ArrayList<>();
 
         LocalTime screenTime = screening.getStartTime().toLocalTime();
         ScreeningType sType = determineScreeningType(screenTime);
         log.info("[가격계산] 영화시간: {}, 적용타입: {}", screenTime, sType);
 
+        // seatId -> priceType 저장용 맵
+        Map<Long, PriceType> priceTypeMap = new HashMap<>();
+        // 좌석 id는 중복 없이 관리(중복 seatId 들어오면 이상한 요청이라 방어)
+        Set<Long> seatIdSet = new LinkedHashSet<>();
+
         for (PaymentDTO.TicketRequest ticketReq : request.getTickets()) {
-            seatIds.add(ticketReq.getSeatId());
+            if (ticketReq == null) throw new IllegalArgumentException("tickets에 null 항목이 있습니다.");
+
+            Long seatId = ticketReq.getSeatId();
+            if (seatId == null) throw new IllegalArgumentException("tickets에 seatId가 없습니다.");
+
+            if (!seatIdSet.add(seatId)) {
+                throw new IllegalArgumentException("tickets에 중복 seatId가 있습니다: " + seatId);
+            }
+
+            PriceType pt = (ticketReq.getPriceType() != null) ? ticketReq.getPriceType() : PriceType.ADULT;
+            priceTypeMap.put(seatId, pt);
 
             TicketPrice policy = ticketPriceRepository.findByScreenTypeAndPriceTypeAndScreeningType(
                     screening.getScreen().getScreenType(),
-                    ticketReq.getPriceType(),
+                    pt,
                     sType
             ).orElseThrow(() -> new IllegalArgumentException(
                     String.format("요금 정책 없음 (Screen: %s, Price: %s, Type: %s)",
-                            screening.getScreen().getScreenType(), ticketReq.getPriceType(), sType)));
+                            screening.getScreen().getScreenType(), pt, sType)));
 
             originalPrice += policy.getPrice();
         }
 
+        List<Long> seatIds = new ArrayList<>(seatIdSet);
+
         // 3) 할인/포인트(회원 전용)
         int discountAmount = 0;
-        int usedPoints = (request.getUsedPoints() != null) ? request.getUsedPoints() : 0;
+
+        // 핵심 수정: 포인트는 회원일 때만 적용
+        int usedPoints = 0;
 
         if (reservation.getMember() != null) {
 
-            // ✅ (중요) 쿠폰 변경/재시도 대비: 이 예약에 묶여 있던 기존 HELD 쿠폰이 있으면 먼저 RELEASE
-            // - 스케줄러(7단계)를 안 쓰기로 했으니, 이런 "최소 방어"가 유령 선점 확률을 줄여줘요.
+            usedPoints = (request.getUsedPoints() != null) ? request.getUsedPoints() : 0;
+
             memberCouponRepository.findByReservation(reservation).ifPresent(old -> {
                 if (old.getStatus() != MemberCouponStatus.USED) {
                     old.setStatus(MemberCouponStatus.AVAILABLE);
@@ -153,7 +156,6 @@ public class PaymentService {
                         reservation.getMember().getId()
                 ).orElseThrow(() -> new IllegalArgumentException("사용 가능한 쿠폰이 아닙니다."));
 
-                // HOLD 처리(10분): 좌석 HOLD TTL과 맞추는 게 가장 안전해요.
                 targetCoupon.setStatus(MemberCouponStatus.HELD);
                 targetCoupon.setReservation(reservation);
                 targetCoupon.setHoldExpiresAt(LocalDateTime.now().plusMinutes(10));
@@ -169,6 +171,9 @@ public class PaymentService {
                 int available = memberPointRepository.getAvailablePointsByMemberId(reservation.getMember().getId());
                 if (available < usedPoints) throw new IllegalArgumentException("포인트 부족");
             }
+        } else {
+            // 비회원이면 포인트/쿠폰은 적용하지 않음(요청값이 와도 무시)
+            usedPoints = 0;
         }
 
         // 4) 최종 금액 산출
@@ -199,7 +204,16 @@ public class PaymentService {
         List<ScreeningSeat> seats = screeningSeatRepository.findAllByScreeningIdAndSeatIdsWithLock(
                 request.getScreeningId(), seatIds);
 
+        // 요청한 좌석을 모두 못 가져오면(이미 누가 잡았거나 잘못된 요청) 실패 처리
+        if (seats.size() != seatIds.size()) {
+            throw new IllegalArgumentException("좌석 선점에 실패했습니다. 다시 선택해주세요.");
+        }
+
         for (ScreeningSeat seat : seats) {
+            // 이전 단계에서 넘어온 priceType을 ScreeningSeat에 저장
+            PriceType pt = priceTypeMap.getOrDefault(seat.getSeat().getId(), PriceType.ADULT);
+            seat.setPriceType(pt);
+
             seat.setStatus(SeatStatus.HELD);
             seat.setReservation(reservation);
             seat.setHoldExpiresAt(LocalDateTime.now().plusMinutes(10));
@@ -218,18 +232,14 @@ public class PaymentService {
                 .build();
     }
 
-    // ========= Confirm =========
-
     @Transactional
     public PaymentDTO.ConfirmResponse confirmPayment(PaymentDTO.ConfirmRequest request) {
 
-        // 1) 동시 confirm 방지: Payment row LOCK
         Payment payment = paymentRepository.findByMerchantUidForUpdate(request.getOrderId())
                 .orElseThrow(() -> new IllegalArgumentException("결제 대기 내역을 찾을 수 없습니다."));
 
         Reservation reservation = payment.getReservation();
 
-        // 2) 멱등성 처리
         if (payment.getPaymentStatus() == PaymentStatus.PAID) {
             log.info("[멱등성] 이미 완료된 결제 orderId={}, reservationStatus={}",
                     request.getOrderId(), reservation.getStatus());
@@ -238,27 +248,21 @@ public class PaymentService {
                     .build();
         }
 
-        // 3) 금액 검증
         if (!Objects.equals(payment.getFinalAmount(), request.getAmount())) {
             log.warn("[금액불일치] orderId={}, expected={}, got={}",
                     request.getOrderId(), payment.getFinalAmount(), request.getAmount());
-            // 금액 불일치도 "결제 실패"로 보고 쿠폰을 풀어주는 게 운영상 더 안전해요.
             releaseHeldCouponIfAny(reservation);
             throw new IllegalArgumentException("금액 불일치");
         }
 
-        // 4) 토스 승인
         try {
             executeTossConfirmOrThrow(request);
         } catch (RuntimeException ex) {
-            // 승인 실패 → 쿠폰 RELEASE
             releaseHeldCouponIfAny(reservation);
             throw ex;
         }
 
-        // 5) DB 후처리
         try {
-            // 결제 확정
             payment.setPaymentStatus(PaymentStatus.PAID);
             payment.setImpUid(request.getPaymentKey());
             payment.setPaidAt(LocalDateTime.now());
@@ -269,7 +273,6 @@ public class PaymentService {
             screeningSeatRepository.findByReservationId(reservation.getId())
                     .forEach(s -> s.setStatus(SeatStatus.RESERVED));
 
-            // ✅ 쿠폰 USED 확정: HELD인 경우에만 USED로 전이
             memberCouponRepository.findByReservation(reservation).ifPresent(mc -> {
                 if (mc.getStatus() == MemberCouponStatus.HELD) {
                     mc.setStatus(MemberCouponStatus.USED);
@@ -279,7 +282,6 @@ public class PaymentService {
                 }
             });
 
-            // 포인트 차감
             if (payment.getUsedPoints() > 0 && payment.getMember() != null) {
                 memberPointRepository.save(MemberPoint.builder()
                         .member(payment.getMember())
@@ -297,21 +299,17 @@ public class PaymentService {
 
             log.error("[DB후처리실패] 승인 후 DB 실패. 전액취소 시도. orderId={}", request.getOrderId());
 
-            // 보상 취소(전액)
             try {
                 executeTossCancelFull(request.getPaymentKey(), "DB update failed after confirm");
             } catch (Exception cancelEx) {
                 log.error("[보상취소실패] paymentKey={}, err={}", request.getPaymentKey(), cancelEx.getMessage());
             }
 
-            // DB 실패 → 쿠폰 RELEASE (USED 제외)
             releaseHeldCouponIfAny(reservation);
 
             throw dbEx;
         }
     }
-
-    // ========= Toss Confirm: 응답 검증 포함 =========
 
     private void executeTossConfirmOrThrow(PaymentDTO.ConfirmRequest request) {
         RestTemplate restTemplate = new RestTemplate();
@@ -339,8 +337,6 @@ public class PaymentService {
             throw new RuntimeException("결제 승인 과정에서 PG사 통신 오류가 발생했습니다.");
         }
     }
-
-    // ========= Toss Cancel: 전액취소 =========
 
     private void executeTossCancelFull(String paymentKey, String reason) {
         RestTemplate restTemplate = new RestTemplate();
@@ -376,11 +372,6 @@ public class PaymentService {
         return headers;
     }
 
-    /**
-     * 쿠폰 RELEASE
-     * - 스케줄러(7단계)를 하지 않는 전략이므로,
-     *   "USED가 아니면" 실패 시 확실하게 풀어주는 방식이 팀 프로젝트에 현실적이에요.
-     */
     private void releaseHeldCouponIfAny(Reservation reservation) {
         memberCouponRepository.findByReservation(reservation).ifPresent(mc -> {
             if (mc.getStatus() != MemberCouponStatus.USED) {

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { Header } from '../../components/common/Header';
 import { Footer } from '../../components/common/Footer';
@@ -16,39 +16,62 @@ import {
   type MyCouponResponse,
 } from '../../api/paymentApi';
 
+import type { PriceType, TicketRequest } from '../../types/dto/payment.dto';
+
+function normalizePriceType(pt?: PriceType): PriceType {
+  return pt ?? 'ADULT';
+}
+
+function buildTicketsFromReservationDetail(detail: any): TicketRequest[] {
+  return (detail.seats ?? []).map((seat: any) => ({
+    seatId: seat.seatId,
+    priceType: normalizePriceType(seat.priceType),
+  }));
+}
+
+function buildTicketTypeText(seats: Array<{ priceType?: PriceType }>): string {
+  const counts: Record<PriceType, number> = { ADULT: 0, YOUTH: 0, SENIOR: 0, SPECIAL: 0 };
+
+  for (const s of seats) {
+    const pt = normalizePriceType(s.priceType);
+    counts[pt] += 1;
+  }
+
+  const parts: string[] = [];
+  if (counts.ADULT) parts.push(`성인 ${counts.ADULT}명`);
+  if (counts.YOUTH) parts.push(`청소년 ${counts.YOUTH}명`);
+  if (counts.SENIOR) parts.push(`경로 ${counts.SENIOR}명`);
+  if (counts.SPECIAL) parts.push(`우대 ${counts.SPECIAL}명`);
+
+  return parts.length ? parts.join(' / ') : '성인 0명';
+}
+
 export default function PaymentPage() {
   const [searchParams] = useSearchParams();
   const reservationId = parseInt(searchParams.get('reservationId') || '0', 10);
 
-  // 결제/예약 데이터
   const { isLoading, reservationDetail, fetchReservationDetail, requestPayment, updateAmount } = usePayment();
 
-  // 할인 관련 상태
   const [discountTab, setDiscountTab] = useState<DiscountTab>('coupon');
-  const [selectedCouponId, setSelectedCouponId] = useState<number | null>(null); // memberCouponId
+  const [selectedCouponId, setSelectedCouponId] = useState<number | null>(null);
   const [usedPoints, setUsedPoints] = useState<number>(0);
 
-  // 쿠폰 목록 상태(옵션 B: memberId로 조회)
   const [coupons, setCoupons] = useState<MyCouponResponse[]>([]);
   const [couponLoading, setCouponLoading] = useState(false);
 
-  // 결제수단/약관
   const [agreeTerms, setAgreeTerms] = useState(false);
-  const [selectedPaymentMethod, setSelectedPaymentMethod] =useState<'CARD' | 'TRANSFER' | 'VIRTUAL_ACCOUNT' | 'MOBILE_PHONE'>('CARD');
+  const [selectedPaymentMethod, setSelectedPaymentMethod] =
+    useState<'CARD' | 'TRANSFER' | 'VIRTUAL_ACCOUNT' | 'MOBILE_PHONE'>('CARD');
 
-
-  // ✅ 서버 prepare 결과로 표시할 값들
   const [serverOriginalPrice, setServerOriginalPrice] = useState<number>(0);
   const [serverCouponDiscount, setServerCouponDiscount] = useState<number>(0);
   const [serverUsedPoints, setServerUsedPoints] = useState<number>(0);
   const [currentFinalAmount, setCurrentFinalAmount] = useState<number>(0);
 
-  // 1) 예약 상세 로드
   useEffect(() => {
     if (reservationId) fetchReservationDetail(reservationId);
   }, [reservationId, fetchReservationDetail]);
 
-  // 2) 회원이면 내 쿠폰 목록 로드
   useEffect(() => {
     const memberId = reservationDetail?.memberId ?? null;
 
@@ -72,7 +95,6 @@ export default function PaymentPage() {
     })();
   }, [reservationDetail?.memberId]);
 
-  // 3) 쿠폰 등록 핸들러 (등록 후 목록 재조회)
   const handleRedeemCoupon = async (code: string) => {
     const memberId = reservationDetail?.memberId ?? null;
 
@@ -93,35 +115,32 @@ export default function PaymentPage() {
     }
   };
 
-  // ✅ 4) 쿠폰/포인트 변경 시 서버 prepare로 최종금액/할인 재계산
+  const tickets: TicketRequest[] = useMemo(() => {
+    if (!reservationDetail) return [];
+    return buildTicketsFromReservationDetail(reservationDetail);
+  }, [reservationDetail]);
+
   useEffect(() => {
     const recalc = async () => {
       if (!reservationDetail) return;
 
-      // 비회원이면 서버 prepare를 굳이 안 때리고 기본 표시만
-      if (!reservationDetail.memberId) {
-        setServerOriginalPrice(reservationDetail.totalAmount);
-        setServerCouponDiscount(0);
-        setServerUsedPoints(0);
-        setCurrentFinalAmount(reservationDetail.totalAmount);
-        updateAmount(reservationDetail.totalAmount);
-        return;
-      }
+      const isMember = !!reservationDetail.memberId;
+
+      const safeUsedPoints = isMember ? usedPoints : 0;
+      const safeCouponId = isMember ? selectedCouponId : null;
 
       try {
         const res = await preparePayment({
           reservationId: reservationDetail.reservationId,
           screeningId: reservationDetail.screeningId,
-          tickets: reservationDetail.seats.map((seat) => ({
-            seatId: seat.seatId,
-            priceType: 'ADULT', // 현재 모델상 고정(성인만이면 OK)
-          })),
-          totalPrice: reservationDetail.totalAmount, // 참고값
-          memberCouponId: selectedCouponId,
-          usedPoints: usedPoints,
+          tickets,
+          totalPrice: reservationDetail.totalAmount,
+          memberCouponId: safeCouponId,
+          usedPoints: safeUsedPoints,
+          memberId: reservationDetail.memberId ?? null,
+          guestId: reservationDetail.guestId ?? null,
         });
 
-        // 서버 계산 결과 반영
         setServerOriginalPrice(res.originalPrice);
         setServerCouponDiscount(res.discountAmount);
         setServerUsedPoints(res.usedPoints);
@@ -131,72 +150,73 @@ export default function PaymentPage() {
       } catch (e) {
         console.error('prepare 재계산 실패:', e);
 
-        // 실패 fallback
         setServerOriginalPrice(reservationDetail.totalAmount);
         setServerCouponDiscount(0);
-        setServerUsedPoints(usedPoints);
+        setServerUsedPoints(safeUsedPoints);
 
-        const fallback = Math.max(0, reservationDetail.totalAmount - usedPoints);
+        const fallback = Math.max(0, reservationDetail.totalAmount - safeUsedPoints);
         setCurrentFinalAmount(fallback);
         updateAmount(fallback);
       }
     };
 
-    recalc();
-  }, [reservationDetail, selectedCouponId, usedPoints, updateAmount]);
+    if (tickets.length > 0) {
+      recalc();
+    }
+  }, [reservationDetail, selectedCouponId, usedPoints, tickets, updateAmount]);
 
-  // 로딩/가드
   if (!reservationDetail && isLoading) {
     return <div className="min-h-screen flex items-center justify-center">로딩 중...</div>;
   }
   if (!reservationDetail) return null;
 
-  // 결제 요청
+  const ticketTypeText = buildTicketTypeText(reservationDetail.seats);
+
   const handlePayment = async () => {
     if (!agreeTerms) {
       alert('취소/환불 정책에 동의해주세요.');
       return;
     }
 
+    const isMember = !!reservationDetail.memberId;
+
     await requestPayment(
       {
         reservationId: reservationDetail.reservationId,
         screeningId: reservationDetail.screeningId,
-        tickets: reservationDetail.seats.map(seat => ({
-          seatId: seat.seatId,
-          priceType: 'ADULT'
-        })),
+        tickets,
         totalPrice: currentFinalAmount,
-        memberCouponId: selectedCouponId,
-        usedPoints: usedPoints
+        memberCouponId: isMember ? selectedCouponId : null,
+        usedPoints: isMember ? usedPoints : 0,
+        memberId: reservationDetail.memberId ?? null,
+        guestId: reservationDetail.guestId ?? null,
       },
       selectedPaymentMethod
     );
-    
   };
 
   const bookingData: BookingData = {
     movieTitle: reservationDetail.movieTitle,
     dateTime: reservationDetail.startTime,
     theater: `${reservationDetail.theaterName} / ${reservationDetail.screenName}`,
-    ticketType: `성인 ${reservationDetail.seats.length}명`,
+    ticketType: ticketTypeText,
     screeningId: reservationDetail.screeningId,
     posterUrl: reservationDetail.posterUrl,
   };
 
-  const baseTotal = serverOriginalPrice || reservationDetail.totalAmount;
+  const baseTotal = serverOriginalPrice > 0 ? serverOriginalPrice : reservationDetail.totalAmount;
   const totalDiscount = (serverCouponDiscount || 0) + (serverUsedPoints || 0);
 
   const paymentData: PaymentData = {
     reservationId: reservationId,
     adultCount: reservationDetail.seats.length,
-    adultPrice: baseTotal / reservationDetail.seats.length,
+    adultPrice: reservationDetail.seats.length ? baseTotal / reservationDetail.seats.length : 0,
     totalAmount: baseTotal,
     discountAmount: totalDiscount,
     finalAmount: currentFinalAmount,
     seats: [],
     memberId: reservationDetail.memberId || null,
-    guestId: null,
+    guestId: reservationDetail.guestId || null,
   };
 
   return (

@@ -1,45 +1,16 @@
-// src/api/paymentApi.ts
+
 
 import type {
   PrepareRequest,
   PrepareResponse,
   ConfirmRequest,
-  ConfirmResponse
+  ConfirmResponse,
+  ReservationDetailResponse
 } from '../types/dto/payment.dto';
 
 // const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:8080';
 const API_BASE_URL = 'http://localhost:8080';
 
-/**
- * 결제 페이지 진입 시 필요한 예약 상세 응답 타입
- * NOTE: 백엔드 응답에 endTime이 없다면 optional로 두는 게 안전해요.
- */
-export interface ReservationDetailResponse {
-  reservationId: number;
-  screeningId: number;
-
-  movieTitle: string;
-  posterUrl?: string;
-
-  screenName: string;
-  theaterName: string;
-
-  startTime: string;
-  endTime?: string; // ✅ optional
-
-  totalAmount: number;
-  seats: Array<{
-    seatId: number;
-    seatName: string;
-  }>;
-
-  memberId?: number | null;
-  guestId?: number | null;
-}
-
-/**
- * [API 1] 예약 상세 정보 조회
- */
 export async function getReservationDetail(
   reservationId: string | number
 ): Promise<ReservationDetailResponse> {
@@ -57,9 +28,6 @@ export async function getReservationDetail(
   return response.json();
 }
 
-/**
- * [API 2] 결제 준비(Prepare)
- */
 export async function preparePayment(
   request: PrepareRequest
 ): Promise<PrepareResponse> {
@@ -77,9 +45,6 @@ export async function preparePayment(
   return response.json();
 }
 
-/**
- * [API 3] 결제 승인(Confirm)
- */
 export async function confirmPayment(
   request: ConfirmRequest
 ): Promise<ConfirmResponse> {
@@ -97,23 +62,15 @@ export async function confirmPayment(
   return response.json();
 }
 
-// -----------------------------------------------------------
-// 확장: 쿠폰/포인트 기능 API (옵션 B: memberId를 프론트에서 전달)
-// -----------------------------------------------------------
-
 export interface MyCouponResponse {
   memberCouponId: number;
   couponName: string;
-  discountType: string; // FIXED | RATE
+  discountType: string;
   discountValue: number;
   minPrice: number;
   expiresAt: string;
 }
 
-/**
- * [API 4] 쿠폰 등록 (옵션 B)
- * POST /api/coupons/redeem
- */
 export async function redeemCoupon(
   code: string,
   memberId: number
@@ -132,10 +89,6 @@ export async function redeemCoupon(
   return response.json();
 }
 
-/**
- * [API 5] 내 쿠폰 목록 조회 (옵션 B)
- * GET /api/coupons/my?memberId=123
- */
 export async function getMyCoupons(
   memberId: number
 ): Promise<MyCouponResponse[]> {
@@ -152,10 +105,6 @@ export async function getMyCoupons(
   return response.json();
 }
 
-/**
- * [API 6] 내 보유 포인트 조회 (선택사항)
- * NOTE: 백엔드가 아직 없으면 나중에 맞춰요.
- */
 export async function getMyPoints(memberId: number) {
   const response = await fetch(`${API_BASE_URL}/api/points?memberId=${memberId}`, {
     method: 'GET',
