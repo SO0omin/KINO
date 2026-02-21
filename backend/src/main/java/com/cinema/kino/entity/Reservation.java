@@ -29,15 +29,21 @@ public class Reservation {
     @JoinColumn(name = "screening_id", nullable = false)
     private Screening screening;
 
-    @Column(name = "total_price")
+    // 스키마 준수: 실결제 금액만 저장
+    @Column(name = "total_price", nullable = false)
     private Integer totalPrice;
 
-    @Column(name = "total_num")
+    @Column(name = "total_num", nullable = false)
     private Integer totalNum;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private ReservationStatus status;
+
+    // 토스 결제 식별용 (스키마에는 없으나 비즈니스 식별을 위해 필요하다면 유지,
+    // 만약 엄격히 스키마만 따른다면 merchant_uid로 대체 가능하나 편의상 유지)
+    @Column(name = "order_id", unique = true)
+    private String orderId;
 
     @CreationTimestamp
     @Column(name = "created_at", updatable = false)

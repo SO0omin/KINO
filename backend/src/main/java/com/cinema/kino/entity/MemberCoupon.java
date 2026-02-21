@@ -1,5 +1,6 @@
 package com.cinema.kino.entity;
 
+import com.cinema.kino.entity.enums.MemberCouponStatus;
 import jakarta.persistence.*;
 import lombok.*;
 import java.time.LocalDateTime;
@@ -41,4 +42,12 @@ public class MemberCoupon {
 
     @Column(name = "used_at")
     private LocalDateTime usedAt;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "status", nullable = false)
+    @Builder.Default
+    private MemberCouponStatus status = MemberCouponStatus.AVAILABLE;
+
+    @Column(name = "hold_expires_at")
+    private LocalDateTime holdExpiresAt;
 }
