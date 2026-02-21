@@ -50,4 +50,8 @@ public class Member {
     @UpdateTimestamp
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
+
+    public Member(Long id){
+        this.id = id;
+    }
 }

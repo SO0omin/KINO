@@ -22,8 +22,9 @@ public class Movie {
     @Column(name = "age_rating", nullable = false)
     private Rating ageRating;
 
-    @Enumerated(EnumType.STRING) // Enum 이름을 문자열로 저장
-    @Column(nullable = false, columnDefinition = "ENUM('UPCOMING', 'SCREENING', 'ENDED', 'HIDDEN') DEFAULT 'UPCOMING'")
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    @Builder.Default
     private MovieStatus status = MovieStatus.UPCOMING;
 
     @Column(name = "duration_min", nullable = false)

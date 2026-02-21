@@ -27,4 +27,8 @@ public class Guest {
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
+
+    public Guest(Long id){
+        this.id = id;
+    }
 }
