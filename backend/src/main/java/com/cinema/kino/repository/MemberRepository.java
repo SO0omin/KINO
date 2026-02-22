@@ -1,1 +1,8 @@
-//SQL을 직접 쓰지 않아도 DB에서 데이터를 가져오게 해주는 인터페이스입니다.
+package com.cinema.kino.repository;
+
+import com.cinema.kino.entity.Member;
+import org.springframework.data.jpa.repository.JpaRepository;
+
+public interface MemberRepository extends JpaRepository<Member, Long> {
+    // 기본 findById 제공됨
+}
