@@ -7,12 +7,12 @@ pages/SeatBooking의 기능을 분산시킵니다.
 =================================== */
 
 import { useMemo, useState, useEffect, useCallback } from "react";
-// 💡 상단에 모든 필요한 타입을 한 번에 import 합니다.
 import type { SeatBookingResponseDto, SeatInfoDto } from "../types/dtos/SeatBookingResponseDto";
 import type { SeatViewModel, ScreeningInfoViewModel } from "../types/models/SeatBookingViewModel";
 import { toSeatViewModels, toScreeningInfoViewModel } from "../mappers/seatBookingMapper";
 import { seatService } from "../services/seatSocketService";
 import { seatBookingApi } from "../api/seatBookingApi";
+import { useAuth } from '../contexts/AuthContext';
 
 export const useSeatBooking = (screeningId: number) => {
   //1) 데이터 보관 및 관리
@@ -23,6 +23,7 @@ export const useSeatBooking = (screeningId: number) => {
   const [isAlertOpen, setIsAlertOpen] = useState(false);
   const [alertMessage, setAlertMessage] = useState("");
   const [showCoupleNotice, setShowCoupleNotice] = useState(false);
+  const { isLoggedIn, memberId } = useAuth();
 
   const totalPersonnelCount = Object.values(personnel).reduce((a, b) => a + b, 0);
   const realSeats = seats.filter((s) => s.isRealSeat);
@@ -240,14 +241,18 @@ export const useSeatBooking = (screeningId: number) => {
   const handleReservation = () => {
     if (selectedSeats.length === 0) return;
 
+    //비회원 예매차단
+    if (!isLoggedIn || !memberId) {
+      alert("회원 예매만 가능합니다. 로그인해주세요.");
+      return;
+    }
+
     seatService.holdSeat({
       screeningId,
       seatIds: selectedSeats.map(s => s.id),
-      memberId: 1,
+      memberId: memberId,
       guestId: null
     });
-
-    console.log("🚀 [최종 예약 전송]:", selectedSeats.map(s => s.id));
   };
 
   return {

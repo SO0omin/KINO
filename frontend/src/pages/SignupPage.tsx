@@ -162,11 +162,11 @@ const SignupPage: React.FC = () => {
         </form>
       </div>
 
-      {/* 이메일 중복 안내 모달 */}
+      {/* 모달 */}
       <CommonModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)}>
-        <div className="p-4">
-          <h2 className="font-serif italic text-2xl mb-4">{modalContent.title}</h2>
-          <p className="font-mono text-sm mb-6">{modalContent.message}</p>
+       <div className="border-[4px] border-black p-6 bg-white shadow-[8px_8px_0_0_#000]">
+          <h3 className="font-serif italic text-2xl uppercase font-black mb-4 border-b-2 border-black pb-2">{modalContent.title}</h3>
+          <p className="font-mono text-sm font-bold uppercase tracking-widest mb-6 leading-relaxed text-black/80 whitespace-pre-wrap">{modalContent.message}</p>
           <div className="flex gap-4">
             <button 
               onClick={() => navigate('/login')} 
@@ -175,10 +175,10 @@ const SignupPage: React.FC = () => {
               로그인으로 이동
             </button>
             <button 
-              onClick={() => setIsModalOpen(false)} 
+              onClick={() => navigate('/find-account')} 
               className="flex-1 bg-white text-black py-2 font-mono text-xs uppercase border-2 border-black"
             >
-              닫기
+              아이디/비밀번호 찾기
             </button>
           </div>
         </div>

@@ -16,11 +16,11 @@ const ModalBox = styled.div`
   background: white;
   padding: 20px;
   border-radius: 10px;
-  width: 280px;
+  width: 350px;
   text-align: center;
 `;
 
-const Button = styled.button`
+/*const Button = styled.button`
   background: #ff4d4f;
   color: white;
   border: none;
@@ -28,7 +28,7 @@ const Button = styled.button`
   border-radius: 4px;
   cursor: pointer;
   margin-top: 15px;
-`;
+`;*/
 
 // 2. 컴포넌트 정의
 interface ModalProps {
@@ -44,7 +44,7 @@ export const CommonModal = ({ isOpen, onClose, children }: ModalProps) => {
     <Overlay onClick={onClose}>
       <ModalBox onClick={(e) => e.stopPropagation()}>
         {children} {/* 가져다 쓰는 곳에서 넣은 내용이 여기 보임 */}
-        <Button onClick={onClose}>확인</Button>
+        {/*<Button onClick={onClose}>확인</Button>*/}
       </ModalBox>
     </Overlay>
   );

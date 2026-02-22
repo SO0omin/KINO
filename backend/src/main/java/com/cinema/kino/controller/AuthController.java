@@ -50,10 +50,10 @@ public class AuthController {
             Member member = authService.authenticate(username, password);
 
             // 2. 검증 통과 시 JWT 토큰(자유이용권) 발급
-            String token = jwtUtil.createToken(member.getUsername());
+            String token = jwtUtil.createToken(member.getId(),member.getUsername(),member.getName());
 
             // 3. 프론트엔드로 토큰 전달
-            return ResponseEntity.ok(new TokenResponseDTO(token, member.getUsername()));
+            return ResponseEntity.ok(new TokenResponseDTO(token,member.getId(),member.getUsername(),member.getName()));
 
         } catch (IllegalArgumentException e) {
             return ResponseEntity.status(401).body(Map.of("error", "아이디 또는 비밀번호가 잘못되었습니다."));

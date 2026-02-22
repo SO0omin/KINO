@@ -14,21 +14,23 @@ public class JwtUtil {
 
     private final Key key;
 
-    private final long EXPIRE_TIME = 1000 * 60 * 60 * 24L; // 토큰 유효시간: 24시간
+    private final long EXPIRE_TIME = 1000 * 60 * 60; // 토큰 유효시간: 1시간
 
     public JwtUtil(@Value("${jwt.secret}") String secretKeyString) {
         this.key = Keys.hmacShaKeyFor(secretKeyString.getBytes());
     }
 
     // 팔찌(토큰) 발급 메서드
-    public String createToken(String username) {
+    public String createToken(Long memberId, String username, String name) {
         Date now = new Date();
-        Date expiration = new Date(now.getTime() + EXPIRE_TIME);
+        Date validity = new Date(now.getTime() + 1000 * 60 * 60L); // 1시간
 
         return Jwts.builder()
-                .setSubject(username)
+                .setSubject(username) // 기본 아이디
+                .claim("memberId", memberId) // 💡 페이로드에 회원번호 추가!
+                .claim("name", name)         // 💡 페이로드에 진짜 이름 추가!
                 .setIssuedAt(now)
-                .setExpiration(expiration)
+                .setExpiration(validity)
                 .signWith(key, SignatureAlgorithm.HS256)
                 .compact();
     }

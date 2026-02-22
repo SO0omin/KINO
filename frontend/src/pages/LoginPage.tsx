@@ -1,25 +1,46 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import axios from "axios";
+import { CommonModal } from '../components/CommonModal';
+import { useAuth } from '../contexts/AuthContext';
 
 const LoginPage: React.FC = () => {
   const navigate = useNavigate();
+  const { login } = useAuth();
 
-  // 1. 탭 상태 관리 ('MEMBER' or 'GUEST')
+  // 탭 상태 관리 ('MEMBER' or 'GUEST')
   const [activeTab, setActiveTab] = useState<'MEMBER' | 'GUEST'>('MEMBER');
 
-  // 2. 폼 입력 상태 관리 (회원, 비회원 폼을 한 곳에서 관리)
+  // 폼 입력 상태 관리
   const [formData, setFormData] = useState({
-    // 회원 로그인용
     username: '',
     password: '',
-    // 비회원 예매조회용
     reservationNumber: '',
     guestName: '',
     guestTel: '',
   });
 
-  // 3. 입력값 변경 핸들러
+  // 모달 상태
+  const [isAlertOpen, setIsAlertOpen] = useState(false);
+  const [alertMessage] = useState("");
+  const [onModalClose] = useState<(() => void) | null>(null);
+
+  /* 커스텀 모달 호출 헬퍼 함수
+  const showAlert = (msg: string, callback?: () => void) => {
+    setAlertMessage(msg);
+    setOnModalClose(() => callback || null);
+    setIsAlertOpen(true);
+  };*/
+
+  // 모달 닫기 핸들러
+  const handleCloseModal = () => {
+    setIsAlertOpen(false);
+    if (onModalClose) {
+      onModalClose();
+    }
+  };
+
+  // 입력값 변경 핸들러
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({
@@ -28,50 +49,24 @@ const LoginPage: React.FC = () => {
     }));
   };
 
-    // 4. 폼 제출 핸들러
-    const handleSubmit = async (e: React.FormEvent) => {
-        e.preventDefault();
+  // 폼 제출 핸들러
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (activeTab === 'MEMBER') {
+      try {
+        const response = await axios.post('/api/auth/login', formData);
+        
+        const { token, username, name, memberId } = response.data; 
+        
+        login(token, username, name, memberId);
 
-        if (activeTab === 'MEMBER') {
-        try {
-            console.log("[로그인 요청]:", formData.username);
-            
-            // 1. 백엔드 인증 API 호출
-            const response = await axios.post('/api/auth/login', {
-            username: formData.username,
-            password: formData.password
-            });
-
-            // 2. 응답 데이터에서 JWT 토큰 및 사용자 정보 추출
-            const { token, username } = response.data; 
-            
-            // 3. 발급받은 JWT 토큰을 localStorage에 저장 (이후 API 요청 시 헤더에 포함)
-            localStorage.setItem('jwt_token', token);
-            localStorage.setItem('username', username); 
-
-            alert(`환영합니다, ${username}님.`);
-            
-            // 4. 로그인 성공 후 메인 페이지로 리다이렉트
-            navigate('/'); 
-
-        } catch (error: any) {
-            console.error("[로그인 통신 에러]:", error);
-            
-            // 5. 서버 응답 에러 메시지 처리 (없을 경우 기본 메시지 노출)
-            const errorMessage = error.response?.data?.error || "아이디 또는 비밀번호가 일치하지 않습니다.";
-            alert(`[로그인 실패] ${errorMessage}`);
-        }
-
-        } else {
-        // 비회원 예매 내역 조회 처리 (추후 예매 조회 API 연동 시 구현)
-        console.log("[비회원 예매조회 요청]:", {
-            resNum: formData.reservationNumber,
-            name: formData.guestName,
-            tel: formData.guestTel
-        });
-        alert(`${formData.guestName}님의 예매 내역을 조회합니다.`);
-        }
-    };
+        alert(`환영합니다, ${username}님.`);
+        navigate('/'); 
+      } catch (error) {
+        // ...
+      }
+    }
+  };
 
   // 공통 인풋 스타일
   const inputClass = `
@@ -94,14 +89,14 @@ const LoginPage: React.FC = () => {
           </h1>
         </div>
 
-        {/* 💡 탭(Tab) 전환 버튼 영역 */}
+        {/* 탭(Tab) 전환 버튼 영역 */}
         <div className="flex border-y-[4px] border-black bg-white">
           <button 
             type="button"
             onClick={() => setActiveTab('MEMBER')} 
             className={`flex-1 py-4 font-bold uppercase tracking-widest text-xs border-r-[4px] border-black transition-all ${
               activeTab === 'MEMBER' 
-                ? 'bg-[#f4f1ea] text-black shadow-[inset_0_-4px_0_0_#b91c1c]' // 활성화 시 하단에 빨간 포인트 선
+                ? 'bg-[#f4f1ea] text-black shadow-[inset_0_-4px_0_0_#b91c1c]'
                 : 'bg-white text-black/40 hover:bg-[#f4f1ea] hover:text-black'
             }`}
           >
@@ -123,7 +118,7 @@ const LoginPage: React.FC = () => {
         {/* 입력 폼 영역 */}
         <form onSubmit={handleSubmit} className="p-8 flex flex-col gap-6 bg-[#f4f1ea]">
           
-          {/* 💡 조건부 렌더링: MEMBER 탭일 때 */}
+          {/* 조건부 렌더링: MEMBER 탭일 때 */}
           {activeTab === 'MEMBER' && (
             <div className="flex flex-col gap-6 animate-[fadeIn_0.3s_ease-in-out]">
               <div className="flex flex-col gap-2">
@@ -137,7 +132,7 @@ const LoginPage: React.FC = () => {
             </div>
           )}
 
-          {/* 💡 조건부 렌더링: GUEST 탭일 때 */}
+          {/* 조건부 렌더링: GUEST 탭일 때 */}
           {activeTab === 'GUEST' && (
             <div className="flex flex-col gap-6 animate-[fadeIn_0.3s_ease-in-out]">
               <div className="flex flex-col gap-2">
@@ -180,6 +175,22 @@ const LoginPage: React.FC = () => {
         </form>
 
       </div>
+
+     {/* 모달 */}
+      <CommonModal isOpen={isAlertOpen} onClose={handleCloseModal}>
+        <div className="border-[4px] border-black p-6 bg-white shadow-[8px_8px_0_0_#000]">
+          <h3 className="font-serif italic text-2xl uppercase font-black mb-4 border-b-2 border-black pb-2">Notice</h3>
+          <div className="font-mono text-sm font-bold uppercase tracking-widest mb-6 leading-relaxed text-black/80 whitespace-pre-wrap">
+            {alertMessage}
+          </div>
+          <button 
+            onClick={handleCloseModal} 
+            className="w-full bg-black text-white font-mono font-bold uppercase py-3 border-2 border-black hover:bg-red-700 transition-colors"
+          >
+            Confirm
+          </button>
+        </div>
+      </CommonModal>
     </div>
   );
 };

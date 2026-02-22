@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { CommonModal } from '../components/CommonModal';
 import axios from 'axios';
 
 type TabType = 'FIND_ID' | 'RESET_PW';
@@ -8,12 +9,32 @@ const FindAccountPage: React.FC = () => {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<TabType>('FIND_ID');
 
-  // 1. 입력 상태 관리
+  // 입력 상태 관리
   const [formData, setFormData] = useState({
     name: '',
     email: '',
     username: '', // PW 찾기 시 필요
   });
+
+  // 모달 상태 관리 추가
+  const [isAlertOpen, setIsAlertOpen] = useState(false);
+  const [alertMessage, setAlertMessage] = useState("");
+  const [onModalClose, setOnModalClose] = useState<(() => void) | null>(null);
+
+  // 커스텀 모달 호출 헬퍼 함수
+  const showAlert = (msg: string, callback?: () => void) => {
+    setAlertMessage(msg);
+    setOnModalClose(() => callback || null); // 확인 버튼 누른 후 실행할 동작 저장
+    setIsAlertOpen(true);
+  };
+
+  // 모달 닫기 핸들러
+  const handleCloseModal = () => {
+    setIsAlertOpen(false);
+    if (onModalClose) {
+      onModalClose(); // 저장된 콜백이 있으면 실행
+    }
+  };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -24,31 +45,33 @@ const FindAccountPage: React.FC = () => {
   const handleFindId = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      // 실무에서는 보통 GET이나 POST로 이름/이메일을 보내 아이디 일부를 가려서 보여줍니다.
       const response = await axios.post('/api/auth/find-id', {
         name: formData.name,
         email: formData.email
       });
-      alert(`찾으시는 아이디는 [ ${response.data.username} ] 입니다.`);
+      // 성공 모달
+      showAlert(`찾으시는 아이디는 [ ${response.data.username} ] 입니다.`);
     } catch (error: any) {
-      alert(error.response?.data?.error || "일치하는 회원 정보가 없습니다.");
+      // 실패 모달
+      showAlert(error.response?.data?.error || "일치하는 회원 정보가 없습니다.");
     }
   };
 
-  // 3. 비밀번호 재설정 요청 핸들러
+  // 비밀번호 재설정 요청 핸들러
   const handleResetPw = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      // 실무에서는 보안상 새 PW를 바로 주지 않고, 이메일로 임시 비밀번호나 링크를 발송합니다.
       const response = await axios.post('/api/auth/reset-password', {
         username: formData.username,
         email: formData.email
       });
-      alert("입력하신 이메일로 임시 비밀번호가 발송되었습니다.");
-      alert(response.data.tempPw);
-      navigate('/login');
+      // 성공 모달: 임시 비밀번호 안내 후, 모달을 닫을 때(콜백) 로그인 페이지로 이동!
+      showAlert(`입력하신 이메일로 임시 비밀번호가 발송되었습니다.\n(임시 비밀번호: ${response.data.tempPw})`, () => {
+        navigate('/login');
+      });
     } catch (error: any) {
-      alert(error.response?.data?.error || "정보가 일치하지 않습니다.");
+      // 실패 모달
+      showAlert(error.response?.data?.error || "정보가 일치하지 않습니다.");
     }
   };
 
@@ -128,6 +151,13 @@ const FindAccountPage: React.FC = () => {
           </div>
         </div>
       </div>
+
+      {/* 모달 */}
+      <CommonModal isOpen={isAlertOpen} onClose={handleCloseModal}>
+        <div>
+            {alertMessage}
+        </div>
+      </CommonModal>
     </div>
   );
 };

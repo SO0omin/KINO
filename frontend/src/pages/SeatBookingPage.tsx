@@ -9,7 +9,7 @@ import type { SeatViewModel } from '../types/models/SeatBookingViewModel';
 
 // 스타일 및 컴포넌트
 import { StyledSeat } from '../Seat.styles';
-import { SeatLegend } from "../SeatLegend";
+import { SeatLegend } from "../components/SeatLegend";
 import { CommonModal } from "../components/CommonModal";
 
 // 이미지 에셋
