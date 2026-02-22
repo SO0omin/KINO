@@ -1,5 +1,6 @@
 package com.cinema.kino.entity;
 
+import com.cinema.kino.entity.enums.PriceType;
 import com.cinema.kino.entity.enums.SeatStatus;
 import jakarta.persistence.*;
 import lombok.*;
@@ -45,6 +46,11 @@ public class ScreeningSeat {
 
     @Column(name = "hold_expires_at")
     private LocalDateTime holdExpiresAt;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name="price_type", nullable=false)
+    private PriceType priceType = PriceType.ADULT;
+
 
     /* =========================
        도메인 메서드

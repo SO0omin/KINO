@@ -20,12 +20,6 @@ public class Payment {
     @JoinColumn(name = "reservation_id", nullable = false)
     private Reservation reservation;
 
-/*    한 예매 당 결제 내역이 하나만 존재해서 결제 실패 시 기존 데이터를 지우거나 덮어 결제 성공 이력만 남기겠다면 위처럼
-      실제 서비스처럼 결제 시도 이력(실패, 성공)을 모두 남기겠다면 아래처럼
-      @ManyToOne(fetch = FetchType.LAZY) // OneToOne에서 ManyToOne으로 변경
-      @JoinColumn(name = "reservation_id", nullable = false)
-      private Reservation reservation;  */
-
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "member_id")
     private Member member;
@@ -34,36 +28,33 @@ public class Payment {
     @JoinColumn(name = "guest_id")
     private Guest guest;
 
-    @Column(name = "merchant_uid", nullable = false, unique = true, length = 100)
-    private String merchantUid;
+    @Column(name = "merchant_uid", nullable = false, unique = true)
+    private String merchantUid; // orderId와 매핑
 
-    @Column(name = "imp_uid", unique = true, length = 100)
-    private String impUid;
+    @Column(name = "imp_uid", unique = true)
+    private String impUid; // paymentKey와 매핑
 
-    @Column(name = "original_amount")
+    @Column(name = "original_amount", nullable = false)
     private Integer originalAmount;
 
-    @Builder.Default
-    @Column(name = "discount")
-    private Integer discount = 0;
+    @Column(name = "discount", nullable = false)
+    private Integer discount;
 
-    @Builder.Default
-    @Column(name = "used_points")
-    private Integer usedPoints = 0;
+    @Column(name = "used_points", nullable = false)
+    private Integer usedPoints;
 
-    @Column(name = "final_amount")
+    @Column(name = "final_amount", nullable = false)
     private Integer finalAmount;
 
-    @Column(name = "payment_method", nullable = false, length = 20)
+    @Column(name = "payment_method", length = 20, nullable = false)
     private String paymentMethod;
 
     @Column(name = "pg_provider", length = 20)
     private String pgProvider;
 
     @Enumerated(EnumType.STRING)
-    @Builder.Default
     @Column(name = "payment_status", nullable = false)
-    private PaymentStatus paymentStatus = PaymentStatus.READY;
+    private PaymentStatus paymentStatus;
 
     @Column(name = "paid_at")
     private LocalDateTime paidAt;
