@@ -2,7 +2,7 @@ import { jsx as _jsx, jsxs as _jsxs } from "react/jsx-runtime";
 import React from "react";
 import { Link } from "react-router-dom"; // 라우팅 사용할 때
 const Gnb = () => {
-    return (_jsx("nav", { style: styles.nav, children: _jsxs("ul", { style: styles.ul, children: [_jsx("li", { children: _jsx(Link, { to: "/", children: "Home" }) }), _jsx("li", { children: _jsx(Link, { to: "/about", children: "About" }) }), _jsx("li", { children: _jsx(Link, { to: "/contact", children: "Contact" }) })] }) }));
+    return (_jsx("nav", { style: styles.nav, children: _jsxs("ul", { style: styles.ul, children: [_jsx("li", { children: _jsx(Link, { to: "/", children: "Home" }) }), _jsx("li", { children: _jsx(Link, { to: "/payment", children: "Payment" }) }), _jsx("li", { children: _jsx(Link, { to: "/my-page", children: "MyPage" }) })] }) }));
 };
 const styles = {
     nav: {

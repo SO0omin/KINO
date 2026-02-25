@@ -3,44 +3,53 @@ import { Menu, Search, Calendar, User } from 'lucide-react';
 export function Header() {
   return (
     <>
-      {/* Top Bar */}
-      <div className="bg-white border-b border-gray-200">
-        <div className="max-w-[1200px] mx-auto px-6 py-2 flex justify-between items-center text-sm">
-          <div className="flex gap-6">
-            <span>VIP LOUNGE</span>
-            <span>멤버십</span>
-            <span>고객센터</span>
-          </div>
-          <div className="flex gap-6">
-            <span>로그인</span>
-            <span>빠른예매</span>
-            <span>바로결제</span>
+      <div className="bg-[#ffffff] border-b border-[#000000]">
+        <div className="mx-auto max-w-[1400px] px-4">
+          <div className="flex h-10 items-center justify-between text-sm">
+            <div className="flex items-center gap-6 text-[#000000]">
+              <span>VIP LOUNGE</span>
+              <span>멤버십</span>
+              <span>고객센터</span>
+            </div>
+            <div className="flex items-center gap-6 text-[#000000]">
+              <span>로그아웃</span>
+              <span>입점</span>
+              <span>빠른예매</span>
+            </div>
           </div>
         </div>
       </div>
 
-      {/* Main Navigation */}
-      <header className="bg-white border-b-2 border-gray-300">
-        <div className="max-w-[1200px] mx-auto px-6 py-4">
-          <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center gap-4">
-              <Menu size={24} />
-              <Search size={24} />
+      <header className="bg-[#ffffff] border-b border-[#000000]">
+        <div className="mx-auto max-w-[1400px] px-4">
+          <div className="relative flex h-16 items-center justify-between">
+            <div className="flex items-center gap-8">
+              <Menu className="h-6 w-6 text-[#000000]" />
+              <Search className="h-6 w-6 text-[#000000]" />
+              <nav className="ml-8 flex items-center gap-8">
+                <a href="#" className="font-medium text-[#000000]">영화</a>
+                <a href="#" className="font-medium text-[#000000]">예매</a>
+                <a href="#" className="font-medium text-[#000000]">극장</a>
+              </nav>
             </div>
-            <div className="text-2xl font-bold text-[#eb4d32]">KINO</div>
-            <div className="flex items-center gap-4">
-              <Calendar size={24} />
-              <User size={24} />
+
+            <div className="absolute left-1/2 -translate-x-1/2 transform">
+              <div className="bg-[#000000] px-6 py-2 font-bold text-[#ffffff]">
+                <div className="text-xl tracking-wider">KINO</div>
+                <div className="text-center text-[10px]">KINO PROJECT</div>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-8">
+              <a href="#" className="font-medium text-[#000000]">이벤트</a>
+              <a href="#" className="font-medium text-[#000000]">스토어</a>
+              <a href="#" className="font-medium text-[#000000]">혜택</a>
+              <div className="flex items-center gap-4">
+                <Calendar className="h-6 w-6 text-[#000000]" />
+                <User className="h-6 w-6 text-[#000000]" />
+              </div>
             </div>
           </div>
-          <nav className="flex justify-center gap-12 text-lg">
-            <a href="#" className="hover:text-[#eb4d32]">영화</a>
-            <a href="#" className="hover:text-[#eb4d32]">예매</a>
-            <a href="#" className="hover:text-[#eb4d32]">극장</a>
-            <a href="#" className="hover:text-[#eb4d32]">이벤트</a>
-            <a href="#" className="hover:text-[#eb4d32]">스토어</a>
-            <a href="#" className="hover:text-[#eb4d32]">혜택</a>
-          </nav>
         </div>
       </header>
     </>

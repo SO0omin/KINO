@@ -35,6 +35,7 @@ public interface PaymentRepository extends JpaRepository<Payment, Long> {
      * @return 해당 예약에 연결된 결제(Optional)
      */
     Optional<Payment> findByReservation(Reservation reservation);
+    Optional<Payment> findByReservationId(Long reservationId);
 
     /**
      * 주문번호(merchantUid)로 결제를 조회합니다.
