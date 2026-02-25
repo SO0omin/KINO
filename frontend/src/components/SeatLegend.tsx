@@ -1,5 +1,5 @@
 import React from "react";
-import { StyledSeat } from '../Seat.styles';
+import { StyledSeat } from '../style/Seat.styles';
 
 interface LegendItemProps {
   children: React.ReactNode;

@@ -4,10 +4,12 @@ import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import { AuthProvider } from './contexts/AuthContext';
 
 // 💡 공통 컴포넌트
-import Gnb from "./components/Gnb";
+import Gnb from "./components/common/Gnb";
+import Footer from "./components/common/Footer";
 
 // 💡 페이지 컴포넌트 (본인 작업)
-import MainPage from "./pages/MainPage"; // 🚨 주의: 팀원은 Main.tsx를 썼습니다. 실제 존재하는 파일명으로 맞춰주세요!
+import MainPage from "./pages/MainPage";
+import MovieListPage from "./pages/MovieListPage";
 import TicketingPage from "./pages/TicketingPage";
 import SeatBookingPage from "./pages/SeatBookingPage";
 import SignupPage from "./pages/SignupPage";
@@ -30,6 +32,7 @@ function App() {
                 <Routes>
                     {/* 메인 페이지 */}
                     <Route path="/" element={<MainPage />} />
+                    <Route path="/movie-list" element={<MovieListPage />} />
 
                     {/* 예매 및 좌석 관련 */}
                     <Route path="/ticketing" element={<TicketingPage />} />
@@ -40,7 +43,7 @@ function App() {
                     <Route path="/login" element={<LoginPage />} />
                     <Route path="/find-account" element={<FindAccountPage />} />
 
-                    {/* 결제 관련 (팀원 작업) */}
+                    {/* 결제 관련 */}
                     <Route path="/payment" element={<PaymentPage />} />
                     <Route path="/payment/success" element={<PaymentSuccessPage />} />
                     <Route path="/payment/fail" element={<PaymentFailPage />} />
@@ -48,6 +51,7 @@ function App() {
                     {/* 404 폴백 페이지 */}
                     <Route path="*" element={<div>홈페이지 또는 다른 페이지</div>} />
                 </Routes>
+                <Footer />
             </Router>
         </AuthProvider>
     );

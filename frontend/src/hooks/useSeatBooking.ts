@@ -7,12 +7,12 @@ pages/SeatBooking의 기능을 분산시킵니다.
 =================================== */
 
 import { useMemo, useState, useEffect, useCallback } from "react";
-import type { SeatBookingResponseDto, SeatInfoDto } from "../types/dtos/SeatBookingResponseDto";
+import type { SeatBookingResponseDto, SeatInfoDto } from "../types/dtos/seatBooking.dto";
 import type { SeatViewModel, ScreeningInfoViewModel } from "../types/models/SeatBookingViewModel";
 import { toSeatViewModels, toScreeningInfoViewModel } from "../mappers/seatBookingMapper";
-import { seatService } from "../services/seatSocketService";
+import { seatSocketService } from "../services/seatSocketService";
 import { seatBookingApi } from "../api/seatBookingApi";
-import { useAuth } from '../contexts/AuthContext';
+import { reservationApi } from "../api/reservationApi";
 
 export const useSeatBooking = (screeningId: number) => {
   //1) 데이터 보관 및 관리
@@ -23,7 +23,6 @@ export const useSeatBooking = (screeningId: number) => {
   const [isAlertOpen, setIsAlertOpen] = useState(false);
   const [alertMessage, setAlertMessage] = useState("");
   const [showCoupleNotice, setShowCoupleNotice] = useState(false);
-  const { isLoggedIn, memberId } = useAuth();
 
   const totalPersonnelCount = Object.values(personnel).reduce((a, b) => a + b, 0);
   const realSeats = seats.filter((s) => s.isRealSeat);
@@ -190,6 +189,52 @@ export const useSeatBooking = (screeningId: number) => {
     );
   }, [personnel, screeningInfo]);
 
+  const getFormattedTickets = useCallback(() => {
+    const sortedSeats = [...selectedSeats].sort((a, b) => {
+      if (a.type === "DISABLED" && b.type !== "DISABLED") return -1;
+      return a.type !== "DISABLED" && b.type === "DISABLED" ? 1 : 0;
+    });
+
+    const priceTypes = [
+      ...Array(personnel.special).fill("SPECIAL"),
+      ...Array(personnel.adult).fill("ADULT"),
+      ...Array(personnel.youth).fill("YOUTH"),
+      ...Array(personnel.senior).fill("SENIOR"),
+    ];
+
+    return sortedSeats.map((seat, index) => ({
+      seatId: seat.id,
+      priceType: priceTypes[index] || "ADULT"
+    }));
+  }, [selectedSeats, personnel]);
+
+  // 💡 메인 로직: 결제 프로세스 시작
+  const handleProceedToPayment = async (
+    navigate: any, 
+    memberId: number | null
+  ) => {
+    if (selectedSeats.length === 0 || selectedSeats.length !== totalPersonnelCount) {
+      showAlert("인원수에 맞게 좌석을 선택해주세요.");
+      return;
+    }
+
+    try {
+      const tickets = getFormattedTickets();
+      const data = await reservationApi.holdSeats({
+        screeningId,
+        memberId,
+        guestId: null,
+        tickets
+      });
+
+      if (data.reservationId) {
+        navigate(`/payment?reservationId=${data.reservationId}`);
+      }
+    } catch (error) {
+      showAlert("좌석 선점에 실패했습니다. 이미 선택된 좌석일 수 있습니다.");
+    }
+  };
+
   //3) 외부 통신
 
   useEffect(() => {
@@ -218,7 +263,7 @@ export const useSeatBooking = (screeningId: number) => {
 
   useEffect(() => {
     // 💡 콜백 타입을 최상단에서 선언한 SeatInfoDto[] 로 사용합니다.
-    seatService.connect(screeningId, (updatedSeats: SeatInfoDto[]) => {
+    seatSocketService.connect(screeningId, (updatedSeats: SeatInfoDto[]) => {
       setSeats(prevSeats => {
         return prevSeats.map(seat => {
           const newData = updatedSeats.find(updated => updated.seatId === seat.id);
@@ -234,26 +279,9 @@ export const useSeatBooking = (screeningId: number) => {
     });
 
     return () => {
-      seatService.disconnect();
+      seatSocketService.disconnect();
     };
   }, [screeningId]);
-
-  const handleReservation = () => {
-    if (selectedSeats.length === 0) return;
-
-    //비회원 예매차단
-    if (!isLoggedIn || !memberId) {
-      alert("회원 예매만 가능합니다. 로그인해주세요.");
-      return;
-    }
-
-    seatService.holdSeat({
-      screeningId,
-      seatIds: selectedSeats.map(s => s.id),
-      memberId: memberId,
-      guestId: null
-    });
-  };
 
   return {
     seats,
@@ -273,6 +301,6 @@ export const useSeatBooking = (screeningId: number) => {
     toggleSeat,
     resetSelection,
     getPartnerNumber,
-    handleReservation
+    handleProceedToPayment
   };
 };

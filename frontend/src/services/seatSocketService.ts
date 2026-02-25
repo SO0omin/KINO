@@ -1,13 +1,6 @@
 import { Client, type IMessage } from '@stomp/stompjs';
 import SockJS from 'sockjs-client';
-import type { SeatInfoDto } from "../types/dtos/SeatBookingResponseDto";
-
-interface HoldSeatPayload {
-  screeningId: number;
-  seatIds: number[];
-  memberId: number | null;
-  guestId: number | null;
-}
+import type { SeatInfoDto } from "../types/dtos/seatBooking.dto";
 
 class SeatSocket {
   private stompClient: Client | null = null;
@@ -62,26 +55,6 @@ class SeatSocket {
     this.stompClient.activate();
   }
 
-  // 좌석 점유 요청 전송
-  holdSeat(payload: HoldSeatPayload) {
-    if (!this.stompClient || !this.stompClient.connected) {
-      console.error("❌ 전송 실패: 소켓이 연결되어 있지 않습니다.");
-      return;
-    }
-
-    try {
-      this.stompClient.publish({
-        // 💡 주의: 백엔드 WebSocketConfig에 setApplicationDestinationPrefixes("/app") 설정이 되어있어야 함
-        destination: '/app/seat/hold', 
-        body: JSON.stringify(payload),
-        headers: { 'content-type': 'application/json' }
-      });
-      console.log("✅ [성공] 서버로 전송 완료!");
-    } catch (e) {
-      console.error("❌ [에러] publish 중 예외 발생:", e);
-    }
-  }
-
   disconnect() {
     if (this.currentSubscription) {
       this.currentSubscription.unsubscribe();
@@ -94,4 +67,4 @@ class SeatSocket {
 }
 
 // 싱글톤으로 내보내기 (아주 좋은 패턴입니다!)
-export const seatService = new SeatSocket();
+export const seatSocketService = new SeatSocket();

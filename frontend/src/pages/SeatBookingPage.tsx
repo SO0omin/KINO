@@ -8,18 +8,21 @@ import ratingImages from '../utils/getRatingImage';
 import type { SeatViewModel } from '../types/models/SeatBookingViewModel';
 
 // 스타일 및 컴포넌트
-import { StyledSeat } from '../Seat.styles';
+import { StyledSeat } from '../style/Seat.styles';
 import { SeatLegend } from "../components/SeatLegend";
-import { CommonModal } from "../components/CommonModal";
+import { CommonModal } from "../components/common/CommonModal";
 
 // 이미지 에셋
 import screenImg from "../assets/screen.png";
 
 //값 받을 때 사용
-import { useLocation } from "react-router-dom";
+import { useLocation, useNavigate  } from "react-router-dom";
+import { useAuth } from "../contexts/AuthContext";
 
 const SeatBooking = () => {
   const location = useLocation();
+  const navigate = useNavigate();
+
   const { screeningId } = location.state;
   const {
     realSeats,
@@ -38,10 +41,12 @@ const SeatBooking = () => {
     toggleSeat,
     resetSelection,
     getPartnerNumber,
-    handleReservation
+    handleProceedToPayment
   } = useSeatBooking(screeningId);
 
   const [hoveredSeatId, setHoveredSeatId] = useState<number | null>(null);
+  const { memberId } = useAuth();
+  
 
   
 
@@ -97,9 +102,9 @@ const SeatBooking = () => {
 
               {/* 커플석 알림창*/}
               {showCoupleNotice && (
-                <div className="absolute top-20 left-1/2 -translate-x-1/2 bg-[#f4f1ea] border-[3px] border-red-700 px-6 py-2 shadow-[4px_4px_0_0_#b91c1c] z-20 flex items-center gap-6">
+                <div className="absolute top-20 left-1/2 [transform:translateX(-50%)] bg-[#f4f1ea] border-[3px] border-red-700 px-6 py-2 shadow-[4px_4px_0_0_#b91c1c] z-20 flex items-center gap-6">
                   <span className="font-mono text-xs font-bold text-red-700 tracking-widest uppercase whitespace-nowrap">
-                    [알림] 커플석은 짝수(2, 4...)로만 선택 가능합니다.
+                    [알림] 커플석은 짝수(2, 4, 6, 8)로만 선택 가능합니다.
                   </span>
                   <button onClick={() => setShowCoupleNotice(false)} className="text-red-700 font-bold hover:scale-125 transition-transform">✕</button>
                 </div>
@@ -256,7 +261,7 @@ const SeatBooking = () => {
                 </div>
 
                 <button
-                  onClick={handleReservation}
+                  onClick={() => handleProceedToPayment(navigate, memberId)}
                   disabled={selectedSeats.length === 0 || selectedSeats.length !== totalPersonnelCount}
                   className={`w-full py-5 text-xl font-black font-serif italic tracking-widest uppercase border-[4px] border-black transition-all ${
                     (selectedSeats.length === 0 || selectedSeats.length !== totalPersonnelCount)

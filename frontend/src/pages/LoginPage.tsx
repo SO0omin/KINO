@@ -1,12 +1,19 @@
 import React, { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate, useLocation, Link } from 'react-router-dom';
 import axios from "axios";
-import { CommonModal } from '../components/CommonModal';
+import { CommonModal } from '../components/common/CommonModal';
 import { useAuth } from '../contexts/AuthContext';
 
 const LoginPage: React.FC = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const { login } = useAuth();
+
+  // 💡 핵심: 이전 페이지(좌석 선택창 등)에서 넘겨준 돌아갈 주소가 있는지 확인합니다.
+  const returnTo = location.state?.returnTo || '/';
+  
+  // 만약 예매 진행 중 넘어온 거라면, 비회원 탭의 성격이 '조회'가 아니라 '예매'로 바뀝니다.
+  const isBookingFlow = !!location.state?.returnTo;
 
   // 탭 상태 관리 ('MEMBER' or 'GUEST')
   const [activeTab, setActiveTab] = useState<'MEMBER' | 'GUEST'>('MEMBER');
@@ -15,179 +22,172 @@ const LoginPage: React.FC = () => {
   const [formData, setFormData] = useState({
     username: '',
     password: '',
-    reservationNumber: '',
+    reservationNumber: '', // 비회원 조회용
     guestName: '',
     guestTel: '',
+    guestPassword: '',     // 비회원 예매용 (4자리)
   });
 
-  // 모달 상태
   const [isAlertOpen, setIsAlertOpen] = useState(false);
-  const [alertMessage] = useState("");
-  const [onModalClose] = useState<(() => void) | null>(null);
+  const [alertMessage, setAlertMessage] = useState("");
 
-  /* 커스텀 모달 호출 헬퍼 함수
-  const showAlert = (msg: string, callback?: () => void) => {
-    setAlertMessage(msg);
-    setOnModalClose(() => callback || null);
-    setIsAlertOpen(true);
-  };*/
-
-  // 모달 닫기 핸들러
-  const handleCloseModal = () => {
-    setIsAlertOpen(false);
-    if (onModalClose) {
-      onModalClose();
-    }
-  };
-
-  // 입력값 변경 핸들러
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: value
-    }));
+    setFormData(prev => ({ ...prev, [name]: value }));
   };
 
-  // 폼 제출 핸들러
+  const handleCloseModal = () => setIsAlertOpen(false);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // 1. 회원 로그인 로직
     if (activeTab === 'MEMBER') {
       try {
-        const response = await axios.post('/api/auth/login', formData);
+        const response = await axios.post('/api/auth/login', {
+          username: formData.username,
+          password: formData.password
+        });
         
         const { token, username, name, memberId } = response.data; 
-        
         login(token, username, name, memberId);
 
-        alert(`환영합니다, ${username}님.`);
-        navigate('/'); 
+        // 💡 로그인 성공 시, 무조건 메인('/')이 아니라 예매하던 곳으로 돌려보냅니다!
+        navigate(returnTo, { state: location.state }); 
       } catch (error) {
-        // ...
+        setAlertMessage("아이디 또는 비밀번호가 일치하지 않습니다.");
+        setIsAlertOpen(true);
+      }
+    } 
+    // 2. 비회원 예매/조회 로직 (백엔드 연결 필요)
+    else {
+      if (isBookingFlow) {
+        // TODO: 비회원 정보 등록 (이름, 폰번호, 비밀번호) API 호출 후 결제창 이동
+        alert("비회원 예매 로직은 백엔드 API 연결 후 작동합니다.");
+      } else {
+        // TODO: 비회원 예매 내역 조회 (예매번호, 이름, 폰번호) API 호출
+        alert("비회원 예매 조회 로직은 백엔드 API 연결 후 작동합니다.");
       }
     }
   };
 
-  // 공통 인풋 스타일
-  const inputClass = `
-    w-full border-[3px] border-black px-4 py-3 text-sm font-bold font-mono 
-    bg-white shadow-[4px_4px_0_0_#000] focus:outline-none focus:translate-x-[4px] 
-    focus:translate-y-[4px] focus:shadow-none transition-all placeholder:text-black/30
-  `;
-
   return (
-    <div className="bg-[#f4f1ea] min-h-screen flex items-center justify-center p-6 relative paper-texture">
+    <div className="min-h-auto bg-[#fdf4e3] flex flex-col items-center pt-20 pb-20">
       
+      {/* 헤더 타이틀 */}
+      <div className="text-center mb-8">
+        <h1 className="text-3xl font-bold text-gray-800 mb-2">
+          {isBookingFlow ? '예매하기' : '로그인'}
+        </h1>
+        <p className="text-gray-600">
+          {isBookingFlow 
+            ? '로그인 혹은 비회원 정보를 입력해주세요.' 
+            : '서비스 이용을 위해 로그인이 필요합니다.'}
+        </p>
+      </div>
+
+      {/* 탭 버튼 영역 */}
+      <div className="flex w-full max-w-[500px] mb-6">
+        <button 
+          type="button"
+          onClick={() => setActiveTab('MEMBER')} 
+          className={`flex-1 py-3 text-lg font-bold border-b-2 transition-colors ${
+            activeTab === 'MEMBER' 
+              ? 'border-[#eb4d32] text-[#eb4d32]' 
+              : 'border-gray-300 text-gray-400 hover:text-gray-600'
+          }`}
+        >
+          회원 로그인
+        </button>
+        <button 
+          type="button"
+          onClick={() => setActiveTab('GUEST')} 
+          className={`flex-1 py-3 text-lg font-bold border-b-2 transition-colors ${
+            activeTab === 'GUEST' 
+              ? 'border-[#eb4d32] text-[#eb4d32]' 
+              : 'border-gray-300 text-gray-400 hover:text-gray-600'
+          }`}
+        >
+          {isBookingFlow ? '비회원 예매' : '비회원 예매조회'}
+        </button>
+      </div>
+
       {/* 폼 컨테이너 */}
-      <div className="max-w-md w-full bg-white border-[6px] border-black shadow-[12px_12px_0_0_#000] relative z-10 overflow-hidden">
-        
-        {/* 헤더 영역 */}
-        <div className="bg-black text-white p-6 text-center">
-          <p className="font-mono text-xs tracking-[0.3em] text-white/60 mb-2">BOX OFFICE</p>
-          <h1 className="font-serif italic text-4xl uppercase tracking-tighter">
-            {activeTab === 'MEMBER' ? 'Member Login' : 'Guest Lookup'}
-          </h1>
-        </div>
-
-        {/* 탭(Tab) 전환 버튼 영역 */}
-        <div className="flex border-y-[4px] border-black bg-white">
-          <button 
-            type="button"
-            onClick={() => setActiveTab('MEMBER')} 
-            className={`flex-1 py-4 font-bold uppercase tracking-widest text-xs border-r-[4px] border-black transition-all ${
-              activeTab === 'MEMBER' 
-                ? 'bg-[#f4f1ea] text-black shadow-[inset_0_-4px_0_0_#b91c1c]'
-                : 'bg-white text-black/40 hover:bg-[#f4f1ea] hover:text-black'
-            }`}
-          >
-            회원 로그인
-          </button>
-          <button 
-            type="button"
-            onClick={() => setActiveTab('GUEST')} 
-            className={`flex-1 py-4 font-bold uppercase tracking-widest text-xs transition-all ${
-              activeTab === 'GUEST' 
-                ? 'bg-[#f4f1ea] text-black shadow-[inset_0_-4px_0_0_#b91c1c]'
-                : 'bg-white text-black/40 hover:bg-[#f4f1ea] hover:text-black'
-            }`}
-          >
-            비회원 예매조회
-          </button>
-        </div>
-
-        {/* 입력 폼 영역 */}
-        <form onSubmit={handleSubmit} className="p-8 flex flex-col gap-6 bg-[#f4f1ea]">
+      <div className="w-full max-w-[500px] bg-white rounded-lg p-8 shadow-sm border border-gray-100">
+        <form onSubmit={handleSubmit} className="flex flex-col gap-5">
           
-          {/* 조건부 렌더링: MEMBER 탭일 때 */}
+          {/* 회원 탭 */}
           {activeTab === 'MEMBER' && (
-            <div className="flex flex-col gap-6 animate-[fadeIn_0.3s_ease-in-out]">
-              <div className="flex flex-col gap-2">
-                <label className="font-bold text-xs uppercase tracking-widest font-mono">ID (Username)</label>
-                <input type="text" name="username" value={formData.username} onChange={handleChange} required className={inputClass} placeholder="Enter your ID" />
-              </div>
-              <div className="flex flex-col gap-2">
-                <label className="font-bold text-xs uppercase tracking-widest font-mono">Password</label>
-                <input type="password" name="password" value={formData.password} onChange={handleChange} required className={inputClass} placeholder="••••••••" />
-              </div>
+            <div className="flex flex-col gap-4 animate-[fadeIn_0.3s_ease-in-out]">
+              <input type="text" name="username" value={formData.username} onChange={handleChange} required 
+                className="w-full border border-gray-300 rounded p-3 focus:outline-none focus:border-[#eb4d32] transition-colors" 
+                placeholder="아이디" />
+              <input type="password" name="password" value={formData.password} onChange={handleChange} required 
+                className="w-full border border-gray-300 rounded p-3 focus:outline-none focus:border-[#eb4d32] transition-colors" 
+                placeholder="비밀번호" />
             </div>
           )}
 
-          {/* 조건부 렌더링: GUEST 탭일 때 */}
+          {/* 비회원 탭 */}
           {activeTab === 'GUEST' && (
-            <div className="flex flex-col gap-6 animate-[fadeIn_0.3s_ease-in-out]">
-              <div className="flex flex-col gap-2">
-                <label className="font-bold text-xs uppercase tracking-widest font-mono">Reservation No.</label>
-                <input type="text" name="reservationNumber" value={formData.reservationNumber} onChange={handleChange} required className={inputClass} placeholder="예매번호" />
-              </div>
-              <div className="flex flex-col gap-2">
-                <label className="font-bold text-xs uppercase tracking-widest font-mono">Guest Name</label>
-                <input type="text" name="guestName" value={formData.guestName} onChange={handleChange} required className={inputClass} placeholder="예매자 이름" />
-              </div>
-              <div className="flex flex-col gap-2">
-                <label className="font-bold text-xs uppercase tracking-widest font-mono">Telephone</label>
-                <input type="tel" name="guestTel" value={formData.guestTel} onChange={handleChange} required className={inputClass} placeholder="010-0000-0000" />
-              </div>
+            <div className="flex flex-col gap-4 animate-[fadeIn_0.3s_ease-in-out]">
+              {!isBookingFlow && (
+                <input type="text" name="reservationNumber" value={formData.reservationNumber} onChange={handleChange} required 
+                  className="w-full border border-gray-300 rounded p-3 focus:outline-none focus:border-[#eb4d32]" 
+                  placeholder="예매번호" />
+              )}
+              <input type="text" name="guestName" value={formData.guestName} onChange={handleChange} required 
+                className="w-full border border-gray-300 rounded p-3 focus:outline-none focus:border-[#eb4d32]" 
+                placeholder="이름" />
+              <input type="tel" name="guestTel" value={formData.guestTel} onChange={handleChange} required 
+                className="w-full border border-gray-300 rounded p-3 focus:outline-none focus:border-[#eb4d32]" 
+                placeholder="휴대폰 번호 (- 제외)" />
+              
+              {isBookingFlow && (
+                <input type="password" name="guestPassword" value={formData.guestPassword} onChange={handleChange} required maxLength={4}
+                  className="w-full border border-gray-300 rounded p-3 focus:outline-none focus:border-[#eb4d32]" 
+                  placeholder="예매용 비밀번호 (숫자 4자리)" />
+              )}
             </div>
           )}
 
-          {/* 하단 버튼 및 추가 링크 */}
-          <div className="mt-4 pt-6 border-t-2 border-dashed border-black/20 flex flex-col gap-4">
+          {/* 하단 버튼 및 링크 */}
+          <div className="mt-2 flex flex-col gap-4">
             <button 
               type="submit" 
-              className="w-full bg-black text-white border-[4px] border-black py-4 text-xl font-black font-serif italic tracking-widest uppercase shadow-[6px_6px_0_0_#000] hover:bg-red-700 hover:translate-x-[6px] hover:translate-y-[6px] hover:shadow-none transition-all"
+              className={`w-full text-white font-bold py-3 rounded transition-colors ${
+                activeTab === 'MEMBER' ? 'bg-[#eb4d32] hover:bg-[#d4452d]' : 'bg-gray-800 hover:bg-black'
+              }`}
             >
-              {activeTab === 'MEMBER' ? 'Login' : 'Check Ticket'}
+              {activeTab === 'MEMBER' ? '로그인' : (isBookingFlow ? '비회원 예매 진행' : '예매 내역 조회')}
             </button>
 
-            {/* 회원가입 유도 링크 (MEMBER 탭일 때만 보여줌) */}
             {activeTab === 'MEMBER' && (
-              <div className="mt-4 flex items-center justify-center">
-                <Link 
-                  to="/find-account" 
-                  className="font-mono text-xs font-bold tracking-widest text-red-700 hover:text-black transition-colors underline decoration-2 underline-offset-4"
-                >
-                  아이디/비밀번호 찾기
-                </Link>
+              <div className="flex items-center justify-center gap-4 text-sm text-gray-500 mt-2">
+                <Link to="/find-account" className="hover:text-gray-800 transition-colors">아이디/비밀번호 찾기</Link>
+                <span>|</span>
+                <Link to="/signup" className="hover:text-gray-800 transition-colors">회원가입</Link>
+              </div>
+            )}
+            {activeTab === 'GUEST' && (
+              <div className="flex items-center justify-center gap-4 text-sm text-gray-500 mt-2">
+                <Link to="/signup" className="hover:text-gray-800 transition-colors">비회원 회원가입</Link>
               </div>
             )}
           </div>
-          
         </form>
-
       </div>
 
-     {/* 모달 */}
+      {/* 모달도 깔끔한 스타일로 변경 */}
       <CommonModal isOpen={isAlertOpen} onClose={handleCloseModal}>
-        <div className="border-[4px] border-black p-6 bg-white shadow-[8px_8px_0_0_#000]">
-          <h3 className="font-serif italic text-2xl uppercase font-black mb-4 border-b-2 border-black pb-2">Notice</h3>
-          <div className="font-mono text-sm font-bold uppercase tracking-widest mb-6 leading-relaxed text-black/80 whitespace-pre-wrap">
-            {alertMessage}
-          </div>
+        <div className="bg-white p-6 rounded-lg text-center max-w-sm w-full mx-auto">
+          <h3 className="text-xl font-bold text-gray-800 mb-2">알림</h3>
+          <p className="text-gray-600 mb-6">{alertMessage}</p>
           <button 
             onClick={handleCloseModal} 
-            className="w-full bg-black text-white font-mono font-bold uppercase py-3 border-2 border-black hover:bg-red-700 transition-colors"
+            className="w-full bg-[#eb4d32] text-white font-bold py-3 rounded hover:bg-[#d4452d] transition-colors"
           >
-            Confirm
+            확인
           </button>
         </div>
       </CommonModal>

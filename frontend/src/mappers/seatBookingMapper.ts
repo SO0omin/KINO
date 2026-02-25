@@ -2,7 +2,7 @@ import type { SeatViewModel, ScreeningInfoViewModel } from "../types/models/Seat
 import entranceImg from "../assets/entrance.png";
 import exitImg from "../assets/exit.png";
 import entranceExitAllImg from "../assets/entrance_exit_all.png";
-import type { ScreeningInfoDto, SeatInfoDto } from "../types/dtos/SeatBookingResponseDto";
+import type { ScreeningInfoDto, SeatInfoDto } from "../types/dtos/seatBooking.dto";
 
 // 1. 영화 정보 매핑
 export const toScreeningInfoViewModel = (dto: ScreeningInfoDto): ScreeningInfoViewModel => {

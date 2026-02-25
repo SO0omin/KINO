@@ -11,6 +11,7 @@ import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Controller;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Slf4j // 💡 실무용 로거 추가 (System.out.println 대체)
 @Controller
@@ -26,17 +27,15 @@ public class SeatWebSocketController {
 
         log.info("[WS] 좌석 선점 요청 도착 - 상영ID: {}, 좌석수: {}",
                 request.getScreeningId(),
-                request.getSeatIds() != null ? request.getSeatIds().size() : 0);
+                request.getTickets() != null ? request.getTickets().size() : 0);
 
         try {
-            // 💡 컨트롤러에서는 for문을 돌리지 않고, Service에 통째로 위임합니다.
-            // Service가 DTO 리스트를 반환하도록 설계 변경을 추천합니다.
-            List<SeatStatusResponseDTO> responses = seatCommandService.holdSeats(request);
+            List<Long> seatIds = request.getTickets().stream()
+                    .map(SeatSelectRequestDTO.TicketRequest::getSeatId)
+                    .collect(Collectors.toList());
 
-            // 정상 처리 시 구독자들에게 상태 변경 브로드캐스팅
             messagingTemplate.convertAndSend(
-                    "/topic/screening/" + request.getScreeningId(),
-                    responses
+                    "/topic/screening/" + request.getScreeningId(), seatIds
             );
 
             log.info("[WS] 좌석 선점 브로드캐스팅 완료 - 상영ID: {}", request.getScreeningId());

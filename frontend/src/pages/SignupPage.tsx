@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
-import { CommonModal } from '../components/CommonModal'; // 기존 모달 컴포넌트 활용
+import { CommonModal } from '../components/common/CommonModal'; // 기존 모달 컴포넌트 활용
 
 const SignupPage: React.FC = () => {
   const navigate = useNavigate();

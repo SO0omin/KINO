@@ -31,13 +31,20 @@ public class SeatCommandService {
     // 좌석 선점 로직
     public List<SeatStatusResponseDTO> holdSeats(SeatSelectRequestDTO request) {
 
+        // 💡 1. 티켓 리스트에서 seatId만 뽑아내기 (Stream API 활용)
+        List<Long> requestedSeatIds = request.getTickets().stream()
+                .map(SeatSelectRequestDTO.TicketRequest::getSeatId)
+                .collect(Collectors.toList());
+
+        // 💡 2. 추출한 ID 리스트로 DB 조회 (비관적 락 유지)
         List<ScreeningSeat> seats = screeningSeatRepository.findAllByScreeningIdAndSeatIdsWithLock(
                 request.getScreeningId(),
-                request.getSeatIds()
-        ); // 비관적 락
+                requestedSeatIds
+        );
 
-        if (seats.size() != request.getSeatIds().size()) {
-            throw new IllegalArgumentException("요청한 좌석 중 일부를 찾을 수 없습니다.");
+        // 💡 3. 검증 로직도 추출한 리스트 사이즈와 비교하도록 수정
+        if (seats.size() != requestedSeatIds.size()) {
+            throw new IllegalArgumentException("요청한 좌석 중 일부를 찾을 수 없거나 이미 선택된 좌석입니다.");
         }
 
         // 💡 중복 코드를 지우고, 주입받은 seatService에서 깔끔하게 가격 맵을 꺼내옵니다.

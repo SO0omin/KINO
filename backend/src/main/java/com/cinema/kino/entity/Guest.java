@@ -24,6 +24,12 @@ public class Guest {
     @Column(nullable = false, length = 20)
     private String tel;
 
+    @Column(nullable = false, length = 30)
+    private String password;
+
+    @Column(unique = true)
+    private String uuid;
+
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;

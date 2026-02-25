@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { seatBookingApi } from '../../api/seatBookingApi'; // API 서비스 임포트
 import { getSeatColor, getRatingDetails } from '../../mappers/ticketingMapper';
 import type { Screening, Seat } from '../../types/ticketing';
+import { useAuth } from '../../contexts/AuthContext';
 
 interface Props {
   isOpen: boolean;
@@ -21,7 +22,8 @@ const SeatPreviewModal: React.FC<Props> = ({ isOpen, onClose, screening, seats: 
 
   // 훅을 통해 실시간 좌석 데이터 관리
   const [currentSeats, setCurrentSeats] = useState<Seat[]>(initialSeats);
-  const [, setIsLoading] = useState(false); 
+  const [, setIsLoading] = useState(false);
+  const { isLoggedIn, isGuest } = useAuth();
 
   // 2. 버튼 클릭 시 실행될 함수 정의
   useEffect(() => {
@@ -52,6 +54,22 @@ const SeatPreviewModal: React.FC<Props> = ({ isOpen, onClose, screening, seats: 
 
   const handleBookingClick = () => {
     if (!screening) return;
+
+    console.log("현재 상태:", { isLoggedIn, isGuest });
+    if (!isLoggedIn && !isGuest) {
+      alert("좌석 선택을 위해 로그인 또는 비회원 정보 입력이 필요합니다.");
+      
+      // 로그인 페이지로 보내버립니다! 
+      // (단, 로그인 성공 후 'seat-booking'으로 돌아올 수 있게 주소표(state)를 쥐어줍니다)
+      navigate('/login', {
+        state: {
+          returnTo: '/seat-booking',       // 로그인 끝나고 돌아갈 목적지
+          screeningId: screening.id        // 목적지에 도착했을 때 필요한 데이터
+        }
+      });
+      return; // 여기서 함수를 끝내서 seat-booking으로 못 넘어가게 막음
+    }
+
     navigate('/seat-booking', {
       state: {
         screeningId: screening.id,

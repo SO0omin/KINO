@@ -5,14 +5,22 @@
 package com.cinema.kino.dto;
 
 import lombok.Getter;
+import lombok.Setter;
 
 import java.util.List;
 
 @Getter
+@Setter
 public class SeatSelectRequestDTO {
-
     private Long screeningId;
-    private List<Long> seatIds;  // 다수의 좌석을 받기 위해서 list로 변경
-    private Long memberId;   // 로그인
-    private Long guestId;    // 비회원
+    private Long memberId;
+    private Long guestId;
+
+    private List<TicketRequest> tickets; //좌석정보(좌석번호+가격타입)
+
+    @Getter @Setter
+    public static class TicketRequest {
+        private Long seatId;
+        private String priceType; // "ADULT", "YOUTH" 등
+    }
 }

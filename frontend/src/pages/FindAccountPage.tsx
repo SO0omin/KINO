@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { CommonModal } from '../components/CommonModal';
+import { CommonModal } from '../components/common/CommonModal';
 import axios from 'axios';
 
 type TabType = 'FIND_ID' | 'RESET_PW';

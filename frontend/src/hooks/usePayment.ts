@@ -11,7 +11,7 @@ import type {
   PrepareRequest,
   ConfirmRequest,
   ReservationDetailResponse,
-} from '../types/dto/payment.dto';
+} from '../types/dtos/payment.dto';
 
 const CLIENT_KEY = 'test_ck_D5GePWvyJnrK0W0k6q8gLzN97Eoq';
 

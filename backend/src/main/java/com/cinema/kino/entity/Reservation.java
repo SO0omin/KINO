@@ -5,6 +5,8 @@ import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Table(name = "reservations")
@@ -48,4 +50,18 @@ public class Reservation {
     @CreationTimestamp
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;
+
+    @OneToMany(mappedBy = "reservation", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<ReservationTicket> tickets = new ArrayList<>();
+
+    public void addTicket(ReservationTicket ticket) {
+        if (this.tickets == null) {
+            this.tickets = new ArrayList<>();
+        }
+        this.tickets.add(ticket);
+        if (ticket.getReservation() != this) {
+            // 이 부분은 ReservationTicket 빌더에서 처리해도 되지만,
+            // 여기서 명시적으로 처리하면 실수를 방지할 수 있습니다.
+        }
+    }
 }

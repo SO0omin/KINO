@@ -1,4 +1,4 @@
-import type { PriceType } from '../dto/payment.dto';
+import type { PriceType } from '../dtos/payment.dto';
 
 /**
  * 할인 탭 종류

@@ -4,7 +4,7 @@ api를 분리할 때는 내부에서 실행되는 실질적인
 훅에 가져가서 사용하면 됩니다.
 =================================== */
 
-import type { SeatBookingResponseDto } from "../types/dtos/SeatBookingResponseDto";
+import type { SeatBookingResponseDto } from "../types/dtos/seatBooking.dto";
 import axios from 'axios';
 
 

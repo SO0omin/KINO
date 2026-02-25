@@ -6,7 +6,7 @@ import type {
   ConfirmRequest,
   ConfirmResponse,
   ReservationDetailResponse
-} from '../types/dto/payment.dto';
+} from '../types/dtos/payment.dto';
 
 // const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:8080';
 const API_BASE_URL = 'http://localhost:8080';

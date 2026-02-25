@@ -10,6 +10,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.*;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.client.HttpStatusCodeException;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 
@@ -45,18 +46,30 @@ public class PaymentService {
 
         Screening screening = reservation.getScreening();
 
-        List<PaymentDTO.ReservationDetailResponse.SeatDetail> seatDetails =
-                screeningSeatRepository.findByReservationId(reservationId)
-                        .stream()
-                        .map(ss -> {
-                            PriceType pt = (ss.getPriceType() != null) ? ss.getPriceType() : PriceType.ADULT;
-                            return new PaymentDTO.ReservationDetailResponse.SeatDetail(
-                                    ss.getSeat().getId(),
-                                    ss.getSeat().getSeatRow() + ss.getSeat().getSeatNumber(),
-                                    pt
-                            );
-                        })
-                        .collect(Collectors.toList());
+        // ✅ [After] 새 메서드 적용: 필요한 좌석만 DB에서 쏙쏙 뽑아오기 (성능 최적화)
+        List<Long> ticketSeatIds = reservation.getTickets().stream()
+                .map(ReservationTicket::getSeatId)
+                .collect(Collectors.toList());
+
+        // 우리가 만든 마법의 메서드 호출!
+        List<ScreeningSeat> fetchedSeats = screeningSeatRepository.findAllByScreeningIdAndSeatIdInWithSeat(
+                screening.getId(), ticketSeatIds);
+
+        List<PaymentDTO.ReservationDetailResponse.SeatDetail> seatDetails = reservation.getTickets().stream()
+                .map(ticket -> {
+                    // DB에서 한 방에 가져온 리스트에서 매칭
+                    ScreeningSeat ss = fetchedSeats.stream()
+                            .filter(seat -> seat.getSeat().getId().equals(ticket.getSeatId()))
+                            .findFirst()
+                            .orElseThrow(() -> new IllegalArgumentException("좌석 정보 없음"));
+
+                    return new PaymentDTO.ReservationDetailResponse.SeatDetail(
+                            ticket.getSeatId(),
+                            ss.getSeat().getSeatRow() + ss.getSeat().getSeatNumber(),
+                            ticket.getPriceType()
+                    );
+                })
+                .collect(Collectors.toList());
 
         return PaymentDTO.ReservationDetailResponse.builder()
                 .reservationId(reservation.getId())
@@ -68,7 +81,7 @@ public class PaymentService {
                 .theaterName(screening.getScreen().getTheater().getName())
                 .screenName(screening.getScreen().getName())
                 .startTime(screening.getStartTime().toString())
-                .seats(seatDetails)
+                .seats(seatDetails) // 👈 드디어 빈 배열이 아닌 꽉 찬 배열이 프론트로 넘어갑니다.
                 .totalAmount(reservation.getTotalPrice())
                 .status(reservation.getStatus().name())
                 .build();
@@ -87,30 +100,20 @@ public class PaymentService {
             throw new IllegalArgumentException("좌석/요금 정보(tickets)가 비어있습니다.");
         }
 
-        // 1) 예약/상영 존재 검증
         Reservation reservation = reservationRepository.findById(request.getReservationId())
                 .orElseThrow(() -> new IllegalArgumentException("기존 예약 정보를 찾을 수 없습니다."));
         Screening screening = screeningRepository.findById(request.getScreeningId())
                 .orElseThrow(() -> new IllegalArgumentException("상영 정보를 찾을 수 없습니다."));
 
-        // 2) 원가 재계산
         int originalPrice = 0;
-
         LocalTime screenTime = screening.getStartTime().toLocalTime();
         ScreeningType sType = determineScreeningType(screenTime);
-        log.info("[가격계산] 영화시간: {}, 적용타입: {}", screenTime, sType);
 
-        // seatId -> priceType 저장용 맵
         Map<Long, PriceType> priceTypeMap = new HashMap<>();
-        // 좌석 id는 중복 없이 관리(중복 seatId 들어오면 이상한 요청이라 방어)
         Set<Long> seatIdSet = new LinkedHashSet<>();
 
         for (PaymentDTO.TicketRequest ticketReq : request.getTickets()) {
-            if (ticketReq == null) throw new IllegalArgumentException("tickets에 null 항목이 있습니다.");
-
             Long seatId = ticketReq.getSeatId();
-            if (seatId == null) throw new IllegalArgumentException("tickets에 seatId가 없습니다.");
-
             if (!seatIdSet.add(seatId)) {
                 throw new IllegalArgumentException("tickets에 중복 seatId가 있습니다: " + seatId);
             }
@@ -119,26 +122,18 @@ public class PaymentService {
             priceTypeMap.put(seatId, pt);
 
             TicketPrice policy = ticketPriceRepository.findByScreenTypeAndPriceTypeAndScreeningType(
-                    screening.getScreen().getScreenType(),
-                    pt,
-                    sType
-            ).orElseThrow(() -> new IllegalArgumentException(
-                    String.format("요금 정책 없음 (Screen: %s, Price: %s, Type: %s)",
-                            screening.getScreen().getScreenType(), pt, sType)));
+                    screening.getScreen().getScreenType(), pt, sType
+            ).orElseThrow(() -> new IllegalArgumentException("요금 정책 없음"));
 
             originalPrice += policy.getPrice();
         }
 
         List<Long> seatIds = new ArrayList<>(seatIdSet);
 
-        // 3) 할인/포인트(회원 전용)
         int discountAmount = 0;
-
-        // 핵심 수정: 포인트는 회원일 때만 적용
         int usedPoints = 0;
 
         if (reservation.getMember() != null) {
-
             usedPoints = (request.getUsedPoints() != null) ? request.getUsedPoints() : 0;
 
             memberCouponRepository.findByReservation(reservation).ifPresent(old -> {
@@ -149,11 +144,9 @@ public class PaymentService {
                 }
             });
 
-            // 3-1) 쿠폰 HOLD
             if (request.getMemberCouponId() != null) {
                 MemberCoupon targetCoupon = memberCouponRepository.findHoldableCouponForUpdate(
-                        request.getMemberCouponId(),
-                        reservation.getMember().getId()
+                        request.getMemberCouponId(), reservation.getMember().getId()
                 ).orElseThrow(() -> new IllegalArgumentException("사용 가능한 쿠폰이 아닙니다."));
 
                 targetCoupon.setStatus(MemberCouponStatus.HELD);
@@ -166,24 +159,16 @@ public class PaymentService {
                         : (int) (originalPrice * (coupon.getDiscountValue() / 100.0));
             }
 
-            // 3-2) 포인트 잔액 검증
             if (usedPoints > 0) {
                 int available = memberPointRepository.getAvailablePointsByMemberId(reservation.getMember().getId());
                 if (available < usedPoints) throw new IllegalArgumentException("포인트 부족");
             }
-        } else {
-            // 비회원이면 포인트/쿠폰은 적용하지 않음(요청값이 와도 무시)
-            usedPoints = 0;
         }
 
-        // 4) 최종 금액 산출
         int finalVal = Math.max(0, originalPrice - discountAmount - usedPoints);
-
-        // 5) 주문번호 생성 및 예약에 저장
         String orderId = "ORD-" + UUID.randomUUID().toString().substring(0, 8);
         reservation.setOrderId(orderId);
 
-        // 6) Payment 레코드 준비(UPSERT)
         Payment payment = paymentRepository.findByReservation(reservation)
                 .orElseGet(() -> Payment.builder()
                         .reservation(reservation)
@@ -200,26 +185,23 @@ public class PaymentService {
         payment.setPaymentMethod("CARD");
         paymentRepository.save(payment);
 
-        // 7) 좌석 선점(LOCK 후 HELD)
+        // 🔥 핵심 유지: 이전(ReservationCommandService)에서 HELD 상태로 만들었지만,
+        // 결제 과정에서 유효성 연장 및 ScreeningSeat 테이블에 예약번호(reservation)를 박아줍니다.
         List<ScreeningSeat> seats = screeningSeatRepository.findAllByScreeningIdAndSeatIdsWithLock(
                 request.getScreeningId(), seatIds);
 
-        // 요청한 좌석을 모두 못 가져오면(이미 누가 잡았거나 잘못된 요청) 실패 처리
         if (seats.size() != seatIds.size()) {
             throw new IllegalArgumentException("좌석 선점에 실패했습니다. 다시 선택해주세요.");
         }
 
         for (ScreeningSeat seat : seats) {
-            // 이전 단계에서 넘어온 priceType을 ScreeningSeat에 저장
             PriceType pt = priceTypeMap.getOrDefault(seat.getSeat().getId(), PriceType.ADULT);
             seat.setPriceType(pt);
-
             seat.setStatus(SeatStatus.HELD);
-            seat.setReservation(reservation);
+            seat.setReservation(reservation); // 👈 여기서 드디어 ScreeningSeat에 reservationId가 들어갑니다!
             seat.setHoldExpiresAt(LocalDateTime.now().plusMinutes(10));
         }
 
-        // 8) 응답
         return PaymentDTO.PrepareResponse.builder()
                 .reservationId(reservation.getId())
                 .orderId(orderId)
@@ -333,9 +315,17 @@ public class PaymentService {
 
             log.info("[토스승인성공] orderId={}, paymentKey={}", request.getOrderId(), request.getPaymentKey());
 
+        }catch (HttpStatusCodeException e) {
+            // 💡 [핵심 수정] 토스가 내려주는 진짜 에러 메시지를 로그로 찍습니다.
+            log.error("[토스 에러 응답] HTTP 상태: {}, 응답 본문: {}", e.getStatusCode(), e.getResponseBodyAsString());
+            throw new RuntimeException("토스 결제 승인 실패: " + e.getResponseBodyAsString());
+
         } catch (RestClientException e) {
+            log.error("[PG사 통신 오류] {}", e.getMessage());
             throw new RuntimeException("결제 승인 과정에서 PG사 통신 오류가 발생했습니다.");
-        }
+        }/* catch (RestClientException e) {
+            throw new RuntimeException("결제 승인 과정에서 PG사 통신 오류가 발생했습니다.");
+        }*/
     }
 
     private void executeTossCancelFull(String paymentKey, String reason) {

@@ -1,4 +1,4 @@
-import type { PaymentData } from '../../types/model/payment';
+import type { PaymentData } from '../../types/models/payment';
 
 export type TossPaymentType =
   | 'CARD'
