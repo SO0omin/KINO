@@ -11,6 +11,7 @@ export default function PaymentSuccessPage() {
   const [isConfirming, setIsConfirming] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [paymentId, setPaymentId] = useState<number | null>(null);
+  const reservationId = searchParams.get('reservationId');
   
   // [추가된 안전장치] API 중복 호출 방지
   const isCalled = useRef(false);
@@ -107,7 +108,9 @@ export default function PaymentSuccessPage() {
                 홈으로
               </button>
               <button
-                onClick={() => navigate('/payment')}
+                onClick={() =>
+                  navigate(reservationId ? `/payment?reservationId=${reservationId}` : '/payment')
+                }
                 className="flex-1 px-6 py-4 bg-[#eb4d32] text-white rounded-lg hover:bg-[#d43d22] transition-all font-medium shadow-lg shadow-orange-200"
               >
                 다시 시도하기

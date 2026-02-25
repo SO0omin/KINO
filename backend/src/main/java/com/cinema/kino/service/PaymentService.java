@@ -10,6 +10,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.*;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.client.HttpStatusCodeException;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 
@@ -251,6 +252,7 @@ public class PaymentService {
         if (!Objects.equals(payment.getFinalAmount(), request.getAmount())) {
             log.warn("[금액불일치] orderId={}, expected={}, got={}",
                     request.getOrderId(), payment.getFinalAmount(), request.getAmount());
+            markPaymentFailed(payment, "amount_mismatch");
             releaseHeldCouponIfAny(reservation);
             throw new IllegalArgumentException("금액 불일치");
         }
@@ -258,6 +260,7 @@ public class PaymentService {
         try {
             executeTossConfirmOrThrow(request);
         } catch (RuntimeException ex) {
+            markPaymentFailed(payment, "pg_confirm_failed");
             releaseHeldCouponIfAny(reservation);
             throw ex;
         }
@@ -333,6 +336,8 @@ public class PaymentService {
 
             log.info("[토스승인성공] orderId={}, paymentKey={}", request.getOrderId(), request.getPaymentKey());
 
+        } catch (HttpStatusCodeException e) {
+            throw new RuntimeException("PG 승인 실패: " + e.getResponseBodyAsString());
         } catch (RestClientException e) {
             throw new RuntimeException("결제 승인 과정에서 PG사 통신 오류가 발생했습니다.");
         }
@@ -381,5 +386,13 @@ public class PaymentService {
                 log.info("[쿠폰 RELEASE] memberCouponId={}, reservationId={}", mc.getId(), reservation.getId());
             }
         });
+    }
+
+    private void markPaymentFailed(Payment payment, String reason) {
+        if (payment.getPaymentStatus() == PaymentStatus.PAID) {
+            return;
+        }
+        payment.setPaymentStatus(PaymentStatus.FAILED);
+        log.warn("[결제실패기록] orderId={}, reason={}", payment.getMerchantUid(), reason);
     }
 }
