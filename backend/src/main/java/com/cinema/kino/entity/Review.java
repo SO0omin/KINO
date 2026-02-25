@@ -25,9 +25,6 @@ public class Review {
     @JoinColumn(name = "movie_id", nullable = false)
     private Movie movie;
 
-    @Column(nullable = false)
-    private Integer rating;
-
     @Column(columnDefinition = "TEXT")
     private String content;
 
@@ -38,4 +35,10 @@ public class Review {
     @UpdateTimestamp
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
+
+    private Integer scoreDirection; // 연출
+    private Integer scoreStory;     // 스토리
+    private Integer scoreVisual;    // 영상미
+    private Integer scoreActor;     // 배우
+    private Integer scoreOst;       // OST
 }

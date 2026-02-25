@@ -14,6 +14,6 @@ public interface RegionRepository extends JpaRepository<Region, Long> {
     @Query("SELECT new com.cinema.kino.dto.MainPageResponseDTO$TheaterStat(r.name, COUNT(t.id)) " +
             "FROM Region r " +
             "LEFT JOIN Theater t ON t.region.id = r.id " +
-            "GROUP BY r.id, r.name")
+            "GROUP BY r.id")
     List<MainPageResponseDTO.TheaterStat> findRegionStats();
 }

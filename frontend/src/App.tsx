@@ -3,6 +3,7 @@ import Main from "./pages/Main";
 import Gnb from "./components/Gnb";
 import TicketingPage from "./pages/TicketingPage";
 import SeatBooking from "./pages/SeatBooking";
+import MovieDetail from './pages/MovieDetail';
 
 function App() {
   return (
@@ -18,6 +19,7 @@ function App() {
         <Route path="/" element={<Main />} />
         <Route path="/ticketing" element={<TicketingPage />} />
         <Route path="/seat-booking" element={<SeatBooking />} />
+        <Route path="/movies/:id" element={<MovieDetail />} />
         <Route path="*" element={<div>홈페이지 또는 다른 페이지</div>} />
       </Routes>
     </Router>
