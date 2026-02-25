@@ -22,4 +22,7 @@ public class MovieResponseDTO {
     private BigDecimal bookingRate; // 예매율
     private String ageRating;    // 관람등급 (ALL, 12, 15, 18)
 
+    private long likeCount;
+    private boolean isLiked;
+
 }

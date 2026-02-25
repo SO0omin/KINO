@@ -1,4 +1,5 @@
 import React, { useEffect, useRef } from 'react';
+import { useLocation } from 'react-router-dom';
 import { useTicketing } from '../hooks/useTicketing';
 import { generateDateList } from '../utils/dateUtils';
 import { mapRatingToStyle } from '../mappers/ticketingMapper';
@@ -10,8 +11,11 @@ const VISIBLE_COUNT = 10;
 const VISIBLE_HOUR_COUNT = 10;
 
 const TicketingPage: React.FC = () => {
+  const location = useLocation();
+  const preSelectedMovieId = location.state?.preSelectedMovieId;
+
   const dateList = generateDateList(30);
-  const { states, setters, handlers, memos } = useTicketing(dateList);
+  const { states, setters, handlers, memos } = useTicketing(dateList, preSelectedMovieId);
   const dateInputRef = useRef<HTMLInputElement>(null);
 
   const xBtnClass = "text-red-700 font-bold ml-1 hover:scale-125 transition-transform text-lg outline-none focus:outline-none focus-visible:outline-none !ring-0 !shadow-none !bg-transparent !border-none !p-0 select-none";

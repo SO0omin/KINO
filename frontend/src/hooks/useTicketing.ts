@@ -7,7 +7,7 @@ import type { Region, Theater, Movie, Screening } from '../types/ticketing';
 const VISIBLE_COUNT = 10;
 //const VISIBLE_HOUR_COUNT = 10;
 
-export const useTicketing = (dateList: any[]) => {
+export const useTicketing = (dateList: any[], preSelectedMovieId?: number) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedScreeningData, setSelectedScreeningData] = useState<Screening | null>(null);
   const [currentSeats, setCurrentSeats] = useState<any[]>([]);
@@ -23,11 +23,13 @@ export const useTicketing = (dateList: any[]) => {
   const [selectedRegionId, setSelectedRegionId] = useState<number | null>(null);
   const [selectedTheaters, setSelectedTheaters] = useState<number[]>([]);
   const [selectedTheatersInfo, setSelectedTheatersInfo] = useState<{id:number; name:string}[]>([]);
-  const [selectedMovies, setSelectedMovies] = useState<number[]>([]);
+  const [selectedMovies, setSelectedMovies] = useState<number[]>( preSelectedMovieId ? [preSelectedMovieId] : []);
   const [selectedDate, setSelectedDate] = useState<string>(getLocalDateString(new Date()));
   const [startIndex, setStartIndex] = useState(0);
   const [selectedHour, setSelectedHour] = useState<number | null>(null);
   const [startHourIndex, setHourStartIndex] = useState(6);
+
+  
 
   useEffect(() => {
     ticketingService.getSortedRegions().then(setRegions);
