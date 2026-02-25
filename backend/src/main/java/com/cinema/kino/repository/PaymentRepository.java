@@ -37,6 +37,10 @@ public interface PaymentRepository extends JpaRepository<Payment, Long> {
     Optional<Payment> findByReservation(Reservation reservation);
     Optional<Payment> findByReservationId(Long reservationId);
 
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("select p from Payment p where p.reservation.id = :reservationId")
+    Optional<Payment> findByReservationIdForUpdate(@Param("reservationId") Long reservationId);
+
     /**
      * 주문번호(merchantUid)로 결제를 조회합니다.
      *

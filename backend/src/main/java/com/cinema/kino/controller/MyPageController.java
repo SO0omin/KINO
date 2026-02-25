@@ -4,8 +4,10 @@ import com.cinema.kino.dto.MyPageDTO;
 import com.cinema.kino.service.MyPageService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDate;
 import java.util.List;
 
 @RestController
@@ -34,5 +36,65 @@ public class MyPageController {
     ) {
         String reason = request != null ? request.getReason() : null;
         return ResponseEntity.ok(myPageService.cancelReservation(memberId, reservationId, reason));
+    }
+
+    @GetMapping("/vouchers")
+    public ResponseEntity<List<MyPageDTO.VoucherItem>> getVouchers(
+            @RequestParam Long memberId,
+            @RequestParam String voucherType,
+            @RequestParam(required = false) String status
+    ) {
+        return ResponseEntity.ok(myPageService.getVouchers(memberId, voucherType, status));
+    }
+
+    @PostMapping("/vouchers/register")
+    public ResponseEntity<MyPageDTO.VoucherRegisterResponse> registerVoucher(
+            @RequestBody MyPageDTO.VoucherRegisterRequest request
+    ) {
+        return ResponseEntity.ok(myPageService.registerVoucher(request));
+    }
+
+    @GetMapping("/cards")
+    public ResponseEntity<List<MyPageDTO.MembershipCardItem>> getMembershipCards(
+            @RequestParam Long memberId
+    ) {
+        return ResponseEntity.ok(myPageService.getMembershipCards(memberId));
+    }
+
+    @PostMapping("/cards/register")
+    public ResponseEntity<MyPageDTO.RegisterMembershipCardResponse> registerMembershipCard(
+            @RequestBody MyPageDTO.RegisterMembershipCardRequest request
+    ) {
+        return ResponseEntity.ok(myPageService.registerMembershipCard(request));
+    }
+
+    @GetMapping("/points")
+    public ResponseEntity<List<MyPageDTO.PointHistoryItem>> getPointHistories(
+            @RequestParam Long memberId,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to
+    ) {
+        return ResponseEntity.ok(myPageService.getPointHistories(memberId, from, to));
+    }
+
+    @PostMapping("/point-password/sms/send")
+    public ResponseEntity<MyPageDTO.MessageResponse> sendPointPasswordSms(
+            @RequestBody MyPageDTO.PointPasswordSmsSendRequest request
+    ) {
+        return ResponseEntity.ok(myPageService.sendPointPasswordSms(request));
+    }
+
+    @PostMapping("/point-password/sms/verify")
+    public ResponseEntity<MyPageDTO.PointPasswordSmsVerifyResponse> verifyPointPasswordSms(
+            @RequestBody MyPageDTO.PointPasswordSmsVerifyRequest request
+    ) {
+        return ResponseEntity.ok(myPageService.verifyPointPasswordSms(request));
+    }
+
+    @PostMapping("/point-password")
+    public ResponseEntity<MyPageDTO.MessageResponse> updatePointPassword(
+            @RequestBody MyPageDTO.PointPasswordUpdateRequest request
+    ) {
+        return ResponseEntity.ok(myPageService.updatePointPassword(request));
     }
 }

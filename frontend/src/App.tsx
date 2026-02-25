@@ -22,8 +22,11 @@ function AppRoutes() {
         <Route path="/my-page" element={<MyPage />} />
         <Route path="/my-page/reservations" element={<MyPage />} />
         <Route path="/my-page/vouchers" element={<MyPage />} />
+        <Route path="/my-page/vouchers/movie" element={<MyPage />} />
+        <Route path="/my-page/vouchers/store" element={<MyPage />} />
         <Route path="/my-page/coupons" element={<MyPage />} />
         <Route path="/my-page/points" element={<MyPage />} />
+        <Route path="/my-page/point-password" element={<MyPage />} />
         <Route path="/my-page/movie-story" element={<MyPage />} />
         <Route path="/my-page/events" element={<MyPage />} />
         <Route path="/my-page/inquiries" element={<MyPage />} />
