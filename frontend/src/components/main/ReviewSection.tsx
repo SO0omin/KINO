@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import type { MovieDTO } from '../../types/main';
 
@@ -8,135 +9,150 @@ interface ReviewSectionProps {
 
 const ReviewSection = ({ movies }: ReviewSectionProps) => {
   const [index, setIndex] = useState(0);
+  const navigate = useNavigate();
+
   if (!movies || movies.length === 0) return null;
 
   const current = movies[index];
   const nextMovie = () => setIndex((prev) => (prev === movies.length - 1 ? 0 : prev + 1));
   const prevMovie = () => setIndex((prev) => (prev === 0 ? movies.length - 1 : prev - 1));
 
-  // ✨ 프로그레스 바 너비 계산 (현재 인덱스 기반으로 1/4, 2/4... 정확히 계산)
   const progressWidth = ((index + 1) / movies.length) * 100;
 
   return (
-    <section className="py-32 bg-[#0a0a0a] overflow-hidden">
-      <div className="max-w-7xl mx-auto px-6">
+    <section className="py-32 relative overflow-hidden bg-[#f4f1ea]/30">
+      <div className="max-w-7xl mx-auto px-10">
         
-        {/* 섹션 헤더 */}
-        <div className="flex justify-between items-center mb-16 border-b border-white/10 pb-8">
-          <div className="space-y-2">
-            <span className="text-purple-500 font-black text-[10px] tracking-[0.5em] uppercase italic">Exclusive Selection</span>
-            <h2 className="text-4xl font-black italic tracking-tighter text-white uppercase">
-              Kino Original <span className="text-zinc-800 text-stroke-white">Review</span>
+        {/* Section Header - Newspaper Style */}
+        <div className="flex flex-col md:flex-row justify-between items-end mb-16 border-b-[6px] border-black pb-10">
+          <div className="space-y-4">
+            <span className="font-typewriter text-[10px] text-black/40 tracking-[0.6em] uppercase">The Critics' Corner</span>
+            <h2 className="font-serif text-6xl italic tracking-tighter text-black uppercase leading-none">
+              Daily <span className="bg-black text-white px-4">Reviews</span>
             </h2>
           </div>
-          <p className="text-zinc-600 text-[10px] font-bold tracking-widest uppercase">Verified Audience Only</p>
+          <div className="hidden md:block text-right">
+            <p className="font-mono text-[10px] font-bold tracking-widest uppercase text-black/40">Volume XIV • Issue 08</p>
+            <p className="font-serif italic text-xl text-black">"Fine cinema for fine people"</p>
+          </div>
         </div>
 
-        <div className="flex flex-col lg:flex-row gap-16 items-start">
+        <div className="flex flex-col lg:flex-row gap-16 items-stretch">
           
-          {/* 1. 왼쪽: 정보 및 정밀 컨트롤러 */}
-          <div className="w-full lg:w-[280px] space-y-12 shrink-0">
+          {/* 1. Left: Info & Controls */}
+          <div className="w-full lg:w-[300px] flex flex-col justify-between shrink-0">
             <AnimatePresence mode="wait">
               <motion.div
                 key={`info-${current.id}`}
                 initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 20 }}
                 className="space-y-6"
               >
-                <h3 className="text-5xl font-black italic tracking-tighter uppercase leading-[0.85] text-white break-keep">
-                  {current.title}
-                </h3>
-                <div className="flex items-center gap-3 text-2xl font-black font-mono text-purple-500 italic">
-                  <span className="text-yellow-500">★</span> {current.avgRating.toFixed(1)}
+                <div className="space-y-2">
+                  <h3 className="font-serif text-4xl italic tracking-tighter uppercase leading-[0.9] text-black">
+                    {current.title}
+                  </h3>
+                  <div className="h-1 w-16 bg-black"></div>
                 </div>
+                
+                <div className="flex items-center gap-4">
+                  <div className="flex gap-1">
+                    {[1,2,3,4,5].map(s => (
+                      <span key={s} className={`text-xl ${s <= Math.round(current.avgRating) ? 'text-black' : 'text-black/10'}`}>★</span>
+                    ))}
+                  </div>
+                  <span className="font-mono text-lg font-bold italic text-black">{current.avgRating.toFixed(1)}</span>
+                </div>
+
+                <button 
+                  onClick={() => navigate(`/movies/${current.id}`)} // 경로 /movies/로 통일
+                  className="w-full py-3.5 border-[3px] border-black bg-white text-black font-serif italic text-base hover:bg-black hover:text-white transition-all shadow-[5px_5px_0_0_#000] active:translate-x-1 active:translate-y-1 active:shadow-none"
+                >
+                  View Full Archive
+                </button>
               </motion.div>
             </AnimatePresence>
 
-            {/* ✨ 수정된 정밀 컨트롤러 영역 */}
-            <div className="space-y-6 pt-8 border-t border-white/5">
-              <div className="flex justify-between items-end mb-2">
-                <span className="text-zinc-600 font-black italic text-sm tracking-tighter uppercase">Progress</span>
-                <span className="text-zinc-400 font-black font-mono italic text-lg tracking-widest">
-                  <span className="text-purple-500">{index + 1}</span> / {movies.length}
+            {/* Progress & Controls */}
+            <div className="space-y-6 pt-10 border-t-2 border-black/10 mt-10 lg:mt-0">
+              <div className="flex justify-between items-end">
+                <span className="font-typewriter text-[9px] text-black/40 uppercase tracking-widest">Reel Progress</span>
+                <span className="font-mono text-base font-bold italic text-black">
+                  {String(index + 1).padStart(2, '0')} / {String(movies.length).padStart(2, '0')}
                 </span>
               </div>
               
-              {/* 진행 바 (배경) */}
-              <div className="h-[3px] w-full bg-zinc-900 rounded-full relative overflow-hidden">
-                {/* 실제 진행도 (게이지) - 프레임워크에 맞춰 정확한 %로 이동 */}
+              <div className="h-1 w-full bg-black/5 rounded-full relative overflow-hidden">
                 <motion.div 
                   initial={false}
                   animate={{ width: `${progressWidth}%` }}
                   transition={{ type: "spring", stiffness: 300, damping: 30 }}
-                  className="absolute h-full bg-gradient-to-r from-purple-800 to-purple-500 shadow-[0_0_15px_rgba(147,51,234,0.6)]" 
+                  className="absolute h-full bg-black" 
                 />
               </div>
 
-              <div className="flex gap-4">
-                <button onClick={prevMovie} className="p-4 rounded-xl border border-white/5 bg-zinc-900/50 hover:bg-purple-600 hover:text-white transition-all group">
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" className="group-active:scale-75 transition-transform"><path d="M15 18l-6-6 6-6"/></svg>
+              <div className="flex gap-3">
+                <button onClick={prevMovie} className="flex-1 py-3 border-2 border-black hover:bg-black hover:text-white transition-all group">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" className="mx-auto group-active:-translate-x-1 transition-transform"><path d="M15 18l-6-6 6-6"/></svg>
                 </button>
-                <button onClick={nextMovie} className="p-4 rounded-xl border border-white/5 bg-zinc-900/50 hover:bg-purple-600 hover:text-white transition-all group">
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" className="group-active:scale-75 transition-transform"><path d="M9 18l6-6-6-6"/></svg>
+                <button onClick={nextMovie} className="flex-1 py-3 border-2 border-black hover:bg-black hover:text-white transition-all group">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" className="mx-auto group-active:translate-x-1 transition-transform"><path d="M9 18l6-6-6-6"/></svg>
                 </button>
               </div>
             </div>
           </div>
 
-          {/* 2. 중앙: 세로로 나열된 티켓 리뷰 3개 */}
-          <div className="flex-1 w-full flex flex-col gap-6">
+          {/* 2. Center: Ticket Reviews */}
+          <div className="flex-1 flex flex-col gap-5">
             <AnimatePresence mode="wait">
               <motion.div 
                 key={`list-${current.id}`}
-                className="space-y-6"
+                className="space-y-5"
               >
                 {current.latestReviews.length > 0 ? current.latestReviews.map((rev: string, i: number) => (
                   <motion.div
                     key={i}
-                    initial={{ opacity: 0, y: 30 }}
+                    initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: i * 0.1, duration: 0.5, ease: "easeOut" }}
-                    className="relative w-full bg-[#141414] border border-white/5 p-8 rounded-2xl shadow-xl group hover:border-purple-500/30 transition-colors"
-                    style={{ 
-                      // ✨ 메가박스 스타일의 왼쪽 절취선 (세로 나열에도 유지)
-                      maskImage: 'radial-gradient(circle at 0px 50%, transparent 12px, black 13px)',
-                      WebkitMaskImage: 'radial-gradient(circle at 0px 50%, transparent 12px, black 13px)'
-                    }}
+                    transition={{ delay: i * 0.1, duration: 0.5 }}
+                    className="relative w-full bg-white border-[3px] border-black p-6 shadow-[6px_6px_0_0_#000] group hover:bg-[#f4f1ea] transition-colors"
                   >
-                    <div className="absolute left-0 top-0 bottom-0 w-1.5 bg-purple-600/30 group-hover:bg-purple-600 transition-colors" />
-                    <div className="flex flex-col gap-2">
-                      <div className="flex justify-between items-center mb-2">
-                        <span className="text-[10px] font-black text-purple-500/50 tracking-[0.2em] uppercase italic">Original Ticket {i+1}</span>
-                        <div className="flex gap-1">
-                          {[1,2,3].map(s => <div key={s} className="w-1 h-1 rounded-full bg-zinc-800" />)}
+                    <div className="flex flex-col gap-3">
+                      <div className="flex justify-between items-center">
+                        <span className="font-mono text-[8px] font-bold text-black/40 tracking-[0.3em] uppercase">Testimonial 0{i+1}</span>
+                        <div className="flex gap-1.5">
+                          {[1,2,3].map(s => <div key={s} className="w-1 h-1 rounded-full bg-black/10" />)}
                         </div>
                       </div>
-                      <p className="text-zinc-400 italic text-base leading-relaxed pl-4 border-l border-white/5 group-hover:text-zinc-200 transition-colors">
+                      <p className="font-serif italic text-lg text-black leading-snug">
                         "{rev}"
                       </p>
+                      <div className="pt-3 border-t border-black/5 flex justify-end">
+                        <span className="font-typewriter text-[9px] text-black/30 uppercase tracking-widest">— Verified Patron</span>
+                      </div>
                     </div>
                   </motion.div>
                 )) : (
-                  <div className="py-20 border-2 border-dashed border-white/5 rounded-3xl flex items-center justify-center">
-                    <p className="text-zinc-800 font-black italic text-xl uppercase tracking-tighter">Waiting for reviews...</p>
+                  <div className="h-full border-4 border-dashed border-black/10 flex items-center justify-center p-20">
+                    <p className="font-serif italic text-xl text-black/20 uppercase tracking-tighter">Awaiting Manifest...</p>
                   </div>
                 )}
               </motion.div>
             </AnimatePresence>
           </div>
 
-          {/* 3. 오른쪽: 대형 포스터 */}
+          {/* 3. Right: Large Poster */}
           <div className="w-full lg:w-[340px] shrink-0">
             <AnimatePresence mode="wait">
               <motion.div
                 key={`poster-${current.id}`}
-                initial={{ opacity: 0, scale: 0.95, rotate: 2 }} animate={{ opacity: 1, scale: 1, rotate: 0 }} exit={{ opacity: 0, scale: 1.05 }}
-                className="relative aspect-[2/3] rounded-3xl overflow-hidden shadow-[0_60px_100px_rgba(0,0,0,0.7)] border border-white/10 group"
+                initial={{ opacity: 0, scale: 0.98 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 1.02 }}
+                className="relative aspect-[2/3] border-[8px] border-black shadow-[15px_15px_0_0_#000] overflow-hidden group"
               >
-                <img src={current.posterUrl} alt={current.title} className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-110" />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent" />
+                <img src={current.posterUrl} alt={current.title} className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-1000" />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-60" />
                 <div className="absolute bottom-8 left-8 right-8">
-                  <p className="text-[10px] font-black text-purple-400 tracking-[0.4em] uppercase italic mb-2">Now Showing</p>
-                  <p className="text-xl font-bold italic text-white uppercase tracking-tight line-clamp-1">{current.title}</p>
+                  <p className="font-typewriter text-[9px] text-white/60 tracking-[0.4em] uppercase mb-1">Now Playing</p>
+                  <p className="font-serif text-xl italic text-white uppercase tracking-tight leading-tight">{current.title}</p>
                 </div>
               </motion.div>
             </AnimatePresence>

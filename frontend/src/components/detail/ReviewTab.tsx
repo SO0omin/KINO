@@ -1,3 +1,4 @@
+
 import React from 'react';
 
 interface ReviewDTO {
@@ -24,90 +25,112 @@ const ReviewTab = ({ totalCount, reviews, currentPage, onPageChange, onSortChang
   const totalPages = Math.ceil(totalCount / 10);
 
   return (
-    <div className="max-w-7xl mx-auto py-16 bg-white text-black font-sans">
-      {/* 1. 상단 총평수 및 본 영화 등록 버튼 */}
-      <div className="flex justify-between items-center mb-10 border-b border-zinc-100 pb-6">
-        <h3 className="text-2xl font-bold">
-          영화 제목에 대한 <span className="text-purple-700">{totalCount.toLocaleString()}</span>개의 이야기가 있어요!
-        </h3>
-      </div>
-
-      {/* 2. 정렬 필터 */}
-      <div className="flex justify-between items-center mb-4 text-xs font-bold uppercase tracking-widest text-zinc-400">
-        <span>전체 {totalCount} 건</span>
-        <div className="flex gap-4">
-          <button onClick={() => onSortChange('id,desc')} className={currentSort.includes('id') ? 'text-black' : ''}>최신순</button>
-          <span className="text-zinc-200">|</span>
-          <button onClick={() => onSortChange('averageScore,desc')} className={currentSort.includes('averageScore') ? 'text-black underline underline-offset-4' : ''}>평점순</button>
+    <div className="max-w-7xl mx-auto py-16">
+      {/* 1. Header */}
+      <div className="flex flex-col md:flex-row justify-between items-end mb-16 border-b-[6px] border-black pb-10">
+        <div className="space-y-4">
+          <span className="font-typewriter text-[10px] text-black/40 tracking-[0.6em] uppercase">Audience Archive</span>
+          <h3 className="font-serif text-5xl italic tracking-tighter text-black uppercase leading-none">
+            Patron <span className="bg-black text-white px-4">Ledger</span>
+          </h3>
         </div>
-      </div>
-
-      {/* 3. 관람평 쓰기 안내 섹션 */}
-      <div className="flex items-start gap-8 p-8 bg-zinc-50/50 rounded-lg border border-zinc-100 mb-8 relative">
-        <div className="w-12 h-12 rounded-full bg-[#503396] flex items-center justify-center text-white font-black shrink-0 shadow-lg shadow-purple-100">
-          K
-        </div>
-        <div className="flex-1 pt-1">
-          <p className="text-zinc-800 font-bold mb-1 leading-relaxed">
-            재미있게 보셨나요? 영화의 어떤 점이 좋았는지 이야기해주세요.
+        <div className="text-right mt-6 md:mt-0">
+          <p className="font-mono text-sm font-bold text-black tracking-widest">
+            TOTAL ENTRIES: <span className="text-red-800">{totalCount.toLocaleString()}</span>
           </p>
-          <p className="text-zinc-400 text-xs">포인트는 관람평 최대 10편까지 지급 가능합니다.</p>
         </div>
-        {/* 나중에 모달과 연결될 클릭 포인트 */}
-        <button onClick={onWriteClick} className="flex items-center gap-2 text-zinc-400 hover:text-purple-600 transition-all absolute right-8 top-1/2 -translate-y-1/2">
-           <span className="text-sm font-bold">관람평쓰기</span>
-           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+      </div>
+
+      {/* 2. Controls */}
+      <div className="flex justify-between items-center mb-10">
+        <div className="flex items-center gap-8">
+          <button 
+            onClick={() => onSortChange('id,desc')} 
+            className={`font-mono text-[10px] uppercase tracking-[0.3em] transition-all ${currentSort.includes('id') ? 'text-black font-black border-b-2 border-black' : 'text-black/30 hover:text-black'}`}
+          >
+            Chronological
+          </button>
+          <button 
+            onClick={() => onSortChange('averageScore,desc')} 
+            className={`font-mono text-[10px] uppercase tracking-[0.3em] transition-all ${currentSort.includes('averageScore') ? 'text-black font-black border-b-2 border-black' : 'text-black/30 hover:text-black'}`}
+          >
+            Critical Acclaim
+          </button>
+        </div>
+
+        <button 
+          onClick={onWriteClick} 
+          className="group flex items-center gap-4 px-8 py-4 border-[3px] border-black bg-white hover:bg-black hover:text-white transition-all shadow-[6px_6px_0_0_#000] active:translate-x-1 active:translate-y-1 active:shadow-none"
+        >
+          <span className="font-serif italic text-lg tracking-tight">Write Review</span>
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="group-hover:rotate-12 transition-transform"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
         </button>
       </div>
 
-      {/* 4. 리뷰 리스트 */}
-      <div className="divide-y divide-zinc-100 border-t border-zinc-100">
-        {reviews.map((r) => (
-          <div key={r.id} className="py-12 flex items-start gap-12 group">
-            {/* 프로필 이미지 및 닉네임 하단 배치 */}
-            <div className="flex flex-col items-center w-24 shrink-0 gap-4">
-              <div className="w-16 h-16 rounded-full bg-zinc-50 flex items-center justify-center overflow-hidden border border-zinc-100">
+      {/* 3. Review List - Ticket Style */}
+      <div className="space-y-10">
+        {reviews.map((r, i) => (
+          <div key={r.id} className="relative flex flex-col md:flex-row items-stretch border-[4px] border-black bg-white shadow-[12px_12px_0_0_rgba(0,0,0,0.05)] overflow-hidden group hover:shadow-[12px_12px_0_0_#000] transition-all">
+            {/* Ticket Stub (Left) */}
+            <div className="w-full md:w-48 bg-[#f4f1ea]/50 border-b-[4px] md:border-b-0 md:border-r-[4px] border-black p-8 flex flex-col items-center justify-center gap-4 shrink-0 relative">
+              {/* Perforation Effect */}
+              <div className="absolute -right-3 top-1/2 -translate-y-1/2 w-6 h-6 rounded-full bg-[#F5F2ED] border-2 border-black hidden md:block"></div>
+              
+              <div className="w-20 h-20 rounded-full border-2 border-black bg-white overflow-hidden shadow-[4px_4px_0_0_rgba(0,0,0,0.1)]">
                 {r.profileImage && r.profileImage !== 'default' ? (
-                  <img src={r.profileImage} alt="profile" className="w-full h-full object-cover" />
+                  <img src={r.profileImage} alt="profile" className="w-full h-full object-cover grayscale" />
                 ) : (
-                  <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#e4e4e7" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                  <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#000" strokeOpacity="0.1" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mx-auto mt-5"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
                 )}
               </div>
-              <span className="text-[11px] font-bold text-zinc-400 text-center leading-tight">
-                {r.maskedUsername}
-              </span>
+              <div className="text-center">
+                <p className="font-mono text-[9px] font-bold text-black/40 uppercase tracking-tighter mb-1">Patron ID</p>
+                <p className="font-typewriter text-[11px] text-black uppercase">{r.maskedUsername}</p>
+              </div>
             </div>
             
-            <div className="flex-1 pt-1">
-              <div className="flex items-center gap-6 mb-4">
-                <div className="flex items-center gap-4">
-                  <span className="text-[10px] font-black text-zinc-300 uppercase">관람평</span>
-                  <span className="text-4xl font-black text-[#503396] leading-none">{r.averageScore.toFixed(1)}</span>
-                  <div className="text-[11px] text-purple-500 font-bold border-l pl-4 border-zinc-100 leading-tight">
-                    {r.topKeywords.split('·').map(k => <div key={k}>{k}</div>)}
+            {/* Ticket Body (Right) */}
+            <div className="flex-1 p-10 flex flex-col justify-between relative">
+              <div className="space-y-6">
+                <div className="flex items-center gap-6">
+                  <div className="flex flex-col">
+                    <span className="font-typewriter text-[9px] text-black/40 uppercase tracking-widest mb-1">Score</span>
+                    <span className="font-serif text-5xl font-black italic text-black leading-none">{r.averageScore.toFixed(1)}</span>
+                  </div>
+                  <div className="h-12 w-px bg-black/10 mx-2"></div>
+                  <div className="flex flex-col">
+                    <span className="font-typewriter text-[9px] text-black/40 uppercase tracking-widest mb-2">Highlights</span>
+                    <div className="flex flex-wrap gap-2">
+                      {r.topKeywords.split('·').map(k => (
+                        <span key={k} className="font-mono text-[9px] font-bold text-red-800 border border-red-800/20 px-2 py-0.5 uppercase">{k}</span>
+                      ))}
+                    </div>
                   </div>
                 </div>
+                <p className="font-serif italic text-2xl text-black/80 leading-relaxed">"{r.content}"</p>
               </div>
-              <p className="text-zinc-800 text-lg leading-relaxed font-medium">{r.content}</p>
-            </div>
-            
-            <div className="text-right">
-              <span className="text-[11px] text-zinc-300 font-mono font-bold">{r.createdAt}</span>
+              
+              <div className="mt-8 pt-6 border-t border-black/5 flex justify-between items-end">
+                <div className="flex gap-1">
+                  {[1,2,3].map(s => <div key={s} className="w-1.5 h-1.5 bg-black/10 rounded-full" />)}
+                </div>
+                <span className="font-mono text-[10px] text-black/20 font-bold uppercase tracking-[0.3em]">{r.createdAt}</span>
+              </div>
             </div>
           </div>
         ))}
       </div>
 
-      {/* 5. 동적 페이지네이션 */}
+      {/* 4. Pagination */}
       {totalPages > 1 && (
-        <div className="flex justify-center mt-16 gap-2">
+        <div className="flex justify-center mt-20 gap-4">
           {Array.from({ length: totalPages }).map((_, i) => (
             <button 
               key={i}
               onClick={() => onPageChange(i)}
-              className={`w-10 h-10 border text-sm font-bold transition-all ${currentPage === i ? 'bg-zinc-900 text-white border-zinc-900 shadow-xl' : 'bg-white text-zinc-400 border-zinc-200 hover:border-zinc-900'}`}
+              className={`w-12 h-12 border-[3px] border-black font-mono text-sm font-bold transition-all shadow-[4px_4px_0_0_rgba(0,0,0,0.1)] ${currentPage === i ? 'bg-black text-white shadow-none translate-x-1 translate-y-1' : 'bg-white text-black hover:bg-[#f4f1ea]'}`}
             >
-              {i + 1}
+              {String(i + 1).padStart(2, '0')}
             </button>
           ))}
         </div>
