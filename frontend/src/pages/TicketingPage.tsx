@@ -5,6 +5,7 @@ import { mapRatingToStyle } from '../mappers/ticketingMapper';
 import type { Screening } from '../types/ticketing';
 import SeatPreviewModal from '../components/ticketing/SeatPreviewModal';
 import FilmStrip from '../components/ticketing/FilmStrip';
+import { useLocation } from 'react-router-dom';
 
 const VISIBLE_COUNT = 10;
 const VISIBLE_HOUR_COUNT = 10;
@@ -13,6 +14,18 @@ const TicketingPage: React.FC = () => {
   const dateList = generateDateList(30);
   const { states, setters, handlers, memos } = useTicketing(dateList);
   const dateInputRef = useRef<HTMLInputElement>(null);
+
+  const location = useLocation();
+
+  useEffect(() => {
+    const initialMovieId = location.state?.movieId;
+
+    if (initialMovieId && !states.selectedMovies.includes(initialMovieId) && states.movies.length > 0) {
+      handlers.toggleMovie(initialMovieId);
+      
+      window.history.replaceState({}, document.title);
+    }
+  }, [location.state, states.movies, handlers]);
 
   const xBtnClass = "text-red-700 font-bold ml-1 hover:scale-125 transition-transform text-lg outline-none focus:outline-none focus-visible:outline-none !ring-0 !shadow-none !bg-transparent !border-none !p-0 select-none";
 
@@ -78,69 +91,195 @@ const TicketingPage: React.FC = () => {
           </div>
         </div>
 
-        <div className="grid grid-cols-4 gap-0 border-[6px] border-black h-[800px] bg-white shadow-[20px_20px_0_0_#000] relative">
-          <div className="border-r-[6px] border-black flex flex-col h-full bg-[#f4f1ea]">
-            <div className="bg-black text-white py-4 text-center font-serif text-2xl italic tracking-widest uppercase border-b-4 border-black">Theater</div>
-            <div className="flex border-b-4 border-black h-14 bg-white">
-              <button onClick={() => setters.setActiveTab('ALL')} className={`flex-1 text-xs font-bold uppercase tracking-[0.2em] transition-all border-r-2 border-black/10 ${states.activeTab === 'ALL' ? 'bg-black text-white' : 'hover:bg-[#e6dcc5]'}`}>Regions</button>
-              <button onClick={() => setters.setActiveTab('SPECIAL')} className={`flex-1 text-xs font-bold uppercase tracking-[0.2em] transition-all ${states.activeTab === 'SPECIAL' ? 'bg-black text-white' : 'hover:bg-[#e6dcc5]'}`}>Special</button>
+        <div className="grid grid-cols-4 gap-0 border-[6px] border-black h-[800px] min-h-0 bg-white shadow-[20px_20px_0_0_#000] relative">
+          <div className="border-r-[6px] border-black flex flex-col h-full min-h-0 bg-[#f4f1ea]">
+            <div className="bg-black text-white py-4 text-center font-serif text-2xl italic tracking-widest uppercase border-b-4 border-black">
+              Theater
             </div>
-            <div className="flex flex-1 overflow-hidden">
-              <div className="w-1/2 border-r-4 border-black/20 overflow-y-auto custom-scrollbar bg-white/40">
-                {states.activeTab === 'ALL' ? states.regions.map(r => (<div key={r.id} onClick={() => setters.setSelectedRegionId(r.id)} className={`p-5 cursor-pointer text-xs font-bold uppercase tracking-widest border-b border-black/5 transition-colors ${states.selectedRegionId === r.id ? 'bg-black text-white' : 'hover:bg-white'}`}>{r.name}</div>)) : states.specialTypes.map(type => (<div key={type} onClick={() => setters.setSelectedSpecialType(type)} className={`p-5 cursor-pointer text-xs font-bold uppercase tracking-widest border-b border-black/5 transition-colors ${states.selectedSpecialType === type ? 'bg-black text-white' : 'hover:bg-white'}`}>{type}</div>))}
-              </div>
-              <div className="w-1/2 overflow-y-auto custom-scrollbar bg-white">
-                {states.theaters.map(t => (
-                  <div key={t.id} onClick={() => handlers.toggleTheater(t.id, t.name)} className={`p-5 cursor-pointer text-sm font-medium border-b border-black/5 transition-all ${states.selectedTheaters.includes(t.id) ? 'bg-red-700 text-white font-bold' : 'text-black hover:bg-[#f4f1ea]'} ${!memos.theaterSet.has(t.id) && states.selectedMovies.length > 0 ? 'opacity-50' : ''}`}>{t.name}</div>
-                ))}
+
+            <div className="flex border-b-4 border-black h-14 bg-white shrink-0">
+              <button
+                onClick={() => setters.setActiveTab('ALL')}
+                className={`flex-1 text-xs font-bold uppercase tracking-[0.2em] transition-all border-r-2 border-black/10 ${
+                  states.activeTab === 'ALL' ? 'bg-black text-white' : 'hover:bg-[#e6dcc5]'
+                }`}
+              >
+                Regions
+              </button>
+              <button
+                onClick={() => setters.setActiveTab('SPECIAL')}
+                className={`flex-1 text-xs font-bold uppercase tracking-[0.2em] transition-all ${
+                  states.activeTab === 'SPECIAL' ? 'bg-black text-white' : 'hover:bg-[#e6dcc5]'
+                }`}
+              >
+                Special
+              </button>
+            </div>
+
+            <div className="flex-1 min-h-0 overflow-hidden">
+              <div className="flex h-full">
+                <div className="w-1/2 border-r-4 border-black/20 overflow-y-auto custom-scrollbar bg-white/40 min-h-0">
+                  {states.activeTab === 'ALL'
+                    ? states.regions.map((r) => (
+                        <div
+                          key={r.id}
+                          onClick={() => setters.setSelectedRegionId(r.id)}
+                          className={`p-5 cursor-pointer text-xs font-bold uppercase tracking-widest border-b border-black/5 transition-colors ${
+                            states.selectedRegionId === r.id ? 'bg-black text-white' : 'hover:bg-white'
+                          }`}
+                        >
+                          {r.name}
+                        </div>
+                      ))
+                    : states.specialTypes.map((type) => (
+                        <div
+                          key={type}
+                          onClick={() => setters.setSelectedSpecialType(type)}
+                          className={`p-5 cursor-pointer text-xs font-bold uppercase tracking-widest border-b border-black/5 transition-colors ${
+                            states.selectedSpecialType === type ? 'bg-black text-white' : 'hover:bg-white'
+                          }`}
+                        >
+                          {type}
+                        </div>
+                      ))}
+                </div>
+
+                <div className="w-1/2 overflow-y-auto custom-scrollbar bg-white min-h-0">
+                  {states.theaters.map((t) => (
+                    <div
+                      key={t.id}
+                      onClick={() => handlers.toggleTheater(t.id, t.name)}
+                      className={`p-5 cursor-pointer text-sm font-medium border-b border-black/5 transition-all ${
+                        states.selectedTheaters.includes(t.id)
+                          ? 'bg-red-700 text-white font-bold'
+                          : 'text-black hover:bg-[#f4f1ea]'
+                      } ${!memos.theaterSet.has(t.id) && states.selectedMovies.length > 0 ? 'opacity-50' : ''}`}
+                    >
+                      {t.name}
+                    </div>
+                  ))}
+                </div>
               </div>
             </div>
-            <div className="p-4 bg-black/5 min-h-[160px] border-t-[6px] border-black">
+
+            <div className="p-4 bg-black/5 h-[160px] border-t-[6px] border-black shrink-0">
               <div className="grid grid-cols-2 gap-2">
-                {states.selectedTheatersInfo.length === 0 ? (<div className="col-span-2 h-28 flex flex-col items-center justify-center text-gray-500 text-[10px] text-center p-4 border-2 border-dashed border-black/20 uppercase tracking-widest leading-relaxed">Select Venue<br/>(Max 4)</div>) : (
+                {states.selectedTheatersInfo.length === 0 ? (
+                  <div className="col-span-2 h-28 flex flex-col items-center justify-center text-gray-500 text-[10px] text-center p-4 border-2 border-dashed border-black/20 uppercase tracking-widest leading-relaxed">
+                    Select Venue<br />(Max 4)
+                  </div>
+                ) : (
                   <>
-                    {states.selectedTheatersInfo.map(t => (
-                      <div key={t.id} className="flex items-center justify-between border-2 border-black px-2 py-2 bg-white shadow-[3px_3px_0_0_rgba(0,0,0,0.1)] h-12">
-                        <span className="text-[12px] uppercase font-bold truncate flex-1 tracking-tighter leading-none">{t.name}</span>
-                        <button onClick={(e) => { e.stopPropagation(); handlers.toggleTheater(t.id); }} className={xBtnClass} style={{ WebkitTapHighlightColor: 'transparent' }}>×</button>
+                    {states.selectedTheatersInfo.map((t) => (
+                      <div
+                        key={t.id}
+                        className="flex items-center justify-between border-2 border-black px-2 py-2 bg-white shadow-[3px_3px_0_0_rgba(0,0,0,0.1)] h-12"
+                      >
+                        <span className="text-[12px] uppercase font-bold truncate flex-1 tracking-tighter leading-none">
+                          {t.name}
+                        </span>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handlers.toggleTheater(t.id);
+                          }}
+                          className={xBtnClass}
+                          style={{ WebkitTapHighlightColor: 'transparent' }}
+                        >
+                          ×
+                        </button>
                       </div>
                     ))}
-                    {Array.from({ length: 4 - states.selectedTheatersInfo.length }).map((_, i) => (<div key={`empty-t-${i}`} className="border-2 border-dashed border-black/10 h-12 flex items-center justify-center text-xs opacity-20 font-bold">+</div>))}
+                    {Array.from({ length: 4 - states.selectedTheatersInfo.length }).map((_, i) => (
+                      <div
+                        key={`empty-t-${i}`}
+                        className="border-2 border-dashed border-black/10 h-12 flex items-center justify-center text-xs opacity-20 font-bold"
+                      >
+                        +
+                      </div>
+                    ))}
                   </>
                 )}
               </div>
             </div>
           </div>
 
-          <div className="border-r-[6px] border-black flex flex-col h-full bg-[#f4f1ea]">
-            <div className="bg-black text-white py-4 text-center font-serif text-2xl italic tracking-widest uppercase border-b-4 border-black">Movie</div>
-            <div className="overflow-y-auto flex-1 custom-scrollbar bg-white">
-              {states.movies.map(m => {
+
+          <div className="border-r-[6px] border-black flex flex-col h-full min-h-0 bg-[#f4f1ea]">
+            <div className="bg-black text-white py-4 text-center font-serif text-2xl italic tracking-widest uppercase border-b-4 border-black">
+              Movie
+            </div>
+
+            <div className="flex-1 min-h-0 overflow-y-auto custom-scrollbar bg-white">
+              {states.movies.map((m) => {
                 const style = mapRatingToStyle(m.ageRating);
                 return (
-                  <div key={m.id} onClick={() => handlers.toggleMovie(m.id)} className={`p-5 cursor-pointer border-b border-black/10 transition-all flex items-center group ${states.selectedMovies.includes(m.id) ? 'bg-black text-white' : 'text-black hover:bg-[#f4f1ea]'} ${!memos.movieSet.has(m.id) && states.selectedTheaters.length > 0 ? 'opacity-50' : ''}`}>
-                    <span className={`${style.color} text-white text-[10px] font-bold w-7 h-7 flex items-center justify-center border-2 border-black shadow-[2px_2px_0_0_#000] shrink-0 mr-4 uppercase font-mono`}>{style.text}</span>
-                    <span className="text-sm font-bold uppercase tracking-tight truncate group-hover:italic">{m.title}</span>
+                  <div
+                    key={m.id}
+                    onClick={() => handlers.toggleMovie(m.id)}
+                    className={`p-5 cursor-pointer border-b border-black/10 transition-all flex items-center group ${
+                      states.selectedMovies.includes(m.id)
+                        ? 'bg-black text-white'
+                        : 'text-black hover:bg-[#f4f1ea]'
+                    } ${!memos.movieSet.has(m.id) && states.selectedTheaters.length > 0 ? 'opacity-50' : ''}`}
+                  >
+                    <span
+                      className={`${style.color} text-white text-[10px] font-bold w-7 h-7 flex items-center justify-center border-2 border-black shadow-[2px_2px_0_0_#000] shrink-0 mr-4 uppercase font-mono`}
+                    >
+                      {style.text}
+                    </span>
+                    <span className="text-sm font-bold uppercase tracking-tight truncate group-hover:italic">
+                      {m.title}
+                    </span>
                   </div>
                 );
               })}
             </div>
-            <div className="p-5 bg-black/5 min-h-[160px] border-t-[6px] border-black">
+
+            <div className="p-5 bg-black/5 h-[160px] border-t-[6px] border-black shrink-0">
               <div className="grid grid-cols-3 gap-3 h-full">
-                {states.selectedMovies.length === 0 ? (<div className="col-span-3 h-28 flex flex-col items-center justify-center text-gray-500 text-[10px] text-center p-4 border-2 border-dashed border-black/20 uppercase tracking-widest leading-relaxed">Select Movie<br/>(Max 3)</div>) : (
+                {states.selectedMovies.length === 0 ? (
+                  <div className="col-span-3 h-28 flex flex-col items-center justify-center text-gray-500 text-[10px] text-center p-4 border-2 border-dashed border-black/20 uppercase tracking-widest leading-relaxed">
+                    Select Movie<br />(Max 3)
+                  </div>
+                ) : (
                   <>
-                    {states.selectedMovies.map(mId => (
-                      <div key={mId} className="relative aspect-[2/3] border-2 border-black bg-white shadow-[6px_6px_0_0_rgba(0,0,0,0.1)]">
-                        <div className="absolute inset-0 p-2 flex items-center justify-center"><p className="text-[10px] text-center font-bold leading-tight uppercase overflow-hidden">{states.movies.find(m => m.id === mId)?.title}</p></div>
-                        <button onClick={(e) => { e.stopPropagation(); handlers.toggleMovie(mId); }} className={`absolute -top-2 -right-2 bg-red-700 text-white w-6 h-6 border-2 border-black flex items-center justify-center text-xs font-bold ${xBtnClass}`} style={{ WebkitTapHighlightColor: 'transparent' }}>×</button>
+                    {states.selectedMovies.map((mId) => (
+                      <div
+                        key={mId}
+                        className="relative aspect-[2/3] border-2 border-black bg-white shadow-[6px_6px_0_0_rgba(0,0,0,0.1)]"
+                      >
+                        <div className="absolute inset-0 p-2 flex items-center justify-center">
+                          <p className="text-[10px] text-center font-bold leading-tight uppercase overflow-hidden">
+                            {states.movies.find((m) => m.id === mId)?.title}
+                          </p>
+                        </div>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handlers.toggleMovie(mId);
+                          }}
+                          className={`absolute -top-2 -right-2 bg-red-700 text-white w-6 h-6 border-2 border-black flex items-center justify-center text-xs font-bold ${xBtnClass}`}
+                          style={{ WebkitTapHighlightColor: 'transparent' }}
+                        >
+                          ×
+                        </button>
                       </div>
                     ))}
-                    {Array.from({ length: 3 - states.selectedMovies.length }).map((_, i) => (<div key={`empty-m-${i}`} className="aspect-[2/3] border-2 border-dashed border-black/10 bg-transparent flex items-center justify-center"><span className="text-black/10 text-3xl font-light">+</span></div>))}
+                    {Array.from({ length: 3 - states.selectedMovies.length }).map((_, i) => (
+                      <div
+                        key={`empty-m-${i}`}
+                        className="aspect-[2/3] border-2 border-dashed border-black/10 bg-transparent flex items-center justify-center"
+                      >
+                        <span className="text-black/10 text-3xl font-light">+</span>
+                      </div>
+                    ))}
                   </>
                 )}
               </div>
             </div>
           </div>
+
 
           <div className="flex flex-col col-span-2 bg-[#f4f1ea] h-full overflow-hidden">
             <div className="bg-black text-white py-4 text-center font-serif text-2xl italic tracking-widest uppercase border-b-4 border-black">Schedule</div>
