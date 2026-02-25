@@ -51,6 +51,7 @@ public class Reservation {
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;
 
+    @Builder.Default
     @OneToMany(mappedBy = "reservation", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<ReservationTicket> tickets = new ArrayList<>();
 

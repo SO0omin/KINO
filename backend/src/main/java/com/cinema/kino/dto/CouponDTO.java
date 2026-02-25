@@ -1,13 +1,40 @@
 package com.cinema.kino.dto;
 
+import com.cinema.kino.entity.Coupon;
 import com.cinema.kino.entity.MemberCoupon;
+import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-
+@Getter
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class CouponDTO {
+
+    // 💡 [복구됨] MainService에서 사용하는 기본 쿠폰 정보 (feat/main-page)
+    private Long id;
+    private String name;
+    private String discountType;
+    private Integer discountValue;
+    private Integer minPrice;
+
+    public static CouponDTO from(Coupon coupon) {
+        return CouponDTO.builder()
+                .id(coupon.getId())
+                .name(coupon.getName())
+                .discountType(coupon.getDiscountType().name())
+                .discountValue(coupon.getDiscountValue())
+                .minPrice(coupon.getMinPrice())
+                .build();
+    }
+
+    // --------------------------------------------------------
+    // 👇 아래는 기존에 우리가 합쳤던 내부 클래스들 (dev 브랜치 로직)
+    // --------------------------------------------------------
+
     /**
      * 쿠폰 코드 등록 요청 DTO
      * POST /api/coupons/redeem

@@ -195,6 +195,14 @@ export default function PaymentPage() {
       recalc();
   }, [reservationDetail?.reservationId, selectedCouponId, usedPoints]);
 
+  if (!reservationId) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <p className="text-gray-700">잘못된 접근입니다. reservationId가 필요합니다.</p>
+      </div>
+    );
+  }
+
   if (!reservationDetail && isLoading) {
     return <div className="min-h-screen flex items-center justify-center">로딩 중...</div>;
   }
