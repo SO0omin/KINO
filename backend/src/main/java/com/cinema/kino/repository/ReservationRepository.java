@@ -7,12 +7,10 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
-import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 
-@Repository
 public interface ReservationRepository extends JpaRepository<Reservation, Long> {
+    Optional<Reservation> findByOrderId(String orderId);
 
     // 1. 특정 영화의 누적 관객수 (total_num 합산)
     // Reservation -> Screening -> Movie 경로를 조인
