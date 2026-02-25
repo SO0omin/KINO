@@ -9,6 +9,7 @@ export default function PaymentFailPage() {
 
   const errorCode = searchParams.get('code');
   const errorMessage = searchParams.get('message');
+  const reservationId = searchParams.get('reservationId');
 
   return (
     <div className="min-h-screen bg-[#fdf4e3]">
@@ -62,7 +63,9 @@ export default function PaymentFailPage() {
                 홈으로
               </button>
               <button
-                onClick={() => navigate('/payment')} // 다시 결제 페이지로 이동
+                onClick={() =>
+                  navigate(reservationId ? `/payment?reservationId=${reservationId}` : '/payment')
+                }
                 className="flex-1 flex items-center justify-center gap-2 px-6 py-4 bg-[#eb4d32] text-white rounded-xl hover:bg-[#d43d22] transition-all font-medium shadow-md shadow-orange-100"
               >
                 <RotateCcw className="w-4 h-4" />
