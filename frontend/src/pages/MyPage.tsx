@@ -11,6 +11,7 @@ import {
   getMyPageSummary,
   getMyReservations,
   getMyVouchers,
+  getMemberProfile,
   redeemCoupon,
   registerMembershipCard,
   sendPointPasswordSms,
@@ -18,11 +19,17 @@ import {
   type MyMembershipCardItem,
   type MyCouponItem,
   updatePointPassword,
+  updateMemberProfile,
+  updateMemberPassword,
   verifyPointPasswordSms,
   registerVoucher,
+  removeMovieLike,
+  getMyWishMovies,
   type MyVoucherItem,
   type MyPageSummary,
   type MyReservationItem,
+  type MemberProfile,
+  type MyWishMovieItem,
 } from "../api/myPageApi";
 
 type PageKey =
@@ -37,7 +44,9 @@ type PageKey =
   | "inquiries"
   | "payments"
   | "cards"
-  | "point-password";
+  | "point-password"
+  | "profile"
+  | "profile-preferences";
 
 const PATH_TO_KEY: Record<string, PageKey> = {
   "/my-page": "dashboard",
@@ -53,6 +62,8 @@ const PATH_TO_KEY: Record<string, PageKey> = {
   "/my-page/inquiries": "inquiries",
   "/my-page/payments": "payments",
   "/my-page/cards": "cards",
+  "/my-page/profile": "profile",
+  "/my-page/profile/preferences": "profile-preferences",
 };
 
 type MenuChild = {
@@ -135,6 +146,14 @@ function formatDateDot(value?: string) {
   ).padStart(2, "0")}`;
 }
 
+function formatDateSimple(value: string) {
+  const date = new Date(value?.includes(" ") ? value.replace(" ", "T") : value);
+  if (Number.isNaN(date.getTime())) return "-";
+  return `${date.getFullYear()}.${String(date.getMonth() + 1).padStart(2, "0")}.${String(
+    date.getDate()
+  ).padStart(2, "0")}`;
+}
+
 function shiftDays(base: Date, days: number) {
   const d = new Date(base);
   d.setDate(d.getDate() + days);
@@ -174,6 +193,8 @@ function breadcrumbLabels(pageKey: PageKey) {
     payments: ["나의 메가박스", "중앙페이 결제수단 관리"],
     cards: ["나의 메가박스", "멤버십 포인트", "멤버십 카드관리"],
     "point-password": ["나의 메가박스", "멤버십 포인트", "포인트 비밀번호 설정"],
+    profile: ["나의 메가박스", "회원정보", "개인정보 수정"],
+    "profile-preferences": ["나의 메가박스", "회원정보", "선호정보 수정"],
   };
   return byPage[pageKey];
 }
@@ -255,6 +276,41 @@ export default function MyPage() {
   const [cardCvcInput, setCardCvcInput] = useState("");
   const [cardRegistering, setCardRegistering] = useState(false);
   const [cardRegisterError, setCardRegisterError] = useState("");
+  const [profileLoading, setProfileLoading] = useState(false);
+  const [profileSaving, setProfileSaving] = useState(false);
+  const [showPasswordChangeModal, setShowPasswordChangeModal] = useState(false);
+  const [currentPasswordInput, setCurrentPasswordInput] = useState("");
+  const [newPasswordInput, setNewPasswordInput] = useState("");
+  const [newPasswordConfirmInput, setNewPasswordConfirmInput] = useState("");
+  const [passwordChanging, setPasswordChanging] = useState(false);
+  const [memberProfile, setMemberProfile] = useState<MemberProfile | null>(null);
+  const [profileName, setProfileName] = useState("");
+  const [profileTel, setProfileTel] = useState("");
+  const [profileEmail, setProfileEmail] = useState("");
+  const [profileBirthDate, setProfileBirthDate] = useState("");
+  const [prefGenre, setPrefGenre] = useState("");
+  const [prefTime, setPrefTime] = useState("");
+  const [profileImageUrl, setProfileImageUrl] = useState("");
+  const [marketingPolicyAgreed, setMarketingPolicyAgreed] = useState(false);
+  const [marketingEmailAgreed, setMarketingEmailAgreed] = useState(false);
+  const [marketingSmsAgreed, setMarketingSmsAgreed] = useState(false);
+  const [marketingPushAgreed, setMarketingPushAgreed] = useState(false);
+  const [preferredCinemas, setPreferredCinemas] = useState<string[]>(["", "", "", "", ""]);
+  const [preferredGenres, setPreferredGenres] = useState<string[]>(["", "", ""]);
+  const [preferredTimeSlot, setPreferredTimeSlot] = useState("");
+  const [socialNaverLinked, setSocialNaverLinked] = useState(false);
+  const [socialKakaoLinked, setSocialKakaoLinked] = useState(false);
+  const [movieStoryTab, setMovieStoryTab] = useState<"timeline" | "review" | "watched" | "wish">("timeline");
+  const [selectedTimelineYear, setSelectedTimelineYear] = useState<number>(new Date().getFullYear());
+  const [showWatchedModal, setShowWatchedModal] = useState(false);
+  const [watchedTicketCodeInput, setWatchedTicketCodeInput] = useState("");
+  const [watchedMovies, setWatchedMovies] = useState<Array<{ id: string; movieTitle: string; watchedAt: string }>>([]);
+  const [showReviewModal, setShowReviewModal] = useState(false);
+  const [reviewMovieTitleInput, setReviewMovieTitleInput] = useState("");
+  const [reviewContentInput, setReviewContentInput] = useState("");
+  const [reviews, setReviews] = useState<Array<{ id: string; movieTitle: string; content: string; createdAt: string }>>([]);
+  const [wishMovies, setWishMovies] = useState<MyWishMovieItem[]>([]);
+  const [wishLoading, setWishLoading] = useState(false);
 
   const load = async () => {
     setLoading(true);
@@ -275,6 +331,113 @@ export default function MyPage() {
   useEffect(() => {
     load();
   }, [memberId]);
+
+  const loadMemberProfile = async () => {
+    setProfileLoading(true);
+    try {
+      const profile = await getMemberProfile(memberId);
+      setMemberProfile(profile);
+      setProfileName(profile.name ?? "");
+      setProfileTel(profile.tel ?? "");
+      setProfileEmail(profile.email ?? "");
+      setProfileBirthDate(profile.birthDate ?? "");
+    } catch (error: any) {
+      alert(error?.message ?? "회원 정보를 불러오지 못했습니다.");
+    } finally {
+      setProfileLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (pageKey !== "profile") return;
+    loadMemberProfile();
+  }, [pageKey, memberId]);
+
+  useEffect(() => {
+    const savedWatched = localStorage.getItem(`movie-story-watched-${memberId}`);
+    const savedReviews = localStorage.getItem(`movie-story-reviews-${memberId}`);
+    const savedPreferencesRaw = localStorage.getItem(`mypage-preferences-${memberId}`);
+    setWatchedMovies(savedWatched ? JSON.parse(savedWatched) : []);
+    setReviews(savedReviews ? JSON.parse(savedReviews) : []);
+
+    if (savedPreferencesRaw) {
+      try {
+        const savedPreferences = JSON.parse(savedPreferencesRaw);
+        setPrefGenre(savedPreferences.prefGenre ?? "");
+        setPrefTime(savedPreferences.prefTime ?? "");
+        setMarketingPolicyAgreed(Boolean(savedPreferences.marketingPolicyAgreed));
+        setMarketingEmailAgreed(Boolean(savedPreferences.marketingEmailAgreed));
+        setMarketingSmsAgreed(Boolean(savedPreferences.marketingSmsAgreed));
+        setMarketingPushAgreed(Boolean(savedPreferences.marketingPushAgreed));
+        setPreferredCinemas(Array.isArray(savedPreferences.preferredCinemas) ? savedPreferences.preferredCinemas.slice(0, 5).concat(["", "", "", "", ""]).slice(0, 5) : ["", "", "", "", ""]);
+        setPreferredGenres(Array.isArray(savedPreferences.preferredGenres) ? savedPreferences.preferredGenres.slice(0, 3).concat(["", "", ""]).slice(0, 3) : ["", "", ""]);
+        setPreferredTimeSlot(savedPreferences.preferredTimeSlot ?? "");
+        setSocialNaverLinked(Boolean(savedPreferences.socialNaverLinked));
+        setSocialKakaoLinked(Boolean(savedPreferences.socialKakaoLinked));
+      } catch {
+        setPrefGenre("");
+        setPrefTime("");
+      }
+    }
+  }, [memberId]);
+
+  useEffect(() => {
+    localStorage.setItem(`movie-story-watched-${memberId}`, JSON.stringify(watchedMovies));
+  }, [memberId, watchedMovies]);
+
+  useEffect(() => {
+    localStorage.setItem(`movie-story-reviews-${memberId}`, JSON.stringify(reviews));
+  }, [memberId, reviews]);
+
+  useEffect(() => {
+    localStorage.setItem(
+      `mypage-preferences-${memberId}`,
+      JSON.stringify({
+        prefGenre,
+        prefTime,
+        marketingPolicyAgreed,
+        marketingEmailAgreed,
+        marketingSmsAgreed,
+        marketingPushAgreed,
+        preferredCinemas,
+        preferredGenres,
+        preferredTimeSlot,
+        socialNaverLinked,
+        socialKakaoLinked,
+      })
+    );
+  }, [
+    memberId,
+    prefGenre,
+    prefTime,
+    marketingPolicyAgreed,
+    marketingEmailAgreed,
+    marketingSmsAgreed,
+    marketingPushAgreed,
+    preferredCinemas,
+    preferredGenres,
+    preferredTimeSlot,
+    socialNaverLinked,
+    socialKakaoLinked,
+  ]);
+
+  const loadWishMovies = async () => {
+    setWishLoading(true);
+    try {
+      const rows = await getMyWishMovies(memberId);
+      setWishMovies(rows);
+    } catch (error: any) {
+      alert(error?.message ?? "보고싶어 목록을 불러오지 못했습니다.");
+      setWishMovies([]);
+    } finally {
+      setWishLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (pageKey !== "movie-story") return;
+    loadWishMovies();
+  }, [pageKey, memberId]);
 
   const handleCancel = async (reservationId: number, reason: string) => {
     setIsCancelling(reservationId);
@@ -582,6 +745,56 @@ export default function MyPage() {
 
   const { active: activeReservations, cancelled: cancelledReservations } = splitReservations(reservations);
   const crumbs = breadcrumbLabels(pageKey);
+  const reservationWatchedMovies = useMemo(() => {
+    return reservations
+      .filter((item) => item.paymentStatus !== "CANCELLED")
+      .map((item) => ({
+        id: `r-${item.reservationId}`,
+        movieTitle: item.movieTitle,
+        watchedAt: item.startTime,
+        theaterName: item.theaterName,
+        screenName: item.screenName,
+      }));
+  }, [reservations]);
+
+  const allWatchedMovies = useMemo(() => {
+    const manualRows = watchedMovies.map((item) => ({
+      id: item.id,
+      movieTitle: item.movieTitle,
+      watchedAt: item.watchedAt,
+      theaterName: "직접 등록",
+      screenName: "-",
+    }));
+    return [...reservationWatchedMovies, ...manualRows].sort(
+      (a, b) => new Date(b.watchedAt).getTime() - new Date(a.watchedAt).getTime()
+    );
+  }, [reservationWatchedMovies, watchedMovies]);
+
+  const timelineYears = useMemo(() => {
+    const years = Array.from(
+      new Set(allWatchedMovies.map((item) => new Date(item.watchedAt).getFullYear()))
+    ).filter((v) => !Number.isNaN(v));
+    if (years.length === 0) {
+      const nowYear = new Date().getFullYear();
+      return [nowYear - 1, nowYear];
+    }
+    return years.sort((a, b) => a - b);
+  }, [allWatchedMovies]);
+
+  useEffect(() => {
+    if (!timelineYears.includes(selectedTimelineYear)) {
+      setSelectedTimelineYear(timelineYears[timelineYears.length - 1]);
+    }
+  }, [timelineYears, selectedTimelineYear]);
+
+  const timelineRows = useMemo(
+    () => allWatchedMovies.filter((item) => new Date(item.watchedAt).getFullYear() === selectedTimelineYear),
+    [allWatchedMovies, selectedTimelineYear]
+  );
+
+  const watchedCount = allWatchedMovies.length;
+  const reviewCount = reviews.length;
+  const wishCount = wishMovies.length;
   const monthOptions = useMemo(() => {
     const base = historyType === "past" ? reservations : activeReservations;
     const keys = Array.from(new Set(base.map((item) => toMonthKey(item.startTime))));
@@ -743,6 +956,84 @@ export default function MyPage() {
     } catch (error: any) {
       alert(error?.message ?? "포인트 비밀번호 설정에 실패했습니다.");
     }
+  };
+
+  const handleSaveProfile = async () => {
+    if (!profileName.trim()) {
+      alert("이름을 입력해 주세요.");
+      return;
+    }
+    setProfileSaving(true);
+    try {
+      const response = await updateMemberProfile({
+        memberId,
+        name: profileName.trim(),
+        tel: profileTel.trim(),
+        email: profileEmail.trim(),
+        birthDate: profileBirthDate || undefined,
+      });
+      alert(response?.message ?? "개인정보가 수정되었습니다.");
+      await loadMemberProfile();
+    } catch (error: any) {
+      alert(error?.message ?? "개인정보 수정에 실패했습니다.");
+    } finally {
+      setProfileSaving(false);
+    }
+  };
+
+  const handlePhoneChange = async () => {
+    const digits = profileTel.replace(/\D/g, "");
+    if (!/^01\d{8,9}$/.test(digits)) {
+      alert("휴대폰 번호 형식을 확인해 주세요. (예: 01012345678)");
+      return;
+    }
+    setProfileTel(digits);
+    await handleSaveProfile();
+  };
+
+  const handlePasswordChange = async () => {
+    if (!currentPasswordInput.trim()) {
+      alert("현재 비밀번호를 입력해 주세요.");
+      return;
+    }
+    if (newPasswordInput.length < 8) {
+      alert("새 비밀번호는 8자리 이상 입력해 주세요.");
+      return;
+    }
+    if (newPasswordInput !== newPasswordConfirmInput) {
+      alert("새 비밀번호와 확인 비밀번호가 일치하지 않습니다.");
+      return;
+    }
+    setPasswordChanging(true);
+    try {
+      const response = await updateMemberPassword({
+        memberId,
+        currentPassword: currentPasswordInput,
+        newPassword: newPasswordInput,
+        confirmPassword: newPasswordConfirmInput,
+      });
+      alert(response?.message ?? "비밀번호가 변경되었습니다.");
+      setShowPasswordChangeModal(false);
+      setCurrentPasswordInput("");
+      setNewPasswordInput("");
+      setNewPasswordConfirmInput("");
+    } catch (error: any) {
+      alert(error?.message ?? "비밀번호 변경에 실패했습니다.");
+    } finally {
+      setPasswordChanging(false);
+    }
+  };
+
+  const toggleSocialLink = (provider: "naver" | "kakao") => {
+    if (provider === "naver") {
+      const next = !socialNaverLinked;
+      setSocialNaverLinked(next);
+      alert(next ? "네이버 계정이 연동되었습니다." : "네이버 계정 연동이 해제되었습니다.");
+      return;
+    }
+    const next = !socialKakaoLinked;
+    setSocialKakaoLinked(next);
+    alert(next ? "카카오 계정이 연동되었습니다." : "카카오 계정 연동이 해제되었습니다.");
   };
 
   const renderDashboard = () => {
@@ -1627,26 +1918,517 @@ export default function MyPage() {
     </section>
   );
 
+  const renderProfile = () => (
+    <section>
+      <h1 className="text-4xl font-semibold text-[#000000]">개인정보 수정</h1>
+      <p className="mt-4 text-sm text-gray-600">· 회원님의 정보를 정확히 입력해주세요.</p>
+
+      <div className="mt-5 overflow-hidden rounded-sm border border-gray-200 bg-[#ffffff]">
+        <div className="grid grid-cols-[170px_1fr_auto] items-center border-b border-gray-200">
+          <div className="bg-[#ffffff] px-5 py-5 text-base font-semibold text-[#000000]">프로필 사진</div>
+          <div className="flex items-center gap-3 px-3 py-3">
+            <div className="h-16 w-16 overflow-hidden rounded-full border border-gray-200 bg-gray-100">
+              {profileImageUrl ? (
+                <img src={profileImageUrl} alt="profile" className="h-full w-full object-cover" />
+              ) : (
+                <div className="flex h-full w-full items-center justify-center text-xs text-gray-400">이미지</div>
+              )}
+            </div>
+            <label className="cursor-pointer rounded border border-gray-300 bg-[#ffffff] px-4 py-2 text-sm text-[#000000]">
+              이미지 등록
+              <input
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={(e) => {
+                  const file = e.target.files?.[0];
+                  if (!file) return;
+                  const reader = new FileReader();
+                  reader.onload = () => setProfileImageUrl(String(reader.result || ""));
+                  reader.readAsDataURL(file);
+                }}
+              />
+            </label>
+            <span className="text-xs text-gray-400">개인정보가 포함된 이미지는 등록하지 마시기 바랍니다.</span>
+          </div>
+          <div className="px-4 text-right">
+            <button className="rounded border border-[#eb4d32] px-4 py-2 text-sm text-[#eb4d32]">회원탈퇴</button>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-[170px_1fr] border-b border-gray-200">
+          <div className="bg-[#ffffff] px-5 py-4 text-base font-semibold text-[#000000]">아이디</div>
+          <div className="px-4 py-4 text-base text-gray-700">{memberProfile?.username ?? "-"}</div>
+        </div>
+      </div>
+
+      <h2 className="mt-8 text-4xl font-semibold text-[#eb4d32]">기본정보</h2>
+      <div className="mt-3 overflow-hidden rounded-sm border border-gray-200 bg-[#ffffff]">
+        <div className="grid grid-cols-[170px_1fr] border-b border-gray-200">
+          <div className="bg-[#ffffff] px-5 py-4 text-base font-semibold text-[#000000]">이름 <span className="text-[#eb4d32]">*</span></div>
+          <div className="flex items-center gap-2 px-4 py-3">
+            <input
+              className="h-10 w-[220px] border border-gray-300 px-3 text-base"
+              value={profileName}
+              onChange={(e) => setProfileName(e.target.value)}
+              disabled={profileLoading}
+            />
+            <button
+              className="rounded border border-gray-300 px-3 py-2 text-sm text-gray-600 disabled:opacity-60"
+              onClick={handleSaveProfile}
+              disabled={profileLoading || profileSaving}
+            >
+              이름변경
+            </button>
+            <span className="text-sm text-gray-500">개명으로 이름이 변경된 경우 회원정보의 이름을 변경하실 수 있습니다.</span>
+          </div>
+        </div>
+        <div className="grid grid-cols-[170px_1fr] border-b border-gray-200">
+          <div className="bg-[#ffffff] px-5 py-4 text-base font-semibold text-[#000000]">생년월일 <span className="text-[#eb4d32]">*</span></div>
+          <div className="px-4 py-4 text-base text-gray-700">
+            {profileBirthDate ? formatDateSimple(profileBirthDate) : "-"}
+          </div>
+        </div>
+        <div className="grid grid-cols-[170px_1fr] border-b border-gray-200">
+          <div className="bg-[#ffffff] px-5 py-4 text-base font-semibold text-[#000000]">휴대폰 <span className="text-[#eb4d32]">*</span></div>
+          <div className="flex items-center gap-2 px-4 py-3">
+            <input
+              className="h-10 w-[220px] border border-gray-300 px-3 text-base"
+              value={profileTel}
+              onChange={(e) => setProfileTel(e.target.value)}
+              disabled={profileLoading}
+            />
+            <button
+              className="rounded border border-gray-300 px-3 py-2 text-sm text-gray-600 disabled:opacity-60"
+              onClick={handlePhoneChange}
+              disabled={profileLoading || profileSaving}
+            >
+              휴대폰번호 변경
+            </button>
+          </div>
+        </div>
+        <div className="grid grid-cols-[170px_1fr] border-b border-gray-200">
+          <div className="bg-[#ffffff] px-5 py-4 text-base font-semibold text-[#000000]">이메일 <span className="text-[#eb4d32]">*</span></div>
+          <div className="px-4 py-3">
+            <input
+              className="h-10 w-full max-w-[700px] border border-gray-300 px-3 text-base"
+              value={profileEmail}
+              onChange={(e) => setProfileEmail(e.target.value)}
+              disabled={profileLoading}
+            />
+          </div>
+        </div>
+        <div className="grid grid-cols-[170px_1fr]">
+          <div className="bg-[#ffffff] px-5 py-4 text-base font-semibold text-[#000000]">비밀번호 <span className="text-[#eb4d32]">*</span></div>
+          <div className="flex items-center gap-2 px-4 py-3 text-sm text-gray-600">
+            <button className="rounded border border-gray-300 px-3 py-2" onClick={() => setShowPasswordChangeModal(true)}>
+              비밀번호 변경
+            </button>
+            <span>마지막 비밀번호 변경: 57일전에 함</span>
+          </div>
+        </div>
+      </div>
+
+      <h2 className="mt-8 text-4xl font-semibold text-[#eb4d32]">포인트 비밀번호 설정</h2>
+      <div className="mt-3 overflow-hidden rounded-sm border border-gray-200 bg-[#ffffff]">
+        <div className="grid grid-cols-[170px_1fr]">
+          <div className="bg-[#ffffff] px-5 py-4 text-base font-semibold text-[#000000]">멤버십 포인트 사용시 비밀번호 설정</div>
+          <div className="flex items-center gap-4 px-4 py-3 text-sm">
+            <button
+              className="rounded border border-gray-300 px-3 py-2"
+              onClick={openPointPhoneModal}
+            >
+              포인트 비밀번호 설정
+            </button>
+            <label className="flex items-center gap-1"><input type="radio" name="pointuse" defaultChecked />사용안함</label>
+            <label className="flex items-center gap-1"><input type="radio" name="pointuse" />사용함</label>
+          </div>
+        </div>
+      </div>
+
+      <h2 className="mt-8 text-4xl font-semibold text-[#eb4d32]">생년월일 로그인 설정</h2>
+      <div className="mt-3 overflow-hidden rounded-sm border border-gray-200 bg-[#ffffff]">
+        <div className="grid grid-cols-[170px_1fr]">
+          <div className="bg-[#ffffff] px-5 py-4 text-base font-semibold text-[#000000]">무인발권기(KIOSK) 기능설정</div>
+          <div className="flex items-center gap-4 px-4 py-3 text-sm">
+            <label className="flex items-center gap-1"><input type="radio" name="kiosk" defaultChecked />사용</label>
+            <label className="flex items-center gap-1"><input type="radio" name="kiosk" />사용안함</label>
+            <span className="text-gray-500">생년월일+휴대폰번호 티켓 출력 및 회원서비스 이용</span>
+          </div>
+        </div>
+      </div>
+
+      <h2 className="mt-8 text-4xl font-semibold text-[#eb4d32]">간편로그인 계정연동</h2>
+      <div className="mt-3 overflow-hidden rounded-sm border border-gray-200 bg-[#ffffff]">
+        <div className="grid grid-cols-[120px_1fr_120px] border-b border-gray-200 bg-[#ffffff] px-4 py-3 text-sm font-semibold text-[#000000]">
+          <span>구분</span>
+          <span>연동정보</span>
+          <span className="text-center">연결</span>
+        </div>
+        {["네이버", "카카오"].map((row) => (
+          <div key={row} className="grid grid-cols-[120px_1fr_120px] border-b border-gray-200 px-4 py-3 text-sm">
+            <span>{row}</span>
+            <span className="text-gray-500">
+              {row === "네이버"
+                ? (socialNaverLinked ? "네이버 계정 연동됨" : "연결된 계정정보가 없습니다.")
+                : (socialKakaoLinked ? "카카오 계정 연동됨" : "연결된 계정정보가 없습니다.")}
+            </span>
+            <div className="text-center">
+              <button
+                className="rounded bg-[#000000] px-3 py-1.5 text-xs text-[#ffffff]"
+                onClick={() => toggleSocialLink(row === "네이버" ? "naver" : "kakao")}
+              >
+                {row === "네이버" ? (socialNaverLinked ? "해제" : "연동") : (socialKakaoLinked ? "해제" : "연동")}
+              </button>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      <h2 className="mt-8 text-4xl font-semibold text-[#eb4d32]">스페셜 멤버십 가입내역</h2>
+      <div className="mt-3 overflow-hidden rounded-sm border border-gray-200 bg-[#ffffff]">
+        <div className="grid grid-cols-[170px_1fr_auto] items-center px-4 py-3 text-sm">
+          <span className="font-semibold">가입정보</span>
+          <span className="text-gray-500">가입된 스페셜 멤버십이 없습니다.</span>
+          <button className="rounded bg-[#000000] px-4 py-2 text-xs text-[#ffffff]">스페셜 멤버십 가입 안내</button>
+        </div>
+      </div>
+
+      <div className="mt-10 flex justify-center gap-3">
+        <button
+          className="rounded border border-[#eb4d32] px-8 py-3 text-base font-semibold text-[#eb4d32]"
+          onClick={() => loadMemberProfile()}
+          disabled={profileLoading || profileSaving}
+        >
+          취소
+        </button>
+        <button
+          className="rounded bg-[#eb4d32] px-8 py-3 text-base font-semibold text-[#ffffff] disabled:opacity-60"
+          disabled={profileLoading || profileSaving}
+          onClick={handleSaveProfile}
+        >
+          {profileSaving ? "저장 중..." : "등록"}
+        </button>
+      </div>
+    </section>
+  );
+
+  const renderProfilePreferences = () => (
+    <section>
+      <h1 className="text-4xl font-semibold text-[#000000]">선택정보 수정</h1>
+
+      <div className="mt-6 overflow-hidden rounded-sm border border-gray-200 bg-[#ffffff]">
+        <div className="flex items-center justify-between border-b border-gray-200 px-6 py-4">
+          <h3 className="text-xl font-semibold">마케팅 활용을 위한 개인정보 수집 이용 안내</h3>
+          <div className="flex items-center gap-4 text-sm">
+            <label className="flex items-center gap-1"><input type="radio" checked={!marketingPolicyAgreed} onChange={() => setMarketingPolicyAgreed(false)} />미동의</label>
+            <label className="flex items-center gap-1"><input type="radio" checked={marketingPolicyAgreed} onChange={() => setMarketingPolicyAgreed(true)} />동의</label>
+          </div>
+        </div>
+        <div className="px-6 py-5 text-sm leading-7 text-gray-700">
+          <p>[수집 목적]</p>
+          <p>고객 맞춤형 상품 및 서비스 추천, 이벤트/사은/할인 정보 안내</p>
+          <p className="mt-2">[수집 항목]</p>
+          <p>이메일, 휴대폰번호, 주소, 생년월일, 선호극장, 문자/이메일/앱푸시 수신동의여부</p>
+          <p className="mt-2">[보유 및 이용 기간]</p>
+          <p>회원 탈퇴 시 혹은 이용 목적 달성 시까지</p>
+        </div>
+      </div>
+
+      <div className="mt-6 overflow-hidden rounded-sm border border-gray-200 bg-[#ffffff]">
+        <div className="border-b border-gray-200 px-6 py-4 text-xl font-semibold">마케팅정보 수신동의</div>
+        <div className="px-6 py-5 text-sm text-gray-700">
+          <p>거래정보와 관련된 내용(예매완료/취소)과 소멸포인트 안내는 수신동의 여부와 관계없이 발송됩니다.</p>
+          <p className="mt-1">· 수신동의 여부를 선택해 주세요.</p>
+          <div className="mt-4 space-y-3">
+            <div className="flex items-center gap-5">
+              <span className="w-20 font-semibold">이메일</span>
+              <label className="flex items-center gap-1"><input type="radio" checked={marketingEmailAgreed} onChange={() => setMarketingEmailAgreed(true)} />수신동의</label>
+              <label className="flex items-center gap-1"><input type="radio" checked={!marketingEmailAgreed} onChange={() => setMarketingEmailAgreed(false)} />수신거부</label>
+            </div>
+            <div className="flex items-center gap-5">
+              <span className="w-20 font-semibold">SMS</span>
+              <label className="flex items-center gap-1"><input type="radio" checked={marketingSmsAgreed} onChange={() => setMarketingSmsAgreed(true)} />수신동의</label>
+              <label className="flex items-center gap-1"><input type="radio" checked={!marketingSmsAgreed} onChange={() => setMarketingSmsAgreed(false)} />수신거부</label>
+            </div>
+            <div className="flex items-center gap-5">
+              <span className="w-20 font-semibold">PUSH</span>
+              <label className="flex items-center gap-1"><input type="radio" checked={marketingPushAgreed} onChange={() => setMarketingPushAgreed(true)} />수신동의</label>
+              <label className="flex items-center gap-1"><input type="radio" checked={!marketingPushAgreed} onChange={() => setMarketingPushAgreed(false)} />수신거부</label>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <h2 className="mt-8 text-4xl font-semibold text-[#eb4d32]">부가정보</h2>
+      <div className="mt-3 overflow-hidden rounded-sm border border-gray-200 bg-[#ffffff]">
+        <div className="grid grid-cols-[170px_1fr] border-b border-gray-200">
+          <div className="bg-[#ffffff] px-5 py-4 text-base font-semibold">선호극장</div>
+          <div className="space-y-3 px-4 py-4">
+            <p className="text-sm text-gray-500">선호 극장은 최대 5개까지 등록 가능합니다.</p>
+            {[0, 1, 2, 3, 4].map((idx) => (
+              <div key={idx} className="flex items-center gap-2">
+                <span className="w-10 text-sm font-semibold">{idx + 1}순위</span>
+                <input
+                  className="h-10 w-[220px] border border-gray-300 px-3 text-sm"
+                  placeholder={`${idx + 1}순위 극장 선택`}
+                  value={preferredCinemas[idx] || ""}
+                  onChange={(e) =>
+                    setPreferredCinemas((prev) => {
+                      const next = [...prev];
+                      next[idx] = e.target.value;
+                      return next;
+                    })
+                  }
+                />
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div className="grid grid-cols-[170px_1fr] border-b border-gray-200">
+          <div className="bg-[#ffffff] px-5 py-4 text-base font-semibold">선호 장르 (3개 선택)</div>
+          <div className="flex flex-wrap items-center gap-2 px-4 py-4">
+            {[0, 1, 2].map((idx) => (
+              <input
+                key={idx}
+                className="h-10 w-[180px] border border-gray-300 px-3 text-sm"
+                placeholder="선호장르 선택"
+                value={preferredGenres[idx] || ""}
+                onChange={(e) =>
+                  setPreferredGenres((prev) => {
+                    const next = [...prev];
+                    next[idx] = e.target.value;
+                    return next;
+                  })
+                }
+              />
+            ))}
+          </div>
+        </div>
+
+        <div className="grid grid-cols-[170px_1fr]">
+          <div className="bg-[#ffffff] px-5 py-4 text-base font-semibold">선호시간</div>
+          <div className="grid grid-cols-2 gap-y-2 px-4 py-4 text-sm md:grid-cols-3">
+            {["10시 이전", "10시~13시", "13시~16시", "16시~18시", "18시~21시", "21시 이후"].map((slot) => (
+              <label key={slot} className="flex items-center gap-1.5">
+                <input
+                  type="radio"
+                  name="pref-time-slot"
+                  checked={preferredTimeSlot === slot}
+                  onChange={() => setPreferredTimeSlot(slot)}
+                />
+                {slot}
+              </label>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      <div className="mt-8 flex justify-center gap-3">
+        <button
+          className="rounded border border-[#eb4d32] px-8 py-3 text-base font-semibold text-[#eb4d32]"
+          onClick={() => {
+            setMarketingPolicyAgreed(false);
+            setMarketingEmailAgreed(false);
+            setMarketingSmsAgreed(false);
+            setMarketingPushAgreed(false);
+            setPreferredCinemas(["", "", "", "", ""]);
+            setPreferredGenres(["", "", ""]);
+            setPreferredTimeSlot("");
+          }}
+        >
+          취소
+        </button>
+        <button
+          className="rounded bg-[#eb4d32] px-8 py-3 text-base font-semibold text-[#ffffff]"
+          onClick={() => {
+            setPrefGenre(preferredGenres.filter(Boolean).join(", "));
+            setPrefTime(preferredTimeSlot);
+            alert("선호정보가 저장되었습니다.");
+          }}
+        >
+          수정
+        </button>
+      </div>
+    </section>
+  );
+
   const renderMovieStory = () => (
     <section>
       <h1 className="text-4xl font-semibold text-[#000000]">나의 무비스토리</h1>
 
       <div className="mt-5 grid grid-cols-2 border border-gray-300 md:grid-cols-4">
-        {["무비타임라인", "관람평", "본영화", "보고싶어"].map((tab, index) => (
-          <button key={tab} className={`px-5 py-3 text-sm ${index === 0 ? "bg-[#000000] text-white" : "bg-white text-gray-600"}`}>
-            {tab}
+        {[
+          { key: "timeline", label: "무비타임라인" },
+          { key: "review", label: "관람평" },
+          { key: "watched", label: "본영화" },
+          { key: "wish", label: "보고싶어" },
+        ].map((tab) => (
+          <button
+            key={tab.key}
+            className={`px-5 py-3 text-sm ${
+              movieStoryTab === tab.key ? "bg-[#000000] text-[#ffffff]" : "bg-[#ffffff] text-gray-600"
+            }`}
+            onClick={() => setMovieStoryTab(tab.key as "timeline" | "review" | "watched" | "wish")}
+          >
+            {tab.label}
           </button>
         ))}
       </div>
 
-      <div className="mt-6 overflow-hidden rounded-sm border border-gray-200 bg-white">
-        <div className="flex items-center justify-between border-b px-4 py-3 text-lg">
-          <button className="text-gray-400">‹</button>
-          <div className="flex gap-8"><span>2025</span><span className="border-b-4 border-[#eb4d32] pb-1">2026</span></div>
-          <button className="text-gray-400">›</button>
+      {movieStoryTab === "timeline" ? (
+        <div className="mt-6 overflow-hidden rounded-sm border border-gray-200 bg-[#ffffff]">
+          <div className="flex items-center justify-between border-b border-gray-200 px-4 py-3 text-lg">
+            <button
+              className="text-gray-400"
+              onClick={() => {
+                const idx = timelineYears.indexOf(selectedTimelineYear);
+                if (idx > 0) setSelectedTimelineYear(timelineYears[idx - 1]);
+              }}
+            >
+              ‹
+            </button>
+            <div className="flex gap-8">
+              {timelineYears.map((year) => (
+                <button
+                  key={year}
+                  className={year === selectedTimelineYear ? "border-b-4 border-[#eb4d32] pb-1" : ""}
+                  onClick={() => setSelectedTimelineYear(year)}
+                >
+                  {year}
+                </button>
+              ))}
+            </div>
+            <button
+              className="text-gray-400"
+              onClick={() => {
+                const idx = timelineYears.indexOf(selectedTimelineYear);
+                if (idx < timelineYears.length - 1) setSelectedTimelineYear(timelineYears[idx + 1]);
+              }}
+            >
+              ›
+            </button>
+          </div>
+          {timelineRows.length === 0 ? (
+            <div className="py-14 text-center text-gray-500">나의 무비타임라인을 만들어 보세요.</div>
+          ) : (
+            <div className="divide-y divide-gray-200">
+              {timelineRows.map((item) => (
+                <div key={item.id} className="px-5 py-4">
+                  <p className="text-lg font-semibold text-[#000000]">{item.movieTitle}</p>
+                  <p className="mt-1 text-sm text-gray-600">
+                    {formatDateSimple(item.watchedAt)} · {item.theaterName} {item.screenName}
+                  </p>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
-        <div className="py-14 text-center text-gray-500">나의 무비타임라인을 만들어 보세요.</div>
-      </div>
+      ) : null}
+
+      {movieStoryTab === "review" ? (
+        <div className="mt-6">
+          <div className="mb-3 flex items-center justify-between">
+            <p className="text-2xl font-semibold">총 <span className="text-[#eb4d32]">{reviewCount}</span>건</p>
+            <button
+              className="rounded border border-[#eb4d32] px-4 py-2 text-sm text-[#eb4d32]"
+              onClick={() => setShowReviewModal(true)}
+            >
+              관람평 작성
+            </button>
+          </div>
+          <div className="overflow-hidden rounded-sm border border-gray-200 bg-[#ffffff]">
+            {reviews.length === 0 ? (
+              <div className="py-14 text-center text-gray-500">등록된 한줄평이 없습니다.</div>
+            ) : (
+              <div className="divide-y divide-gray-200">
+                {reviews.map((item) => (
+                  <div key={item.id} className="px-5 py-4">
+                    <p className="text-base font-semibold">{item.movieTitle}</p>
+                    <p className="mt-2 text-sm">{item.content}</p>
+                    <p className="mt-1 text-xs text-gray-500">{formatDateSimple(item.createdAt)}</p>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      ) : null}
+
+      {movieStoryTab === "watched" ? (
+        <div className="mt-6">
+          <div className="flex flex-wrap items-start justify-between gap-3">
+            <div>
+              <p className="text-sm text-[#000000]">· 극장에서 발권하신 티켓 거래번호 또는 직접 등록으로 본 영화를 기록할 수 있습니다.</p>
+              <p className="text-sm text-[#000000]">· 본영화는 관람한 인원수에 한해 등록이 가능합니다.</p>
+            </div>
+            <button
+              className="rounded border border-[#eb4d32] px-5 py-2 text-sm text-[#eb4d32]"
+              onClick={() => setShowWatchedModal(true)}
+            >
+              본 영화 등록
+            </button>
+          </div>
+          <div className="mt-5">
+            <p className="text-2xl font-semibold">총 <span className="text-[#eb4d32]">{watchedCount}</span>건</p>
+          </div>
+          <div className="mt-3 overflow-hidden rounded-sm border border-gray-200 bg-[#ffffff]">
+            {allWatchedMovies.length === 0 ? (
+              <div className="py-14 text-center text-gray-500">관람 내역이 없습니다.</div>
+            ) : (
+              <div className="divide-y divide-gray-200">
+                {allWatchedMovies.map((item) => (
+                  <div key={item.id} className="px-5 py-4">
+                    <p className="text-base font-semibold">{item.movieTitle}</p>
+                    <p className="mt-1 text-sm text-gray-600">{formatDateSimple(item.watchedAt)}</p>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      ) : null}
+
+      {movieStoryTab === "wish" ? (
+        <div className="mt-6">
+          <div className="mb-3 flex items-center justify-between">
+            <p className="text-2xl font-semibold">총 <span className="text-[#eb4d32]">{wishCount}</span>건</p>
+            <span className="text-sm text-gray-600">영화 목록에서 찜하기로만 추가 가능합니다.</span>
+          </div>
+          <div className="overflow-hidden rounded-sm border border-gray-200 bg-[#ffffff]">
+            {wishLoading ? (
+              <div className="py-20 text-center text-gray-500">불러오는 중...</div>
+            ) : wishMovies.length === 0 ? (
+              <div className="py-20 text-center text-gray-500">보고싶은 영화를 담아주세요.</div>
+            ) : (
+              <div className="divide-y divide-gray-200">
+                {wishMovies.map((item) => (
+                  <div key={item.movieId} className="flex items-center justify-between px-5 py-4">
+                    <div>
+                      <p className="text-base font-semibold">{item.title}</p>
+                      <p className="mt-1 text-xs text-gray-500">movieId: {item.movieId}</p>
+                    </div>
+                    <button
+                      className="rounded border border-gray-300 px-3 py-1 text-sm"
+                      onClick={async () => {
+                        try {
+                          await removeMovieLike(item.movieId, memberId);
+                          await loadWishMovies();
+                        } catch (error: any) {
+                          alert(error?.message ?? "삭제에 실패했습니다.");
+                        }
+                      }}
+                    >
+                      삭제
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      ) : null}
     </section>
   );
 
@@ -1733,6 +2515,8 @@ export default function MyPage() {
     if (pageKey === "points") return renderPoints();
     if (pageKey === "point-password") return renderPointPassword();
     if (pageKey === "cards") return renderCards();
+    if (pageKey === "profile") return renderProfile();
+    if (pageKey === "profile-preferences") return renderProfilePreferences();
     if (pageKey === "movie-story") return renderMovieStory();
     if (pageKey === "events") return renderEvents();
     if (pageKey === "inquiries") return renderInquiries();
@@ -1797,8 +2581,18 @@ export default function MyPage() {
 
           <div className="border-t border-gray-200 bg-[#ffffff] px-4 py-3 text-base text-gray-700">회원정보</div>
           <div className="px-5 pb-4 pt-2 text-sm text-gray-500">
-            <p>· 개인정보 수정</p>
-            <p>· 선호정보 수정</p>
+            <button
+              className={`block w-full text-left ${pageKey === "profile" ? "font-semibold text-[#eb4d32]" : "text-gray-500"}`}
+              onClick={() => moveMenu("/my-page/profile")}
+            >
+              · 개인정보 수정
+            </button>
+            <button
+              className={`mt-1 block w-full text-left ${pageKey === "profile-preferences" ? "font-semibold text-[#eb4d32]" : "text-gray-500"}`}
+              onClick={() => moveMenu("/my-page/profile/preferences")}
+            >
+              · 선호정보 수정
+            </button>
           </div>
         </aside>
 
@@ -1808,6 +2602,58 @@ export default function MyPage() {
       </div>
 
       <Footer />
+
+      {showPasswordChangeModal ? (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4">
+          <div className="w-full max-w-md rounded-lg border border-[#000000] bg-[#ffffff] p-5">
+            <h3 className="text-lg font-semibold text-[#000000]">비밀번호 변경</h3>
+            <div className="mt-4 space-y-3">
+              <input
+                type="password"
+                className="h-11 w-full rounded border border-gray-300 px-3 text-sm"
+                placeholder="현재 비밀번호"
+                value={currentPasswordInput}
+                onChange={(e) => setCurrentPasswordInput(e.target.value)}
+              />
+              <input
+                type="password"
+                className="h-11 w-full rounded border border-gray-300 px-3 text-sm"
+                placeholder="새 비밀번호 (8자리 이상)"
+                value={newPasswordInput}
+                onChange={(e) => setNewPasswordInput(e.target.value)}
+              />
+              <input
+                type="password"
+                className="h-11 w-full rounded border border-gray-300 px-3 text-sm"
+                placeholder="새 비밀번호 확인"
+                value={newPasswordConfirmInput}
+                onChange={(e) => setNewPasswordConfirmInput(e.target.value)}
+              />
+            </div>
+            <div className="mt-5 flex justify-end gap-2">
+              <button
+                className="rounded border border-gray-300 px-4 py-2 text-sm"
+                onClick={() => {
+                  if (passwordChanging) return;
+                  setShowPasswordChangeModal(false);
+                  setCurrentPasswordInput("");
+                  setNewPasswordInput("");
+                  setNewPasswordConfirmInput("");
+                }}
+              >
+                취소
+              </button>
+              <button
+                className="rounded bg-[#eb4d32] px-4 py-2 text-sm font-semibold text-[#ffffff] disabled:opacity-60"
+                onClick={handlePasswordChange}
+                disabled={passwordChanging}
+              >
+                {passwordChanging ? "변경 중..." : "변경"}
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
 
       {showCancelModal ? (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4">
@@ -2076,6 +2922,150 @@ export default function MyPage() {
           </div>
         </div>
       ) : null}
+
+      {showWatchedModal ? (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#000000]/70 px-4">
+          <div className="w-full max-w-3xl overflow-hidden rounded-sm border border-[#000000] bg-[#ffffff]">
+            <div className="flex items-center justify-between bg-[#000000] px-5 py-4">
+              <h3 className="text-3xl font-semibold text-[#ffffff]">본 영화 등록</h3>
+              <button
+                className="text-4xl leading-none text-[#ffffff]"
+                onClick={() => setShowWatchedModal(false)}
+                aria-label="닫기"
+              >
+                ×
+              </button>
+            </div>
+
+            <div className="space-y-6 p-6">
+              <p className="text-base text-[#000000]">
+                발견하신 티켓 하단의 거래번호 또는 예매번호를 입력해주세요.
+              </p>
+
+              <div className="rounded-sm bg-[#fdf4e3] p-4">
+                <div className="flex flex-wrap items-center gap-3">
+                  <label className="min-w-[140px] text-right text-base font-semibold text-[#000000]">
+                    거래번호 또는 예매번호
+                  </label>
+                  <input
+                    value={watchedTicketCodeInput}
+                    onChange={(e) => setWatchedTicketCodeInput(e.target.value.replace(/\D/g, ""))}
+                    maxLength={20}
+                    className="h-12 flex-1 border border-gray-300 bg-[#ffffff] px-3 text-base text-[#000000] outline-none"
+                    placeholder="숫자만 입력해 주세요"
+                  />
+                  <button
+                    className="h-12 rounded-sm bg-[#eb4d32] px-6 text-base font-semibold text-[#ffffff]"
+                    onClick={() => {
+                      const code = watchedTicketCodeInput.trim();
+                      if (!code) {
+                        alert("거래번호 또는 예매번호를 입력해 주세요.");
+                        return;
+                      }
+
+                      const matched = reservations.find(
+                        (r) => String(r.reservationId) === code
+                      );
+                      const movieTitle = matched ? matched.movieTitle : `본 영화 등록 (${code})`;
+                      const watchedAt = matched ? matched.startTime : new Date().toISOString();
+
+                      setWatchedMovies((prev) => [
+                        ...prev,
+                        {
+                          id: `m-${Date.now()}`,
+                          movieTitle,
+                          watchedAt,
+                        },
+                      ]);
+                      setShowWatchedModal(false);
+                      setWatchedTicketCodeInput("");
+                    }}
+                  >
+                    등록
+                  </button>
+                </div>
+              </div>
+
+              <div className="rounded-sm border border-gray-200 bg-[#ffffff] p-5">
+                <p className="mb-3 text-2xl font-semibold text-[#000000]">이용안내</p>
+                <p className="text-sm leading-7 text-[#000000]">
+                  · 극장에서 예매하신 내역을 본 영화(관람이력)로 등록하실 수 있습니다.
+                </p>
+                <p className="text-sm leading-7 text-[#000000]">
+                  · 예매처를 통해 예매하신 고객님은 극장에서 발권하신 티켓 하단의 온라인 예매번호를 입력해 주세요.
+                </p>
+                <p className="text-sm leading-7 text-[#000000]">
+                  · 본 영화 등록은 관람인원만큼 가능하며, 동일 계정 중복등록은 불가합니다.
+                </p>
+                <p className="text-sm leading-7 text-[#000000]">
+                  · 상영시간 종료 이후 등록 가능합니다.
+                </p>
+                <p className="text-sm leading-7 text-[#000000]">
+                  · 본 영화로 수동 등록한 내역은 이벤트 참여 및 포인트 추후 적립이 불가합니다.
+                </p>
+              </div>
+
+              <div className="flex justify-center">
+                <button
+                  className="rounded-sm bg-[#000000] px-10 py-3 text-base font-semibold text-[#ffffff]"
+                  onClick={() => setShowWatchedModal(false)}
+                >
+                  닫기
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      ) : null}
+
+      {showReviewModal ? (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#000000]/70 px-4">
+          <div className="w-full max-w-lg rounded-sm border border-[#000000] bg-[#ffffff] p-6">
+            <h3 className="text-2xl font-semibold">관람평 작성</h3>
+            <div className="mt-4 space-y-3">
+              <input
+                value={reviewMovieTitleInput}
+                onChange={(e) => setReviewMovieTitleInput(e.target.value)}
+                className="h-11 w-full border border-gray-300 px-3"
+                placeholder="영화 제목"
+              />
+              <textarea
+                value={reviewContentInput}
+                onChange={(e) => setReviewContentInput(e.target.value)}
+                className="h-24 w-full resize-none border border-gray-300 px-3 py-2"
+                placeholder="관람평을 입력해 주세요."
+              />
+            </div>
+            <div className="mt-5 flex justify-end gap-2">
+              <button className="rounded border border-gray-300 px-4 py-2" onClick={() => setShowReviewModal(false)}>취소</button>
+              <button
+                className="rounded bg-[#eb4d32] px-4 py-2 text-[#ffffff]"
+                onClick={() => {
+                  if (!reviewMovieTitleInput.trim() || !reviewContentInput.trim()) {
+                    alert("영화 제목과 관람평을 입력해 주세요.");
+                    return;
+                  }
+                  setReviews((prev) => [
+                    {
+                      id: `rv-${Date.now()}`,
+                      movieTitle: reviewMovieTitleInput.trim(),
+                      content: reviewContentInput.trim(),
+                      createdAt: new Date().toISOString(),
+                    },
+                    ...prev,
+                  ]);
+                  setShowReviewModal(false);
+                  setReviewMovieTitleInput("");
+                  setReviewContentInput("");
+                }}
+              >
+                등록
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
+
 
       {showCardRegisterModal ? (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#000000]/70 px-4">

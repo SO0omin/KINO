@@ -107,6 +107,79 @@ public class MyPageService {
     }
 
     @Transactional(readOnly = true)
+    public MyPageDTO.MemberProfileResponse getMemberProfile(Long memberId) {
+        Member member = memberRepository.findById(memberId)
+                .orElseThrow(() -> new IllegalArgumentException("회원 정보를 찾을 수 없습니다."));
+
+        return MyPageDTO.MemberProfileResponse.builder()
+                .memberId(member.getId())
+                .username(member.getUsername())
+                .name(member.getName())
+                .tel(member.getTel())
+                .email(member.getEmail())
+                .birthDate(member.getBirthDate())
+                .build();
+    }
+
+    @Transactional
+    public MyPageDTO.MessageResponse updateMemberProfile(MyPageDTO.MemberProfileUpdateRequest request) {
+        if (request == null || request.getMemberId() == null) {
+            throw new IllegalArgumentException("memberId는 필수입니다.");
+        }
+
+        Member member = memberRepository.findById(request.getMemberId())
+                .orElseThrow(() -> new IllegalArgumentException("회원 정보를 찾을 수 없습니다."));
+
+        if (request.getName() == null || request.getName().isBlank()) {
+            throw new IllegalArgumentException("이름은 필수입니다.");
+        }
+
+        member.setName(request.getName().trim());
+        member.setTel(request.getTel() == null ? null : request.getTel().trim());
+        member.setEmail(request.getEmail() == null ? null : request.getEmail().trim());
+        member.setBirthDate(request.getBirthDate());
+
+        return MyPageDTO.MessageResponse.builder()
+                .message("개인정보가 수정되었습니다.")
+                .build();
+    }
+
+    @Transactional
+    public MyPageDTO.MessageResponse updateMemberPassword(MyPageDTO.MemberPasswordUpdateRequest request) {
+        if (request == null || request.getMemberId() == null) {
+            throw new IllegalArgumentException("memberId는 필수입니다.");
+        }
+        if (request.getNewPassword() == null || request.getNewPassword().isBlank()) {
+            throw new IllegalArgumentException("새 비밀번호를 입력해 주세요.");
+        }
+        if (request.getConfirmPassword() == null || request.getConfirmPassword().isBlank()) {
+            throw new IllegalArgumentException("비밀번호 확인을 입력해 주세요.");
+        }
+        if (!request.getNewPassword().equals(request.getConfirmPassword())) {
+            throw new IllegalArgumentException("새 비밀번호와 확인 비밀번호가 일치하지 않습니다.");
+        }
+        if (request.getNewPassword().length() < 8) {
+            throw new IllegalArgumentException("비밀번호는 8자리 이상 입력해 주세요.");
+        }
+
+        Member member = memberRepository.findById(request.getMemberId())
+                .orElseThrow(() -> new IllegalArgumentException("회원 정보를 찾을 수 없습니다."));
+
+        if (request.getCurrentPassword() == null || request.getCurrentPassword().isBlank()) {
+            throw new IllegalArgumentException("현재 비밀번호를 입력해 주세요.");
+        }
+        if (!passwordEncoder.matches(request.getCurrentPassword(), member.getPassword())) {
+            throw new IllegalArgumentException("현재 비밀번호가 올바르지 않습니다.");
+        }
+
+        member.setPassword(passwordEncoder.encode(request.getNewPassword()));
+
+        return MyPageDTO.MessageResponse.builder()
+                .message("비밀번호가 변경되었습니다.")
+                .build();
+    }
+
+    @Transactional(readOnly = true)
     public List<MyPageDTO.ReservationItem> getReservations(Long memberId) {
         List<Reservation> reservations = reservationRepository.findMyReservationsWithScreening(memberId);
 

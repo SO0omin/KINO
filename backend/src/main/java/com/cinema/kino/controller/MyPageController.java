@@ -23,6 +23,25 @@ public class MyPageController {
         return ResponseEntity.ok(myPageService.getSummary(memberId));
     }
 
+    @GetMapping("/profile")
+    public ResponseEntity<MyPageDTO.MemberProfileResponse> getProfile(@RequestParam Long memberId) {
+        return ResponseEntity.ok(myPageService.getMemberProfile(memberId));
+    }
+
+    @PutMapping("/profile")
+    public ResponseEntity<MyPageDTO.MessageResponse> updateProfile(
+            @RequestBody MyPageDTO.MemberProfileUpdateRequest request
+    ) {
+        return ResponseEntity.ok(myPageService.updateMemberProfile(request));
+    }
+
+    @PostMapping("/profile/password")
+    public ResponseEntity<MyPageDTO.MessageResponse> updateProfilePassword(
+            @RequestBody MyPageDTO.MemberPasswordUpdateRequest request
+    ) {
+        return ResponseEntity.ok(myPageService.updateMemberPassword(request));
+    }
+
     @GetMapping("/reservations")
     public ResponseEntity<List<MyPageDTO.ReservationItem>> getReservations(@RequestParam Long memberId) {
         return ResponseEntity.ok(myPageService.getReservations(memberId));

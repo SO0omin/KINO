@@ -32,6 +32,8 @@ function AppRoutes() {
         <Route path="/my-page/inquiries" element={<MyPage />} />
         <Route path="/my-page/payments" element={<MyPage />} />
         <Route path="/my-page/cards" element={<MyPage />} />
+        <Route path="/my-page/profile" element={<MyPage />} />
+        <Route path="/my-page/profile/preferences" element={<MyPage />} />
       </Routes>
     </>
   );

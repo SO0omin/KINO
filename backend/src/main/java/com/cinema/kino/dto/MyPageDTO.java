@@ -32,6 +32,45 @@ public class MyPageDTO {
     @Builder
     @NoArgsConstructor
     @AllArgsConstructor
+    public static class MemberProfileResponse {
+        private Long memberId;
+        private String username;
+        private String name;
+        private String tel;
+        private String email;
+        private LocalDate birthDate;
+    }
+
+    @Getter
+    @Setter
+    @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class MemberProfileUpdateRequest {
+        private Long memberId;
+        private String name;
+        private String tel;
+        private String email;
+        private LocalDate birthDate;
+    }
+
+    @Getter
+    @Setter
+    @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class MemberPasswordUpdateRequest {
+        private Long memberId;
+        private String currentPassword;
+        private String newPassword;
+        private String confirmPassword;
+    }
+
+    @Getter
+    @Setter
+    @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
     public static class ReservationItem {
         private Long reservationId;
         private String movieTitle;

@@ -7,6 +7,38 @@ export async function getMyPageSummary(memberId) {
     }
     return response.json();
 }
+export async function getMemberProfile(memberId) {
+    const response = await fetch(`${API_BASE_URL}/api/mypage/profile?memberId=${memberId}`);
+    if (!response.ok) {
+        const error = await response.json().catch(() => ({}));
+        throw new Error(error.message || '회원 정보를 불러오지 못했습니다.');
+    }
+    return response.json();
+}
+export async function updateMemberProfile(payload) {
+    const response = await fetch(`${API_BASE_URL}/api/mypage/profile`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+    });
+    if (!response.ok) {
+        const error = await response.json().catch(() => ({}));
+        throw new Error(error.message || '회원 정보 수정에 실패했습니다.');
+    }
+    return response.json();
+}
+export async function updateMemberPassword(payload) {
+    const response = await fetch(`${API_BASE_URL}/api/mypage/profile/password`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+    });
+    if (!response.ok) {
+        const error = await response.json().catch(() => ({}));
+        throw new Error(error.message || '비밀번호 변경에 실패했습니다.');
+    }
+    return response.json();
+}
 export async function getMyReservations(memberId) {
     const response = await fetch(`${API_BASE_URL}/api/mypage/reservations?memberId=${memberId}`);
     if (!response.ok) {
@@ -139,6 +171,35 @@ export async function updatePointPassword(memberId, verificationToken, newPasswo
     if (!response.ok) {
         const error = await response.json().catch(() => ({}));
         throw new Error(error.message || '포인트 비밀번호 설정에 실패했습니다.');
+    }
+    return response.json();
+}
+export async function toggleMovieLike(movieId, memberId) {
+    const response = await fetch(`${API_BASE_URL}/api/movies/${movieId}/likes`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ memberId }),
+    });
+    if (!response.ok) {
+        const error = await response.json().catch(() => ({}));
+        throw new Error(error.message || "찜 처리에 실패했습니다.");
+    }
+    return response.json();
+}
+export async function removeMovieLike(movieId, memberId) {
+    const response = await fetch(`${API_BASE_URL}/api/movies/${movieId}/likes?memberId=${memberId}`, {
+        method: "DELETE",
+    });
+    if (!response.ok) {
+        const error = await response.json().catch(() => ({}));
+        throw new Error(error.message || "찜 취소에 실패했습니다.");
+    }
+}
+export async function getMyWishMovies(memberId) {
+    const response = await fetch(`${API_BASE_URL}/api/movies/likes?memberId=${memberId}`);
+    if (!response.ok) {
+        const error = await response.json().catch(() => ({}));
+        throw new Error(error.message || "보고싶어 목록을 불러오지 못했습니다.");
     }
     return response.json();
 }
