@@ -1,8 +1,10 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useSeatWebSocket } from '../../hooks/useSeatWebSocket';
+//import { useSeatWebSocket } from '../../hooks/useSeatWebSocket';
+import { seatBookingApi } from '../../api/seatBookingApi'; // API 서비스 임포트
 import { getSeatColor, getRatingDetails } from '../../mappers/ticketingMapper';
 import type { Screening, Seat } from '../../types/ticketing';
+import { useAuth } from '../../contexts/AuthContext';
 
 interface Props {
   isOpen: boolean;
@@ -11,7 +13,7 @@ interface Props {
   seats: Seat[];
 }
 
-const VINTAGE_NOISE_SVG = `url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")`;
+//const VINTAGE_NOISE_SVG = `url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")`;
 
 const SeatPreviewModal: React.FC<Props> = ({ isOpen, onClose, screening, seats: initialSeats }) => {
 
@@ -19,27 +21,66 @@ const SeatPreviewModal: React.FC<Props> = ({ isOpen, onClose, screening, seats: 
   const navigate = useNavigate();
 
   // 훅을 통해 실시간 좌석 데이터 관리
-  const { currentSeats } = useSeatWebSocket(isOpen, screening?.id, initialSeats);
+  const [currentSeats, setCurrentSeats] = useState<Seat[]>(initialSeats);
+  const [, setIsLoading] = useState(false);
+  const { isLoggedIn, isGuest } = useAuth();
 
   // 2. 버튼 클릭 시 실행될 함수 정의
+  useEffect(() => {
+    if (isOpen && screening?.id) {
+      setIsLoading(true);
+      
+      seatBookingApi.getScreeningSeats(screening.id)
+        .then((data) => {
+          // 서버에서 온 raw 데이터를 Seat 타입에 맞춰 매핑
+          const formattedSeats: Seat[] = data.seats
+          .filter(item => item.seatRow !== "0") //실제 좌석만 통과
+          .map(item => ({
+            id: item.seatId,
+            seatRow: item.seatRow,
+            seatNumber: item.seatNumber,
+            status: item.status,
+            type: item.seatType, // DTO의 seatType을 Seat의 type으로
+            posX: item.posX,
+            posY: item.posY
+          }));
+          
+          setCurrentSeats(formattedSeats);
+        })
+        .catch(err => console.error("데이터 로드 실패:", err))
+        .finally(() => setIsLoading(false));
+    }
+  }, [isOpen, screening?.id]);
+
   const handleBookingClick = () => {
     if (!screening) return;
 
-    // /seat-booking 페이지로 필요한 정보를 봇짐(state)에 싸서 보냄(필요한 정보 여기에서 수정하면 된다 수민)
+    console.log("현재 상태:", { isLoggedIn, isGuest });
+    if (!isLoggedIn && !isGuest) {
+      alert("좌석 선택을 위해 로그인 또는 비회원 정보 입력이 필요합니다.");
+      
+      // 로그인 페이지로 보내버립니다! 
+      // (단, 로그인 성공 후 'seat-booking'으로 돌아올 수 있게 주소표(state)를 쥐어줍니다)
+      navigate('/login', {
+        state: {
+          returnTo: '/seat-booking',       // 로그인 끝나고 돌아갈 목적지
+          screeningId: screening.id        // 목적지에 도착했을 때 필요한 데이터
+        }
+      });
+      return; // 여기서 함수를 끝내서 seat-booking으로 못 넘어가게 막음
+    }
+
     navigate('/seat-booking', {
       state: {
         screeningId: screening.id,
-        movieTitle: screening.movieTitle,
-        theaterName: screening.theaterName,
-        screenName: screening.screenName,
-        startTime: screening.startTime,
-        initialSeats: currentSeats 
       }
     });
   };
 
-  const maxCol = useMemo(() => Math.max(...currentSeats.map(s => s.posX), 0), [currentSeats]);
-  const maxRow = useMemo(() => Math.max(...currentSeats.map(s => s.posY), 0), [currentSeats]);
+  const maxX = useMemo(() => Math.max(...currentSeats.map(s => s.posX), 0), [currentSeats]);
+  const maxY = useMemo(() => Math.max(...currentSeats.map(s => s.posY), 0), [currentSeats]);
+  const PADDING = 20;
+  
 
   if (!isOpen || !screening) return null;
 
@@ -96,30 +137,44 @@ const SeatPreviewModal: React.FC<Props> = ({ isOpen, onClose, screening, seats: 
             <span className="font-serif text-[10px] italic tracking-[1.2em] text-black/80 uppercase mt-2">S C R E E N</span>
           </div>
 
-          <div className="flex flex-col items-center shrink-0">
+          <div className="flex justify-center items-center w-full">
             <div 
-              className="grid gap-[4px] p-4 bg-black/5 border border-black/5 rounded shadow-inner" 
-              style={{ 
-                gridTemplateColumns: `repeat(${maxCol}, 12px)`,
-                gridTemplateRows: `repeat(${maxRow}, 12px)`
+              className="bg-black/5 border border-black/10 rounded p-3"
+              style={{
+                width: maxX + PADDING * 2,
+                height: maxY + PADDING * 2,
               }}
             >
-              {currentSeats.map((seat) => (
-                <div 
-                  key={seat.id}
-                  className={`w-[12px] h-[12px] border border-black/10 transition-all duration-300 relative group ${getSeatColor(seat.status)} ${seat.status === 'AVAILABLE' ? 'hover:scale-125 hover:z-10' : ''}`}
-                  style={{ gridColumn: Math.floor(seat.posX), gridRow: Math.floor(seat.posY) }}
-                >
-                  <div className="absolute inset-0 opacity-[0.1] mix-blend-overlay pointer-events-none" style={{ backgroundImage: VINTAGE_NOISE_SVG }} />
-                  <div className="absolute -top-6 left-1/2 -translate-x-1/2 bg-black text-white text-[8px] px-1 py-0.5 opacity-0 group-hover:opacity-100 transition-opacity z-20 font-mono whitespace-nowrap">
-                    {seat.seatRow}{seat.seatNumber}
+              <div className="relative">
+                {currentSeats.map((seat) => (
+                  <div
+                    key={seat.id}
+                    className={`
+                      absolute w-[12px] h-[12px] 
+                      border border-black/20 
+                      transition-all duration-200
+                      ${getSeatColor(seat.status)}
+                      ${seat.status === "AVAILABLE" ? "cursor-pointer hover:scale-125 z-10" : ""}
+                    `}
+                    style={{
+                      left: seat.posX,
+                      top: seat.posY,
+                    }}
+                  >
+                    {/* 툴팁 */}
+                    <div className="absolute -top-6 left-1/2 -translate-x-1/2 
+                                    bg-black text-white text-[8px] px-1 py-0.5 
+                                    opacity-0 group-hover:opacity-100 
+                                    whitespace-nowrap pointer-events-none">
+                      {seat.seatRow}{seat.seatNumber}
+                    </div>
                   </div>
-                </div>
-              ))}
+                ))}
+              </div>
             </div>
           </div>
 
-          <div className="mt-auto w-full pt-10 border-t border-black/10 shrink-0">
+          <div className="flex justify-center items-center w-full">
             <div className="flex flex-col items-center text-center gap-2">
               <div className="flex items-center gap-3">
                 <span className={`${ratingData.color} text-white w-6 h-6 flex items-center justify-center font-bold text-[10px] border border-black/20 shadow-[2px_2px_0_0_#000]`}>

@@ -1,13 +1,11 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { Header } from '../../components/common/Header';
-import { Footer } from '../../components/common/Footer';
 import { BookingInfo } from '../../components/payment/BookingInfo';
 import { DiscountSection } from '../../components/payment/DiscountSection';
 import { PaymentMethodSection } from '../../components/payment/PaymentMethodSection';
 import { PaymentSummary } from '../../components/payment/PaymentSummary';
 import { usePayment } from '../../hooks/usePayment';
-import type { DiscountTab, BookingData, PaymentData } from '../../types/model/payment';
+import type { DiscountTab, BookingData, PaymentData } from '../../types/models/payment';
 
 import {
   preparePayment,
@@ -17,7 +15,7 @@ import {
   type MyCouponResponse,
 } from '../../api/paymentApi';
 
-import type { PriceType, TicketRequest } from '../../types/dto/payment.dto';
+import type { PriceType, TicketRequest } from '../../types/dtos/payment.dto';
 
 function normalizePriceType(pt?: PriceType): PriceType {
   return pt ?? 'ADULT';
@@ -155,7 +153,7 @@ export default function PaymentPage() {
   // 쿠폰/포인트 변경 시 prepare 재계산
   useEffect(() => {
     const recalc = async () => {
-      if (!reservationDetail) return;
+      if (!reservationDetail) return; //티켓 정보없으면 실행하지 않음
 
       const isMember = !!reservationDetail.memberId;
 
@@ -183,6 +181,7 @@ export default function PaymentPage() {
       } catch (e) {
         console.error('prepare 재계산 실패:', e);
 
+        // 에러 발생 시 폴백 로직
         setServerOriginalPrice(reservationDetail.totalAmount);
         setServerCouponDiscount(0);
         setServerUsedPoints(safeUsedPoints);
@@ -193,10 +192,8 @@ export default function PaymentPage() {
       }
     };
 
-    if (tickets.length > 0) {
       recalc();
-    }
-  }, [reservationDetail, selectedCouponId, usedPoints, tickets, updateAmount]);
+  }, [reservationDetail?.reservationId, selectedCouponId, usedPoints]);
 
   if (!reservationId) {
     return (
@@ -260,9 +257,9 @@ export default function PaymentPage() {
     guestId: reservationDetail.guestId || null,
   };
 
+  // console.log("🚨 서버에서 온 예약 상세 데이터:", reservationDetail); 디버깅용
   return (
     <div className="min-h-screen bg-[#fdf4e3]">
-      <Header />
       <main className="max-w-[1200px] mx-auto px-6 pb-16 pt-8">
         <div className="flex gap-8">
           <div className="flex-1 space-y-8">
@@ -311,7 +308,6 @@ export default function PaymentPage() {
           </div>
         </div>
       </main>
-      <Footer />
     </div>
   );
 }

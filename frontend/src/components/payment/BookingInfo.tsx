@@ -1,4 +1,4 @@
-import type { BookingData } from '../../types/model/payment';
+import type { BookingData } from '../../types/models/payment';
 
 interface BookingInfoProps {
   bookingData: BookingData;

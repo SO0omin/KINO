@@ -11,7 +11,7 @@ import type {
   PrepareRequest,
   ConfirmRequest,
   ReservationDetailResponse,
-} from '../types/dto/payment.dto';
+} from '../types/dtos/payment.dto';
 
 const CLIENT_KEY = import.meta.env.VITE_TOSS_CLIENT_KEY ?? '';
 

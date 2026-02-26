@@ -12,4 +12,13 @@ export default defineConfig({
     // global 변수를 window로 매핑
     global: 'window',
   },
+  server: {
+    proxy: {
+      '/api': {
+        target: 'http://localhost:8080',
+        changeOrigin: true,
+        secure: false,
+      }
+    }
+  }
 })

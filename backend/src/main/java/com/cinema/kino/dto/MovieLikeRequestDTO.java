@@ -5,6 +5,7 @@ import lombok.Setter;
 
 @Getter
 @Setter
+@Getter @Setter
 public class MovieLikeRequestDTO {
     private Long memberId;
 }

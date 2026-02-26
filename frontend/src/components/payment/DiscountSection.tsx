@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import type { DiscountTab } from '../../types/model/payment';
+import type { DiscountTab } from '../../types/models/payment';
 import type { MyCouponResponse } from '../../api/paymentApi';
 
 interface DiscountSectionProps {

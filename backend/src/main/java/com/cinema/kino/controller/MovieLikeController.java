@@ -16,6 +16,11 @@ public class MovieLikeController {
 
     private final MovieLikeService movieLikeService;
 
+    /**
+     * 영화 찜하기 토글 (찜하기 / 취소)
+     * POST /api/movies/{movieId}/likes
+     * @return Boolean - 최종적으로 찜 상태인지(true) 아닌지(false) 반환
+     */
     @PostMapping("/{movieId}/likes")
     public ResponseEntity<Boolean> toggleLike(
             @PathVariable Long movieId,
@@ -32,7 +37,11 @@ public class MovieLikeController {
         movieLikeService.unlike(movieId, memberId);
         return ResponseEntity.ok().build();
     }
+            @RequestBody MovieLikeRequestDTO request) {
 
+        // 프론트에서 넘겨준 memberId를 서비스에 전달합니다.
+        // 서비스에서 찜 등록이면 true, 해제면 false를 반환하도록 설계하는 것이 좋습니다.
+        boolean isLiked = movieLikeService.toggleLike(movieId, request);
     @GetMapping("/{movieId}/likes/me")
     public ResponseEntity<Boolean> isLiked(
             @PathVariable Long movieId,
@@ -41,6 +50,7 @@ public class MovieLikeController {
         return ResponseEntity.ok(movieLikeService.isLiked(movieId, memberId));
     }
 
+        return ResponseEntity.ok(isLiked);
     @GetMapping("/likes")
     public ResponseEntity<List<MovieLikeItemResponseDTO>> getMyLikedMovies(
             @RequestParam Long memberId

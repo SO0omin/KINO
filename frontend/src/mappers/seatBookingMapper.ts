@@ -1,23 +1,48 @@
-import type { SeatStatusDto } from "../types/dtos/SeatStatusDto";
 import type { SeatViewModel, ScreeningInfoViewModel } from "../types/models/SeatBookingViewModel";
 import entranceImg from "../assets/entrance.png";
 import exitImg from "../assets/exit.png";
 import entranceExitAllImg from "../assets/entrance_exit_all.png";
+import type { ScreeningInfoDto, SeatInfoDto } from "../types/dtos/seatBooking.dto";
 
-// 좌석 리스트 변환
-export const toSeatViewModels = (dtos: SeatStatusDto[]): SeatViewModel[] => {
+// 1. 영화 정보 매핑
+export const toScreeningInfoViewModel = (dto: ScreeningInfoDto): ScreeningInfoViewModel => {
+  return {
+    movie: {
+      title: dto.movieTitle,
+      poster: dto.posterUrl,
+      ageRating: dto.ageRating,
+    },
+    theater: {
+      name: dto.theaterName,
+      screenName: dto.screenName,
+      screenType: dto.screenType,
+    },
+    time: {
+      start: dto.startTime,
+      end: dto.endTime,
+    },
+    prices: {
+      adult: dto.priceAdult,
+      youth: dto.priceYouth,
+      senior: dto.priceSenior,
+      special: dto.priceSpecial,
+    }
+  };
+};
 
+// 2. 좌석 목록 매핑 (배열을 받아 배열로 반환)
+export const toSeatViewModels = (dtos: SeatInfoDto[]): SeatViewModel[] => {
   return dtos.map(dto => {
     let icon = entranceExitAllImg;
     let label = "입/출구";
-    const isEntranceType = ["ENTRANCE", "EXIT", "ETRANCE_EXIT_ALL"].includes(dto.seatType);
+    const isEntranceType = ["ENTRANCE", "EXIT", "ENTRANCE_EXIT_ALL"].includes(dto.seatType);
 
     if (dto.seatType === "ENTRANCE") {
       icon = entranceImg; label = "입구";
     } else if (dto.seatType === "EXIT") {
       icon = exitImg; label = "출구";
     }
-
+    
     return {
       id: dto.seatId,
       row: dto.seatRow,
@@ -33,24 +58,4 @@ export const toSeatViewModels = (dtos: SeatStatusDto[]): SeatViewModel[] => {
       displayLabel: label
     };
   });
-};
-
-// 상영 정보 변환 -> 좌석 정보와 함께 올 상영과, 영화관, 시간 관련 정보는 전부 같기 때문에 리스트 중 첫 번째 요소만 사용
-export const toScreeningInfoViewModel = (dto: SeatStatusDto): ScreeningInfoViewModel => {
-  return {
-    movie: {
-      title: dto.movieTitle,
-      poster: dto.posterUrl,
-      ageRating: dto.ageRating
-    },
-    theater: {
-      name: dto.theaterName,
-      screenName: dto.screenName,
-      screenType: dto.screenType
-    },
-    time: {
-      start: dto.startTime,
-      end: dto.endTime
-    }
-  };
 };

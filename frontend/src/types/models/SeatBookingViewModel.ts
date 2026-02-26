@@ -10,7 +10,7 @@ export interface SeatViewModel {
   number: number;
   label: string;       // "A1"
   status: "AVAILABLE" | "HELD" | "RESERVED";
-  type: "NORMAL" | "DISABLED" | "COUPLE" | "ENTRANCE" | "EXIT" | "ETRANCE_EXIT_ALL";
+  type: "NORMAL" | "DISABLED" | "COUPLE" | "ENTRANCE" | "EXIT" | "ENTRANCE_EXIT_ALL";
   x: number;
   y: number;
   isRealSeat: boolean; // row !== "0"
@@ -33,5 +33,11 @@ export interface ScreeningInfoViewModel {
   time: {
     start: string;
     end: string;
+  };
+  prices: {
+    adult: number;
+    youth: number;
+    senior: number;
+    special: number;
   };
 }

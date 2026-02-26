@@ -55,12 +55,13 @@ public class ScreeningSeat {
     /* =========================
        도메인 메서드
        ========================= */
-    public void hold(Long memberId, Long guestId) {
+    public void hold(Long memberId, Long guestId) { //다건 처리:
         if (this.status != SeatStatus.AVAILABLE) {
             throw new IllegalStateException("이미 선택된 좌석입니다.");
         }
 
         this.status = SeatStatus.HELD;
+        this.holdExpiresAt = LocalDateTime.now().plusMinutes(5);
 
         if (memberId != null) {
             this.heldByMember = new Member(memberId); // 프록시
@@ -75,6 +76,7 @@ public class ScreeningSeat {
         this.status = SeatStatus.AVAILABLE;
         this.heldByMember = null;
         this.heldByGuest = null;
+        this.holdExpiresAt = null;
     }
 
     public void reserve() {
