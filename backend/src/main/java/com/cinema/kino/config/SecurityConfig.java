@@ -61,4 +61,6 @@ public class SecurityConfig {
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder(); // 가장 강력하고 표준적인 해시 암호화
     }
+
+
 }

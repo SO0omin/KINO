@@ -65,11 +65,45 @@ public class CouponService {
         return memberCouponRepository.findAvailableCouponsByMemberId(memberId)
                 .stream()
                 .map(CouponDTO.MyCouponResponse::from)
+                .map(this::normalizeCouponStatus)
+                .toList();
+    }
+
+    @Transactional(readOnly = true)
+    public List<CouponDTO.MyCouponResponse> getMyCoupons(Long memberId) {
+        return memberCouponRepository.findAllCouponsByMemberId(memberId)
+                .stream()
+                .map(CouponDTO.MyCouponResponse::from)
+                .map(this::normalizeCouponStatus)
                 .toList();
     }
 
     private String normalize(String code) {
         if (code == null) return "";
         return code.trim().toUpperCase().replaceAll("\\s+", "");
+    }
+
+    private CouponDTO.MyCouponResponse normalizeCouponStatus(CouponDTO.MyCouponResponse src) {
+        String normalizedStatus = src.getStatus();
+        if (src.getExpiresAt() != null) {
+            LocalDateTime expiresAt = LocalDateTime.parse(src.getExpiresAt());
+            if (expiresAt.isBefore(LocalDateTime.now()) && !"USED".equals(normalizedStatus)) {
+                normalizedStatus = "EXPIRED";
+            }
+        }
+
+        return CouponDTO.MyCouponResponse.builder()
+                .memberCouponId(src.getMemberCouponId())
+                .couponCode(src.getCouponCode())
+                .couponName(src.getCouponName())
+                .discountType(src.getDiscountType())
+                .discountValue(src.getDiscountValue())
+                .minPrice(src.getMinPrice())
+                .expiresAt(src.getExpiresAt())
+                .issuedAt(src.getIssuedAt())
+                .status(normalizedStatus)
+                .couponKind(src.getCouponKind())
+                .sourceType(src.getSourceType())
+                .build();
     }
 }

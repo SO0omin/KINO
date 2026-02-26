@@ -5,6 +5,9 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.time.LocalDateTime;
+import java.util.List;
+
 /**
  * 회원 포인트(MemberPoint) 엔티티 데이터 접근 Repository
  *
@@ -39,4 +42,15 @@ public interface MemberPointRepository extends JpaRepository<MemberPoint, Long> 
             "FROM MemberPoint mp " +
             "WHERE mp.member.id = :memberId")
     int getAvailablePointsByMemberId(@Param("memberId") Long memberId);
+
+    @Query("""
+            SELECT mp
+            FROM MemberPoint mp
+            WHERE mp.member.id = :memberId
+              AND mp.createdAt BETWEEN :fromDateTime AND :toDateTime
+            ORDER BY mp.createdAt DESC, mp.id DESC
+            """)
+    List<MemberPoint> findHistoriesByMemberIdAndRange(@Param("memberId") Long memberId,
+                                                      @Param("fromDateTime") LocalDateTime fromDateTime,
+                                                      @Param("toDateTime") LocalDateTime toDateTime);
 }
