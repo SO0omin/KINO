@@ -62,8 +62,5 @@ public class SecurityConfig {
         return new BCryptPasswordEncoder(); // 가장 강력하고 표준적인 해시 암호화
     }
 
-    @Bean
-    public PasswordEncoder passwordEncoder() {
-        return new BCryptPasswordEncoder();
-    }
+
 }

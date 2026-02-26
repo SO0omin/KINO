@@ -22,31 +22,63 @@ public class MovieLikeService {
     private final MovieRepository movieRepository;
     private final MemberRepository memberRepository;
 
-    /**
-     * 영화 찜하기 토글 로직
-     * @param movieId 영화 PK
-     * @param request 회원 정보가 담긴 DTO
-     * @return boolean (true: 찜 등록됨, false: 찜 해제됨)
-     */
     @Transactional
     public boolean toggleLike(Long movieId, MovieLikeRequestDTO request) {
+        Long memberId = getMemberIdOrThrow(request);
 
-        // 1. 이미 찜한 상태인지 확인
         if (movieLikeRepository.existsByMovieIdAndMemberId(movieId, memberId)) {
-            // 2. 이미 있다면 삭제 (찜 취소)
             movieLikeRepository.deleteByMovieIdAndMemberId(movieId, memberId);
+            return false;
+        }
+
         Movie movie = movieRepository.findById(movieId)
                 .orElseThrow(() -> new IllegalArgumentException("영화를 찾을 수 없습니다. ID: " + movieId));
         Member member = memberRepository.findById(memberId)
                 .orElseThrow(() -> new IllegalArgumentException("회원을 찾을 수 없습니다. ID: " + memberId));
 
-            MovieLike movieLike = MovieLike.builder()
-                    .movie(movie)
-                    .member(member)
-                    .build();
+        MovieLike movieLike = MovieLike.builder()
+                .movie(movie)
+                .member(member)
+                .build();
 
         movieLikeRepository.save(movieLike);
+        return true;
+    }
+
+    @Transactional
+    public void unlike(Long movieId, Long memberId) {
+        if (memberId == null) {
+            throw new IllegalArgumentException("memberId는 필수입니다.");
         }
-        movieLikeRepository.deleteByMovieIdAndMemberId(movieId, safeMemberId);
+        movieLikeRepository.deleteByMovieIdAndMemberId(movieId, memberId);
     }
+
+    @Transactional(readOnly = true)
+    public boolean isLiked(Long movieId, Long memberId) {
+        if (memberId == null) {
+            return false;
+        }
+        return movieLikeRepository.existsByMovieIdAndMemberId(movieId, memberId);
     }
+
+    @Transactional(readOnly = true)
+    public List<MovieLikeItemResponseDTO> getMyLikedMovies(Long memberId) {
+        if (memberId == null) {
+            throw new IllegalArgumentException("memberId는 필수입니다.");
+        }
+        return movieLikeRepository.findAllByMemberIdWithMovie(memberId).stream()
+                .map(movieLike -> MovieLikeItemResponseDTO.builder()
+                        .movieId(movieLike.getMovie().getId())
+                        .title(movieLike.getMovie().getTitle())
+                        .posterUrl(movieLike.getMovie().getPosterUrl())
+                        .build())
+                .toList();
+    }
+
+    private Long getMemberIdOrThrow(MovieLikeRequestDTO request) {
+        if (request == null || request.getMemberId() == null) {
+            throw new IllegalArgumentException("memberId는 필수입니다.");
+        }
+        return request.getMemberId();
+    }
+}
