@@ -12,8 +12,8 @@ export const Gnb: React.FC = () => {
   const mainNavLinks = [
     { label: "영화", path: "/movie-list" },
     { label: "예매", path: "/ticketing" }, // 기존 TICKETING 라우트 연결
-    { label: "극장", path: "/theaters" },
-    { label: "이벤트", path: "/events" },
+    { label: "상영시간표", path: "/timetables" },
+    { label: "극장", path: "/theater-list" },
     { label: "스토어", path: "/store" },
     { label: "혜택", path: "/benefits" },
   ];

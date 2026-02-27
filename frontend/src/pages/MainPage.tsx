@@ -1,5 +1,4 @@
 
-import React from 'react';
 import { useMainData } from '../hooks/useMainData';
 import HeroSection from '../components/main/HeroSection';
 import RankingSection from '../components/main/RankingSection';
@@ -11,6 +10,8 @@ import FilmStrip from '../components/ticketing/FilmStrip';
 
 const Main = () => {
   const { data, loading, error } = useMainData();
+
+  console.log("메인 페이지 데이터:", data);
 
   const vintageStyles = `
     .font-serif { font-family: 'Playfair Display', serif; }

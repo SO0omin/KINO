@@ -1,4 +1,4 @@
-package com.cinema.kino.controller;
+package com.cinema.kino.scheduler;
 
 import com.cinema.kino.repository.ScreeningSeatRepository;
 import lombok.RequiredArgsConstructor;

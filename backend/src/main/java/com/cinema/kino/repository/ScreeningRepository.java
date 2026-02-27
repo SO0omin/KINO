@@ -1,7 +1,9 @@
 package com.cinema.kino.repository;
 
+import com.cinema.kino.dto.TimetableRawDTO;
+import com.cinema.kino.dto.TimetableResponseDTO;
 import com.cinema.kino.entity.Screening;
-import com.cinema.kino.entity.ScreeningSeat;
+import com.cinema.kino.entity.enums.ReservationStatus;
 import com.cinema.kino.entity.enums.ScreenType;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -58,5 +60,47 @@ public interface ScreeningRepository extends JpaRepository<Screening, Long> {
             @Param("theaterIds") List<Long> theaterIds,
             @Param("start") LocalDateTime start,
             @Param("end") LocalDateTime end
+    );
+
+    // 5. 특정 극장, 특정 날짜의 상영 일정을 조회 (영화와 상영관 정보 함께 페치)
+    @Query("SELECT new com.cinema.kino.dto.TimetableRawDTO(" +
+            "t.id, t.name, m.id, m.title, CAST(m.ageRating AS string), m.durationMin, " +
+            "s.id, sc.name, sc.screenType, sc.totalSeats, s.startTime, s.endTime, " +
+            "COALESCE(SUM(r.totalNum), 0L)) " +
+            "FROM Screening s " +
+            "JOIN s.movie m " +
+            "JOIN s.screen sc " +
+            "JOIN sc.theater t " +
+            "LEFT JOIN Reservation r ON r.screening = s AND r.status = :validStatus " +
+            "WHERE t.id = :theaterId " +
+            "AND s.startTime >= :startOfDay AND s.startTime < :endOfDay " +
+            "GROUP BY s.id, t.id, m.id, sc.id " +
+            "ORDER BY m.id, s.startTime ASC")
+    List<TimetableRawDTO> findByTheater(
+            @Param("theaterId") Long theaterId,
+            @Param("startOfDay") LocalDateTime startOfDay,
+            @Param("endOfDay") LocalDateTime endOfDay,
+            @Param("validStatus") ReservationStatus validStatus
+    );
+
+    // ✨ CAST 구문 뒤에 쉼표(,) 추가!
+    @Query("SELECT new com.cinema.kino.dto.TimetableRawDTO(" +
+            "t.id, t.name, m.id, m.title, CAST(m.ageRating AS string), m.durationMin, " +
+            "s.id, sc.name, sc.screenType, sc.totalSeats, s.startTime, s.endTime, " +
+            "COALESCE(SUM(r.totalNum), 0L)) " +
+            "FROM Screening s " +
+            "JOIN s.movie m " +
+            "JOIN s.screen sc " +
+            "JOIN sc.theater t " +
+            "LEFT JOIN Reservation r ON r.screening = s AND r.status = :validStatus " +
+            "WHERE m.id = :movieId " +
+            "AND s.startTime >= :startOfDay AND s.startTime < :endOfDay " +
+            "GROUP BY s.id, t.id, m.id, sc.id " +
+            "ORDER BY t.id, s.startTime ASC")
+    List<TimetableRawDTO> findByMovie(
+            @Param("movieId") Long movieId,
+            @Param("startOfDay") LocalDateTime startOfDay,
+            @Param("endOfDay") LocalDateTime endOfDay,
+            @Param("validStatus") ReservationStatus validStatus
     );
 }

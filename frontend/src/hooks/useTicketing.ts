@@ -7,7 +7,7 @@ import type { Region, Theater, Movie, Screening } from '../types/ticketing';
 const VISIBLE_COUNT = 10;
 //const VISIBLE_HOUR_COUNT = 10;
 
-export const useTicketing = (dateList: any[], preSelectedMovieId?: number) => {
+export const useTicketing = (dateList: any[], initialMovieId?: number, initialTheaterId?: number, initialRegionId?: number) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedScreeningData, setSelectedScreeningData] = useState<Screening | null>(null);
   const [currentSeats, setCurrentSeats] = useState<any[]>([]);
@@ -20,10 +20,10 @@ export const useTicketing = (dateList: any[], preSelectedMovieId?: number) => {
   const [selectedSpecialType, setSelectedSpecialType] = useState<string | null>(null);
   const [availableMovieIds, setAvailableMovieIds] = useState<number[]>([]);
   const [availableTheaterIds, setAvailableTheaterIds] = useState<number[]>([]);
-  const [selectedRegionId, setSelectedRegionId] = useState<number | null>(null);
-  const [selectedTheaters, setSelectedTheaters] = useState<number[]>([]);
+  const [selectedRegionId, setSelectedRegionId] = useState<number | null>(initialRegionId || null);
+  const [selectedMovies, setSelectedMovies] = useState<number[]>(initialMovieId ? [initialMovieId] : []);
+  const [selectedTheaters, setSelectedTheaters] = useState<number[]>(initialTheaterId ? [initialTheaterId] : []);
   const [selectedTheatersInfo, setSelectedTheatersInfo] = useState<{id:number; name:string}[]>([]);
-  const [selectedMovies, setSelectedMovies] = useState<number[]>( preSelectedMovieId ? [preSelectedMovieId] : []);
   const [selectedDate, setSelectedDate] = useState<string>(getLocalDateString(new Date()));
   const [startIndex, setStartIndex] = useState(0);
   const [selectedHour, setSelectedHour] = useState<number | null>(null);
@@ -82,6 +82,37 @@ export const useTicketing = (dateList: any[], preSelectedMovieId?: number) => {
       setHourStartIndex(Math.max(0, Math.min(minHour - 4, 14)));
     } else { setSelectedHour(null); }
   }, [screenings]);
+  
+  useEffect(() => {
+        // theaters(전체 극장 목록)가 들어왔고, 넘어온 ID가 있는데, 하단 박스가 아직 비어있다면!
+        if (initialTheaterId && theaters && theaters.length > 0 && selectedTheatersInfo.length === 0) {
+            
+            // 전체 극장 리스트에서 넘어온 ID와 일치하는 극장을 찾습니다.
+            const targetTheater = theaters.find(t => t.id === initialTheaterId);
+
+            if (targetTheater) {
+                // ✅ 1. 하단 [Select Venue] 박스에 극장 이름 쏙 넣기!
+                setSelectedTheatersInfo([{ id: targetTheater.id, name: targetTheater.name }]);
+                
+                // ✅ 2. 굳이 서울을 누르지 않아도 알아서 '서울' 탭이 열리도록 지역ID 세팅!
+                if (targetTheater.regionId) {
+                    setSelectedRegionId(targetTheater.regionId); 
+                }
+            }
+        }
+    }, [theaters, initialTheaterId]); // 전체 극장 리스트가 세팅될 때 발동
+
+    // 영화 쪽도 마찬가지로 이름 세팅해 주기
+    useEffect(() => {
+        if (initialMovieId && movies && movies.length > 0 && selectedMovies.length === 0) {
+            const targetMovie = movies.find(m => m.id === initialMovieId);
+            if (targetMovie) {
+                // 하단 [Select Movie] 박스에 영화 이름 쏙 넣기!
+                // (이 부분은 작성해두신 상태 관리 함수명에 맞게 변경하세요)
+                // 예: setSelectedMoviesInfo([{ id: targetMovie.id, title: targetMovie.title }]); 
+            }
+        }
+    }, [movies, initialMovieId]);
 
   // 날짜 관련 핸들러 분리
   const onDateButtonClick = (date: string) => setSelectedDate(date);

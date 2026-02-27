@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import type { MovieDTO } from '../../types/main';
 
@@ -71,7 +71,7 @@ const HeroSection = ({ movies }: HeroSectionProps) => {
           {/* 우측: View Details 버튼 */}
           <div className="pointer-events-auto">
             <button 
-              onClick={() => navigate(`/movies/${currentMovie.id}`)}
+              onClick={() => navigate(`/movie-detail/${currentMovie.id}`)}
               className="px-8 py-3 bg-white text-black font-serif italic text-lg hover:bg-[#f4f1ea] transition-all shadow-[6px_6px_0_0_rgba(255,255,255,0.2)] active:translate-x-1 active:translate-y-1 active:shadow-none uppercase tracking-tight"
             >
               View Details

@@ -1,13 +1,10 @@
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 
-// 💡 전역 상태 관리 (본인 작업)
 import { AuthProvider } from './contexts/AuthContext';
 
-// 💡 공통 컴포넌트
 import Gnb from "./components/common/Gnb";
 import Footer from "./components/common/Footer";
 
-// 💡 페이지 컴포넌트 (본인 작업)
 import MainPage from "./pages/MainPage";
 import MovieListPage from "./pages/MovieListPage";
 import TicketingPage from "./pages/TicketingPage";
@@ -15,11 +12,12 @@ import SeatBookingPage from "./pages/SeatBookingPage";
 import SignupPage from "./pages/SignupPage";
 import LoginPage from "./pages/LoginPage";
 import FindAccountPage from "./pages/FindAccountPage";
-
-// 💡 페이지 컴포넌트 (팀원 작업: 결제 도메인)
+import MovieDetailPage from "./pages/MovieDetailPage";
 import PaymentPage from "./pages/Payment/PaymentPage";
 import PaymentSuccessPage from "./pages/Payment/PaymentSuccessPage";
 import PaymentFailPage from "./pages/Payment/PaymentFailPage";
+import TheaterListPage from "./pages/TheaterListPage";
+import TimetablePage from "./pages/TimetablePage";
 
 function App() {
     return (
@@ -33,6 +31,9 @@ function App() {
                     {/* 메인 페이지 */}
                     <Route path="/" element={<MainPage />} />
                     <Route path="/movie-list" element={<MovieListPage />} />
+                    <Route path="/theater-list" element={<TheaterListPage />} />
+                    <Route path="/movie-detail/:id" element={<MovieDetailPage />} />
+                    <Route path="/timetables" element={<TimetablePage />} />
 
                     {/* 예매 및 좌석 관련 */}
                     <Route path="/ticketing" element={<TicketingPage />} />
