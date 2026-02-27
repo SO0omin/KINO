@@ -25,7 +25,14 @@ public class CouponController {
     }
 
     @GetMapping("/my")
-    public ResponseEntity<List<CouponDTO.MyCouponResponse>> myCoupons(@RequestParam Long memberId) {
-        return ResponseEntity.ok(couponService.getMyAvailableCoupons(memberId));
+    public ResponseEntity<List<CouponDTO.MyCouponResponse>> myCoupons(
+            @RequestParam Long memberId,
+            @RequestParam(defaultValue = "false") boolean includeAll
+    ) {
+        return ResponseEntity.ok(
+                includeAll
+                        ? couponService.getMyCoupons(memberId)
+                        : couponService.getMyAvailableCoupons(memberId)
+        );
     }
 }

@@ -13,9 +13,9 @@ import java.util.List;
 
 @Repository
 public interface ReviewRepository extends JpaRepository<Review, Long> {
+    long countByMemberId(Long memberId);
 
     // 1. 메인 페이지용: 5개 항목 평균으로 상위 리뷰 가져오기
-    // (r.scoreDirection + r.scoreStory + r.scoreVisual + r.scoreActor + r.scoreOst) / 5.0 로 변경
     @Query("SELECT new com.cinema.kino.dto.MainPageResponseDTO$ReviewSummary(" +
             "m.title, " +
             "AVG((r.scoreDirection + r.scoreStory + r.scoreVisual + r.scoreActor + r.scoreOst) / 5.0), " +

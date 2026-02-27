@@ -84,15 +84,15 @@ public interface MemberCouponRepository extends JpaRepository<MemberCoupon, Long
     ORDER BY mc.expiresAt ASC
 """)
     List<MemberCoupon> findAvailableCouponsByMemberId(@Param("memberId") Long memberId);
+
     @Query("""
     SELECT mc FROM MemberCoupon mc
     JOIN FETCH mc.coupon c
     WHERE mc.member.id = :memberId
-      AND mc.status = com.cinema.kino.entity.enums.MemberCouponStatus.AVAILABLE
-      AND mc.isUsed = false
-      AND mc.expiresAt > CURRENT_TIMESTAMP
-    ORDER BY mc.expiresAt ASC
+    ORDER BY mc.issuedAt DESC, mc.id DESC
 """)
+    List<MemberCoupon> findAllCouponsByMemberId(@Param("memberId") Long memberId);
+
     Optional<MemberCoupon> findByMemberIdAndCouponId(Long memberId, Long couponId);
 
 

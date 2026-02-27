@@ -43,6 +43,12 @@ public class Member {
     @Column(name = "profile_image")
     private String profileImage = "default";
 
+    @Column(name = "point_password", length = 100)
+    private String pointPassword;
+
+    @Column(name = "point_password_updated_at")
+    private LocalDateTime pointPasswordUpdatedAt;
+
     @CreationTimestamp
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;
