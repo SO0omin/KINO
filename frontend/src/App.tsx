@@ -1,4 +1,4 @@
-import { BrowserRouter as Router, Route, Routes, useLocation } from "react-router-dom";
+import { BrowserRouter as Router, Route, Routes } from "react-router-dom"; // useLocation 제거
 import { AuthProvider } from "./contexts/AuthContext";
 import Footer from "./components/common/Footer";
 import Gnb from "./components/common/Gnb";
@@ -10,7 +10,7 @@ import SignupPage from "./pages/SignupPage";
 import LoginPage from "./pages/LoginPage";
 import FindAccountPage from "./pages/FindAccountPage";
 import MovieDetailPage from "./pages/MovieDetailPage";
-import MyPage from "./pages/MyPage"; // ✨ 새로 추가된 마이페이지
+import MyPage from "./pages/MyPage"; 
 import PaymentPage from "./pages/Payment/PaymentPage";
 import PaymentSuccessPage from "./pages/Payment/PaymentSuccessPage";
 import PaymentFailPage from "./pages/Payment/PaymentFailPage";
@@ -18,14 +18,10 @@ import TheaterListPage from "./pages/TheaterListPage";
 import TimetablePage from "./pages/TimetablePage";
 
 function AppRoutes() {
-    const { pathname } = useLocation();
-    // ✨ 마이페이지 하위 경로에서는 Gnb를 숨기는 로직
-    const hideGnb = pathname.startsWith("/my-page");
-
     return (
         <div className="flex flex-col min-h-screen">
-            {/* hideGnb가 false일 때만 Gnb 렌더링 */}
-            {!hideGnb && <Gnb />}
+            {/* ✨ 이제 조건 없이 항상 Gnb가 최상단에 렌더링됩니다! */}
+            <Gnb />
 
             <main className="flex-grow">
                 <Routes>
@@ -36,7 +32,7 @@ function AppRoutes() {
                     <Route path="/movie-detail/:id" element={<MovieDetailPage />} />
                     <Route path="/timetables" element={<TimetablePage />} />
 
-                    {/* 마이페이지 관련 (새로 추가됨!) */}
+                    {/* 마이페이지 관련 */}
                     <Route path="/my-page/*" element={<MyPage />} />
 
                     {/* 예매 및 좌석 관련 */}

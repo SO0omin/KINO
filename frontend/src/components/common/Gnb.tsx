@@ -84,7 +84,7 @@ export const Gnb: React.FC = () => {
                 <Calendar size={24} />
               </button>
               {/* 유저 아이콘 클릭 시 로그인 여부에 따라 마이페이지 또는 로그인 창으로 이동 */}
-              <Link to={isLoggedIn ? "/mypage" : "/login"} className="hover:text-[#eb4d32] transition-colors">
+              <Link to={isLoggedIn ? "/my-page" : "/login"} className="hover:text-[#eb4d32] transition-colors">
                 <User size={24} />
               </Link>
             </div>

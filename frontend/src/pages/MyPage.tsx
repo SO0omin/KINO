@@ -2525,7 +2525,7 @@ export default function MyPage() {
 
   return (
     <div className="min-h-screen bg-[#fdf4e3] text-[#000000]">
-      <Header />
+      {/*<Header />*/}
 
       <div className="border-y border-[#000000] bg-[#ffffff]">
         <div className="mx-auto flex h-12 max-w-[1200px] items-center gap-2 px-4 text-sm text-gray-500">
