@@ -3,6 +3,7 @@ import { AuthProvider } from "./contexts/AuthContext";
 import Footer from "./components/common/Footer";
 import Gnb from "./components/common/Gnb";
 import MainPage from "./pages/MainPage";
+import MovieDetail from "./pages/MovieDetail";
 import MovieListPage from "./pages/MovieListPage";
 import TicketingPage from "./pages/TicketingPage";
 import SeatBookingPage from "./pages/SeatBookingPage";
@@ -23,6 +24,7 @@ function AppRoutes() {
       {!hideGnb && <Gnb />}
       <Routes>
         <Route path="/" element={<MainPage />} />
+        <Route path="/movies/:id" element={<MovieDetail />} />
         <Route path="/movie-list" element={<MovieListPage />} />
         <Route path="/ticketing" element={<TicketingPage />} />
         <Route path="/seat-booking" element={<SeatBookingPage />} />

@@ -11,7 +11,7 @@ const BenefitSection = ({ coupons }: BenefitSectionProps) => {
   return (
     <section className="py-24 relative overflow-hidden">
       <div className="max-w-7xl mx-auto px-10 relative z-10">
-        {/* Header: AI Studio Style */}
+        {/* Header */}
         <div className="mb-16 flex flex-col items-center text-center">
           <span className="font-typewriter text-[10px] text-black/40 tracking-[0.6em] uppercase mb-4">Patron Privileges</span>
           <h2 className="font-serif text-5xl italic tracking-tighter text-black uppercase">
