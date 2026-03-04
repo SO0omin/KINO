@@ -1,4 +1,4 @@
-import { BrowserRouter as Router, Route, Routes, useLocation } from "react-router-dom";
+import { BrowserRouter as Router, Route, Routes } from "react-router-dom";
 import { AuthProvider } from "./contexts/AuthContext";
 import Footer from "./components/common/Footer";
 import Gnb from "./components/common/Gnb";
@@ -16,12 +16,9 @@ import PaymentSuccessPage from "./pages/Payment/PaymentSuccessPage";
 import PaymentFailPage from "./pages/Payment/PaymentFailPage";
 
 function AppRoutes() {
-  const { pathname } = useLocation();
-  const hideGnb = pathname.startsWith("/my-page");
-
   return (
     <>
-      {!hideGnb && <Gnb />}
+      <Gnb />
       <Routes>
         <Route path="/" element={<MainPage />} />
         <Route path="/movies/:id" element={<MovieDetail />} />
