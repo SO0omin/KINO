@@ -118,6 +118,7 @@ public class MyPageService {
                 .tel(member.getTel())
                 .email(member.getEmail())
                 .birthDate(member.getBirthDate())
+                .profileImage(member.getProfileImage())
                 .build();
     }
 
@@ -138,6 +139,7 @@ public class MyPageService {
         member.setTel(request.getTel() == null ? null : request.getTel().trim());
         member.setEmail(request.getEmail() == null ? null : request.getEmail().trim());
         member.setBirthDate(request.getBirthDate());
+        member.setProfileImage(request.getProfileImage());
 
         return MyPageDTO.MessageResponse.builder()
                 .message("개인정보가 수정되었습니다.")
@@ -721,5 +723,18 @@ public class MyPageService {
         headers.set("Authorization", "Basic " + encodedAuth);
         headers.setContentType(MediaType.APPLICATION_JSON);
         return headers;
+    }
+
+    @Transactional(readOnly = true)
+    public List<MyPageDTO.MyReviewItem> getMyReviews(Long memberId) {
+        // 💡 ReviewRepository에 findByMemberId가 있다고 가정합니다.
+        return reviewRepository.findByMemberId(memberId).stream()
+                .map(r -> MyPageDTO.MyReviewItem.builder()
+                        .id(r.getId())
+                        .movieTitle(r.getMovie().getTitle()) // 영화 제목 가져오기
+                        .content(r.getContent())
+                        .createdAt(r.getCreatedAt().toLocalDate().toString())
+                        .build())
+                .collect(Collectors.toList());
     }
 }

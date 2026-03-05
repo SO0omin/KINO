@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { ChevronRight } from "lucide-react";
+import { useAuth } from "../contexts/AuthContext";
 import {
   cancelReservation,
   redeemCoupon,
@@ -15,6 +16,8 @@ import {
   verifyPointPasswordSms,
   registerVoucher,
   removeMovieLike,
+  getMyReviews,
+  type MyReviewItem,
 } from "../api/myPageApi";
 import { ticketingApi } from "../api/ticketingApi";
 import { useMyPageData } from "../hooks/useMyPageData";
@@ -68,10 +71,16 @@ type PreferenceSnapshot = {
 export default function MyPage() {
   const navigate = useNavigate();
   const location = useLocation();
+  const { memberId: myRealId, isLoggedIn } = useAuth();
+
+  // memberId 결정 로직 수정
   const memberId = useMemo(() => {
     const q = new URLSearchParams(location.search).get("memberId");
-    return Number(q || 1);
-  }, [location.search]);
+    // 1. URL에 memberId가 있으면 그 번호를 보여줌 (관리자용 혹은 타인 프로필용)
+    // 2. URL에 없으면 로그인한 내 ID(myRealId)를 사용함
+    // 3. 둘 다 없으면 최후의 수단으로 1을 사용 (비로그인 방어)
+    return Number(q || myRealId || 1);
+  }, [location.search, myRealId]);
 
   const pageKey = PATH_TO_KEY[location.pathname] ?? "dashboard";
   const verificationToken = useMemo(() => new URLSearchParams(location.search).get("verifyToken") ?? "", [location.search]);
@@ -158,7 +167,7 @@ export default function MyPage() {
   const [showReviewModal, setShowReviewModal] = useState(false);
   const [reviewMovieTitleInput, setReviewMovieTitleInput] = useState("");
   const [reviewContentInput, setReviewContentInput] = useState("");
-  const [reviews, setReviews] = useState<Array<{ id: string; movieTitle: string; content: string; createdAt: string }>>([]);
+  const [reviews, setReviews] = useState<MyReviewItem[]>([]);
   const {
     loading,
     summary,
@@ -195,15 +204,17 @@ export default function MyPage() {
     setProfileTel(memberProfile.tel ?? "");
     setProfileEmail(memberProfile.email ?? "");
     setProfileBirthDate(memberProfile.birthDate ?? "");
+    if (memberProfile.profileImage) {
+      setProfileImageUrl(memberProfile.profileImage);
+    }
   }, [memberProfile]);
 
   useEffect(() => {
     const savedWatched = localStorage.getItem(`movie-story-watched-${memberId}`);
-    const savedReviews = localStorage.getItem(`movie-story-reviews-${memberId}`);
     const savedPreferencesRaw = localStorage.getItem(`mypage-preferences-${memberId}`);
     setWatchedMovies(savedWatched ? JSON.parse(savedWatched) : []);
-    setReviews(savedReviews ? JSON.parse(savedReviews) : []);
 
+    
     if (savedPreferencesRaw) {
       try {
         const savedPreferences = JSON.parse(savedPreferencesRaw);
@@ -250,6 +261,19 @@ export default function MyPage() {
       });
     }
   }, [memberId]);
+
+  useEffect(() => {
+    if (isLoggedIn && memberId) {
+      getMyReviews(memberId)
+        .then((data) => {
+          // 백엔드에서 가져온 진짜 리뷰 리스트를 상태에 저장!
+          setReviews(data); 
+        })
+        .catch((err) => {
+          console.error("리뷰 목록 로드 실패 🕵️‍♂️", err);
+        });
+    }
+  }, [memberId, isLoggedIn]);
 
   useEffect(() => {
     if (!preferredTheaterId) {
@@ -309,10 +333,6 @@ export default function MyPage() {
   useEffect(() => {
     localStorage.setItem(`movie-story-watched-${memberId}`, JSON.stringify(watchedMovies));
   }, [memberId, watchedMovies]);
-
-  useEffect(() => {
-    localStorage.setItem(`movie-story-reviews-${memberId}`, JSON.stringify(reviews));
-  }, [memberId, reviews]);
 
   const handleRemoveWishMovie = async (movieId: number) => {
     try {
@@ -708,6 +728,7 @@ export default function MyPage() {
         tel: profileTel.trim(),
         email: profileEmail.trim(),
         birthDate: profileBirthDate || undefined,
+        profileImage: profileImageUrl,
       });
       alert(response?.message ?? "개인정보가 수정되었습니다.");
       await loadMemberProfile();

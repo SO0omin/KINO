@@ -39,6 +39,7 @@ public class MyPageDTO {
         private String tel;
         private String email;
         private LocalDate birthDate;
+        private String profileImage;
     }
 
     @Getter
@@ -52,6 +53,7 @@ public class MyPageDTO {
         private String tel;
         private String email;
         private LocalDate birthDate;
+        private String profileImage;
     }
 
     @Getter
@@ -251,5 +253,14 @@ public class MyPageDTO {
     public static class PointPasswordSmsVerifyResponse {
         private String verificationToken;
         private String message;
+    }
+
+    @Getter @Setter @Builder
+    @NoArgsConstructor @AllArgsConstructor
+    public static class MyReviewItem {
+        private Long id;
+        private String movieTitle;
+        private String content;
+        private String createdAt;
     }
 }
