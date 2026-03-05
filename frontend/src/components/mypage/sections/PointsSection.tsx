@@ -53,10 +53,10 @@ export function PointsSection({
             <p className="mt-3 text-center text-5xl font-bold text-[#eb4d32]">{(summary?.availablePoints ?? 0).toLocaleString()} P</p>
             <div className="mt-5 space-y-2">
               <div className="flex items-center justify-between rounded-full bg-white px-5 py-2 text-sm text-gray-700">
-                <span>· 적립예정</span><span>0 P</span>
+                <span>· 적립예정</span><span>{(summary?.pendingPoints ?? 0).toLocaleString()} P</span>
               </div>
               <div className="flex items-center justify-between rounded-full bg-white px-5 py-2 text-sm text-gray-700">
-                <span>· 당월소멸예정</span><span>0 P</span>
+                <span>· 당월소멸예정</span><span>{(summary?.expiringPointsThisMonth ?? 0).toLocaleString()} P</span>
               </div>
             </div>
           </div>
@@ -64,9 +64,9 @@ export function PointsSection({
             <h3 className="text-center text-xl font-semibold text-gray-700">VIP 선정 누적 포인트 현황</h3>
             <div className="mt-4 rounded bg-[#ffffff] py-2 text-center text-base font-semibold">포인트</div>
             <div className="mt-4 space-y-2 text-sm text-gray-700">
-              <p>· 매표 <span className="float-right">0</span></p>
-              <p>· 매점 <span className="float-right">0</span></p>
-              <p>· 이벤트(VIP등급대상) <span className="float-right">0</span></p>
+              <p>· 매표 <span className="float-right">{(summary?.vipTicketPoints ?? 0).toLocaleString()}</span></p>
+              <p>· 매점 <span className="float-right">{(summary?.vipStorePoints ?? 0).toLocaleString()}</span></p>
+              <p>· 이벤트(VIP등급대상) <span className="float-right">{(summary?.vipEventPoints ?? 0).toLocaleString()}</span></p>
             </div>
             <p className="mt-8 text-right text-3xl font-semibold text-[#eb4d32]">{(summary?.availablePoints ?? 0).toLocaleString()} P</p>
           </div>

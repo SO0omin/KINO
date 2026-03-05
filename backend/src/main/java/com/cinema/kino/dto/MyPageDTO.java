@@ -21,6 +21,14 @@ public class MyPageDTO {
         private Long memberId;
         private String memberName;
         private Integer availablePoints;
+        private Integer pendingPoints;
+        private Integer expiringPointsThisMonth;
+        private Integer vipTicketPoints;
+        private Integer vipStorePoints;
+        private Integer vipEventPoints;
+        private String pointTier;
+        private String nextPointTier;
+        private Integer pointsToNextTier;
         private Integer availableCouponCount;
         private Integer paidReservationCount;
         private Integer reviewCount;

@@ -4,6 +4,14 @@ export interface MyPageSummary {
   memberId: number;
   memberName: string;
   availablePoints: number;
+  pendingPoints: number;
+  expiringPointsThisMonth: number;
+  vipTicketPoints: number;
+  vipStorePoints: number;
+  vipEventPoints: number;
+  pointTier: string;
+  nextPointTier?: string | null;
+  pointsToNextTier: number;
   availableCouponCount: number;
   paidReservationCount: number;
   reviewCount: number;

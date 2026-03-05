@@ -55,6 +55,14 @@ import java.util.stream.Collectors;
 @Service
 @RequiredArgsConstructor
 public class MyPageService {
+    private static final double POINT_EARN_RATE = 0.05;
+    private static final List<PointTierRule> POINT_TIER_RULES = List.of(
+            new PointTierRule("WELCOME", 0),
+            new PointTierRule("FRIENDS", 6000),
+            new PointTierRule("VIP", 12000),
+            new PointTierRule("VVIP", 20000),
+            new PointTierRule("MVIP", 30000)
+    );
 
     private final MemberRepository memberRepository;
     private final ReservationRepository reservationRepository;
@@ -89,7 +97,11 @@ public class MyPageService {
         Member member = memberRepository.findById(memberId)
                 .orElseThrow(() -> new IllegalArgumentException("회원 정보를 찾을 수 없습니다."));
 
-        int points = memberPointRepository.getAvailablePointsByMemberId(memberId);
+        int availablePoints = memberPointRepository.getAvailablePointsByMemberId(memberId);
+        PointTierInfo pointTierInfo = determinePointTier(availablePoints);
+        int pendingPoints = calculatePendingPoints(memberId);
+        int expiringThisMonth = calculateExpiringThisMonth(memberId);
+        int vipTicketPoints = memberPointRepository.sumPositiveEarnPoints(memberId);
         int coupons = memberCouponRepository.findAvailableCouponsByMemberId(memberId).size();
         int paidReservations = (int) reservationRepository.countByMemberIdAndStatus(memberId, ReservationStatus.PAID);
         int reviewCount = (int) reviewRepository.countByMemberId(memberId);
@@ -98,7 +110,15 @@ public class MyPageService {
         return MyPageDTO.SummaryResponse.builder()
                 .memberId(member.getId())
                 .memberName(member.getName())
-                .availablePoints(points)
+                .availablePoints(availablePoints)
+                .pendingPoints(pendingPoints)
+                .expiringPointsThisMonth(expiringThisMonth)
+                .vipTicketPoints(vipTicketPoints)
+                .vipStorePoints(0)
+                .vipEventPoints(0)
+                .pointTier(pointTierInfo.currentTier())
+                .nextPointTier(pointTierInfo.nextTier())
+                .pointsToNextTier(pointTierInfo.pointsToNextTier())
                 .availableCouponCount(coupons)
                 .paidReservationCount(paidReservations)
                 .reviewCount(reviewCount)
@@ -266,6 +286,18 @@ public class MyPageService {
                     .pointType(PointType.EARN)
                     .createdAt(LocalDateTime.now())
                     .build());
+        }
+
+        if (payment.getMember() != null) {
+            int earnedPoints = calculateEarnPoints(payment.getFinalAmount());
+            if (earnedPoints > 0) {
+                memberPointRepository.save(MemberPoint.builder()
+                        .member(payment.getMember())
+                        .point(-earnedPoints)
+                        .pointType(PointType.EXPIRE)
+                        .createdAt(LocalDateTime.now())
+                        .build());
+            }
         }
 
         return MyPageDTO.CancelResponse.builder()
@@ -725,16 +757,63 @@ public class MyPageService {
         return headers;
     }
 
+    private int calculateEarnPoints(Integer finalAmount) {
+        if (finalAmount == null || finalAmount <= 0) {
+            return 0;
+        }
+        return (int) Math.floor(finalAmount * POINT_EARN_RATE);
+    }
+
+    private int calculatePendingPoints(Long memberId) {
+        LocalDateTime now = LocalDateTime.now();
+        LocalDateTime oneDayAgo = now.minusDays(1);
+
+        return paymentRepository.findPaidPaymentsByMemberIdFrom(memberId, oneDayAgo).stream()
+                .filter(payment -> payment.getPaidAt() != null)
+                .filter(payment -> payment.getPaidAt().plusDays(1).isAfter(now))
+                .mapToInt(payment -> calculateEarnPoints(payment.getFinalAmount()))
+                .sum();
+    }
+
+    private int calculateExpiringThisMonth(Long memberId) {
+        LocalDate today = LocalDate.now();
+        LocalDateTime from = today.withDayOfMonth(1).atStartOfDay();
+        LocalDateTime to = today.withDayOfMonth(today.lengthOfMonth()).atTime(23, 59, 59);
+        int monthExpireSum = memberPointRepository.sumPointsByTypeAndRange(memberId, PointType.EXPIRE, from, to);
+        return Math.max(0, -Math.min(monthExpireSum, 0));
+    }
+
+    private PointTierInfo determinePointTier(int points) {
+        PointTierRule current = POINT_TIER_RULES.get(0);
+        PointTierRule next = null;
+
+        for (int i = 0; i < POINT_TIER_RULES.size(); i++) {
+            PointTierRule rule = POINT_TIER_RULES.get(i);
+            if (points >= rule.minPoints()) {
+                current = rule;
+                next = (i + 1 < POINT_TIER_RULES.size()) ? POINT_TIER_RULES.get(i + 1) : null;
+            }
+        }
+
+        int pointsToNext = (next == null) ? 0 : Math.max(0, next.minPoints() - points);
+        return new PointTierInfo(current.tierName(), next == null ? null : next.tierName(), pointsToNext);
+    }
+
     @Transactional(readOnly = true)
     public List<MyPageDTO.MyReviewItem> getMyReviews(Long memberId) {
-        // 💡 ReviewRepository에 findByMemberId가 있다고 가정합니다.
         return reviewRepository.findByMemberId(memberId).stream()
                 .map(r -> MyPageDTO.MyReviewItem.builder()
                         .id(r.getId())
-                        .movieTitle(r.getMovie().getTitle()) // 영화 제목 가져오기
+                        .movieTitle(r.getMovie().getTitle())
                         .content(r.getContent())
                         .createdAt(r.getCreatedAt().toLocalDate().toString())
                         .build())
                 .collect(Collectors.toList());
+    }
+
+    private record PointTierRule(String tierName, int minPoints) {
+    }
+
+    private record PointTierInfo(String currentTier, String nextTier, int pointsToNextTier) {
     }
 }

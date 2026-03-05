@@ -24,6 +24,7 @@ import java.util.stream.Collectors;
 @Service
 @RequiredArgsConstructor
 public class PaymentService {
+    private static final double POINT_EARN_RATE = 0.05;
 
     private final ScreeningSeatRepository screeningSeatRepository;
     private final ReservationRepository reservationRepository;
@@ -293,6 +294,18 @@ public class PaymentService {
                         .build());
             }
 
+            if (payment.getMember() != null) {
+                int earnPoints = calculateEarnPoints(payment.getFinalAmount());
+                if (earnPoints > 0) {
+                    memberPointRepository.save(MemberPoint.builder()
+                            .member(payment.getMember())
+                            .point(earnPoints)
+                            .pointType(PointType.EARN)
+                            .createdAt(LocalDateTime.now())
+                            .build());
+                }
+            }
+
             return PaymentDTO.ConfirmResponse.builder()
                     .paymentId(payment.getId())
                     .build();
@@ -376,6 +389,13 @@ public class PaymentService {
         headers.set("Authorization", "Basic " + encodedAuth);
         headers.setContentType(MediaType.APPLICATION_JSON);
         return headers;
+    }
+
+    private int calculateEarnPoints(Integer finalAmount) {
+        if (finalAmount == null || finalAmount <= 0) {
+            return 0;
+        }
+        return (int) Math.floor(finalAmount * POINT_EARN_RATE);
     }
 
     private void releaseHeldCouponIfAny(Reservation reservation) {

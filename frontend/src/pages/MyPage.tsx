@@ -71,16 +71,18 @@ type PreferenceSnapshot = {
 export default function MyPage() {
   const navigate = useNavigate();
   const location = useLocation();
-  const { memberId: myRealId, isLoggedIn } = useAuth();
-
-  // memberId 결정 로직 수정
+  const { memberId: authMemberId } = useAuth();
   const memberId = useMemo(() => {
-    const q = new URLSearchParams(location.search).get("memberId");
-    // 1. URL에 memberId가 있으면 그 번호를 보여줌 (관리자용 혹은 타인 프로필용)
-    // 2. URL에 없으면 로그인한 내 ID(myRealId)를 사용함
-    // 3. 둘 다 없으면 최후의 수단으로 1을 사용 (비로그인 방어)
-    return Number(q || myRealId || 1);
-  }, [location.search, myRealId]);
+    if (authMemberId && authMemberId > 0) {
+      return authMemberId;
+    }
+    const queryValue = new URLSearchParams(location.search).get("memberId");
+    const parsedFromQuery = queryValue ? Number(queryValue) : NaN;
+    if (Number.isFinite(parsedFromQuery) && parsedFromQuery > 0) {
+      return parsedFromQuery;
+    }
+    return 0;
+  }, [location.search, authMemberId]);
 
   const pageKey = PATH_TO_KEY[location.pathname] ?? "dashboard";
   const verificationToken = useMemo(() => new URLSearchParams(location.search).get("verifyToken") ?? "", [location.search]);
@@ -303,6 +305,12 @@ export default function MyPage() {
 
   useEffect(() => {
     if (pageKey !== "dashboard") return;
+    if (memberId <= 0) {
+      setAvailableMovieVoucherCount(0);
+      setAvailableStoreVoucherCount(0);
+      setAvailableCouponCount(0);
+      return;
+    }
 
     let mounted = true;
     Promise.all([
@@ -690,7 +698,7 @@ export default function MyPage() {
     try {
       const response = await verifyPointPasswordSms(memberId, phoneDigits, codeDigits);
       closePointPhoneModal();
-      navigate(`/my-page/point-password?memberId=${memberId}&verifyToken=${encodeURIComponent(response.verificationToken)}`);
+      navigate(`/mypage/point-password?memberId=${memberId}&verifyToken=${encodeURIComponent(response.verificationToken)}`);
     } catch (error: any) {
       alert(error?.message ?? "휴대폰 인증에 실패했습니다.");
     } finally {
@@ -703,13 +711,13 @@ export default function MyPage() {
     const confirmPassword = pointPasswordConfirmInput.replace(/\D/g, "");
     if (!verificationToken) {
       alert("휴대폰 인증 정보가 없습니다. 다시 인증해 주세요.");
-      navigate(`/my-page/points?memberId=${memberId}`);
+      navigate(`/mypage/points?memberId=${memberId}`);
       return;
     }
     try {
       const response = await updatePointPassword(memberId, verificationToken, newPassword, confirmPassword);
       alert(response?.message ?? "포인트 비밀번호가 설정되었습니다.");
-      navigate(`/my-page/points?memberId=${memberId}`);
+      navigate(`/mypage/points?memberId=${memberId}`);
     } catch (error: any) {
       alert(error?.message ?? "포인트 비밀번호 설정에 실패했습니다.");
     }
@@ -796,6 +804,11 @@ export default function MyPage() {
 
   const renderDashboard = () => {
     const cardClass = "rounded-sm border border-gray-200 bg-white p-5";
+    const tierSteps = ["WELCOME", "FRIENDS", "VIP", "VVIP", "MVIP"] as const;
+    const currentTier = (summary?.pointTier ?? "WELCOME").toUpperCase();
+    const currentTierIndex = Math.max(0, tierSteps.indexOf(currentTier as (typeof tierSteps)[number]));
+    const nextTier = summary?.nextPointTier;
+    const pointsToNextTier = summary?.pointsToNextTier ?? 0;
 
     return (
       <>
@@ -811,14 +824,20 @@ export default function MyPage() {
                 </div>
               </div>
               <div className="text-right">
-                <p className="text-sm">현재등급 <span className="font-semibold text-[#eb4d32]">WELCOME</span></p>
-                <div className="mt-3 inline-block rounded bg-[#eb4d32] px-4 py-1 text-sm font-semibold text-[#ffffff]">
-                  다음 Friends 등급까지 6,000 P 남았어요!
-                </div>
+                <p className="text-sm">현재등급 <span className="font-semibold text-[#eb4d32]">{currentTier}</span></p>
+                {nextTier ? (
+                  <div className="mt-3 inline-block rounded bg-[#eb4d32] px-4 py-1 text-sm font-semibold text-[#ffffff]">
+                    다음 {nextTier} 등급까지 {pointsToNextTier.toLocaleString()} P 남았어요!
+                  </div>
+                ) : (
+                  <div className="mt-3 inline-block rounded bg-[#eb4d32] px-4 py-1 text-sm font-semibold text-[#ffffff]">
+                    최고 등급을 달성했어요!
+                  </div>
+                )}
                 <div className="mt-4 flex items-center justify-end gap-5 text-sm">
-                  {["Welcome", "Friends", "VIP", "VVIP", "MVIP"].map((label, index) => (
+                  {tierSteps.map((label, index) => (
                     <div key={label} className="flex items-center gap-2 text-white/85">
-                      <span className={`h-3 w-3 rounded-full ${index === 0 ? "bg-[#eb4d32]" : "bg-[#ffffff]"}`} />
+                      <span className={`h-3 w-3 rounded-full ${index === currentTierIndex ? "bg-[#eb4d32]" : "bg-[#ffffff]"}`} />
                       <span>{label}</span>
                     </div>
                   ))}
@@ -830,19 +849,19 @@ export default function MyPage() {
             <button
               type="button"
               className="p-5 text-left transition-colors hover:bg-gray-50"
-              onClick={() => moveMenu("/my-page/points")}
+              onClick={() => moveMenu("/mypage/points")}
             >
               <div className="mb-3 flex items-center justify-between text-base font-semibold text-[#eb4d32]">
                 <span>포인트 이용내역</span>
                 <ChevronRight className="h-5 w-5 text-gray-400" />
               </div>
-              <p className="text-sm">적립예정 <span className="float-right font-semibold">0 P</span></p>
-              <p className="mt-2 text-sm">당월소멸예정 <span className="float-right font-semibold">0 P</span></p>
+              <p className="text-sm">적립예정 <span className="float-right font-semibold">{(summary?.pendingPoints ?? 0).toLocaleString()} P</span></p>
+              <p className="mt-2 text-sm">당월소멸예정 <span className="float-right font-semibold">{(summary?.expiringPointsThisMonth ?? 0).toLocaleString()} P</span></p>
             </button>
             <button
               type="button"
               className="p-5 text-left transition-colors hover:bg-gray-50"
-              onClick={() => moveMenu("/my-page/profile/preferences")}
+              onClick={() => moveMenu("/mypage/profile/preferences")}
             >
               <div className="mb-3 flex items-center justify-between text-base font-semibold text-[#eb4d32]">
                 <span>선호하는 극장</span>
@@ -860,7 +879,7 @@ export default function MyPage() {
             <button
               type="button"
               className="p-5 text-left transition-colors hover:bg-gray-50"
-              onClick={() => moveMenu("/my-page/vouchers/movie")}
+              onClick={() => moveMenu("/mypage/vouchers/movie")}
             >
               <div className="mb-3 flex items-center justify-between text-base font-semibold text-[#eb4d32]">
                 <span>관람권/쿠폰</span>
@@ -879,7 +898,7 @@ export default function MyPage() {
               <h3 className="text-xl font-semibold text-[#eb4d32]">나의 무비스토리</h3>
               <button
                 className="rounded border border-gray-300 px-4 py-1 text-sm"
-                onClick={() => moveMenu("/my-page/movie-story")}
+                onClick={() => moveMenu("/mypage/movie-story")}
               >
                 본 영화 등록
               </button>
@@ -904,7 +923,7 @@ export default function MyPage() {
         <section className="mt-7 rounded-sm border border-gray-200 bg-white p-4">
           <div className="mb-2 flex items-center justify-between border-b border-gray-300 pb-3">
             <h3 className="text-2xl font-semibold text-[#eb4d32]">나의 예매내역</h3>
-            <button className="flex items-center gap-1 text-base text-gray-600" onClick={() => moveMenu("/my-page/reservations")}>더보기 <ChevronRight className="h-5 w-5" /></button>
+            <button className="flex items-center gap-1 text-base text-gray-600" onClick={() => moveMenu("/mypage/reservations")}>더보기 <ChevronRight className="h-5 w-5" /></button>
           </div>
           {activeReservations.length === 0 ? <EmptyLine message="예매 내역이 없습니다." /> : (
             <div className="divide-y">
@@ -929,7 +948,7 @@ export default function MyPage() {
               onClick={() => {
                 const params = new URLSearchParams(location.search);
                 params.set("tab", "purchase");
-                navigate(`/my-page/reservations?${params.toString()}`);
+                navigate(`/mypage/reservations?${params.toString()}`);
               }}
             >
               더보기 <ChevronRight className="h-5 w-5" />
@@ -1081,7 +1100,7 @@ export default function MyPage() {
       <div className="mt-8 flex justify-center gap-3">
         <button
           className="rounded border border-[#eb4d32] px-10 py-3 text-lg font-semibold text-[#eb4d32]"
-          onClick={() => navigate(`/my-page/points?memberId=${memberId}`)}
+          onClick={() => navigate(`/mypage/points?memberId=${memberId}`)}
         >
           취소
         </button>
