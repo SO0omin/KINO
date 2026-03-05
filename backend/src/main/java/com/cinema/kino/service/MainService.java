@@ -3,6 +3,7 @@ package com.cinema.kino.service;
 import com.cinema.kino.dto.CouponDTO;
 import com.cinema.kino.dto.MovieDTO;
 import com.cinema.kino.dto.MainPageResponseDTO;
+import com.cinema.kino.dto.TheaterStatDTO;
 import com.cinema.kino.entity.Review;
 import com.cinema.kino.entity.enums.MovieStatus;
 import com.cinema.kino.repository.*;
@@ -60,7 +61,7 @@ public class MainService {
         List<MainPageResponseDTO.ReviewSummary> topReviews = reviewRepository.findTopReviewsSummary();
 
         // 5. 극장 섹션: 지역별 극장 현황 (내부 클래스 활용)
-        List<MainPageResponseDTO.TheaterStat> regionStats = regionRepository.findRegionStats();
+        List<TheaterStatDTO> regionStats = regionRepository.findRegionStats();
 
         return MainPageResponseDTO.builder()
                 .heroTrailers(heroTrailers)

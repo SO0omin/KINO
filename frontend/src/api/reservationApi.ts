@@ -1,4 +1,4 @@
-import axios from 'axios';
+import { api } from './api';
 
 interface HoldSeatPayload {
   screeningId: number;
@@ -11,8 +11,8 @@ interface HoldSeatPayload {
 }
 
 export const reservationApi = {
-  holdSeats: async (payload: HoldSeatPayload) => { // 👈 여기서 타입을 사용
-    const response = await axios.post('/api/reservations/hold', payload);
+  holdSeats: async (payload: HoldSeatPayload) => {
+    const response = await api.post('/api/reservations/hold', payload);
     return response.data;
   }
 };

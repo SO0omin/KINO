@@ -1,17 +1,17 @@
 package com.cinema.kino.controller;
 
-import com.cinema.kino.dto.FindIdRequestDTO;
-import com.cinema.kino.dto.ResetPwRequestDTO;
-import com.cinema.kino.dto.SignupRequestDTO;
-import com.cinema.kino.dto.TokenResponseDTO;
-import com.cinema.kino.entity.Member;
+import com.cinema.kino.dto.*;
 import com.cinema.kino.service.AuthService;
-import com.cinema.kino.util.JwtUtil;
+import com.cinema.kino.service.GoogleAuthService;
+import com.cinema.kino.service.KakaoAuthService;
+import com.cinema.kino.service.NaverAuthService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.HashMap;
 import java.util.Map;
 
 @Slf4j
@@ -21,54 +21,45 @@ import java.util.Map;
 public class AuthController {
 
     private final AuthService authService;
-    private final JwtUtil jwtUtil; // 팔찌 제작 기계
+    private final KakaoAuthService kakaoAuthService;
+    private final NaverAuthService naverAuthService;
+    private final GoogleAuthService googleAuthService;
 
-    //회원가입
+    // 회원가입 (Member + SocialAccount 연동 포함)
     @PostMapping("/signup")
-    public ResponseEntity<?> signup(@RequestBody SignupRequestDTO request) {
+    public ResponseEntity<?> signup(@RequestBody MemberSignupRequestDTO request) {
         log.info("📥 회원가입 요청 수신: {}", request.getUsername());
-
         try {
             authService.signup(request);
             return ResponseEntity.ok(Map.of("message", "회원가입이 완료되었습니다. Box Office에서 로그인해주세요."));
         } catch (IllegalArgumentException e) {
-            // 중복된 아이디/이메일일 경우 400 Bad Request 에러와 메시지 반환
             return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
         }
     }
 
-    //로그인
+    // 일반 로그인
     @PostMapping("/login")
-    public ResponseEntity<?> login(@RequestBody Map<String, String> request) {
-        String username = request.get("username");
-        String password = request.get("password");
-
-        log.info("[로그인] 로그인 요청 수신: {}", username);
-
+    public ResponseEntity<?> login(@RequestBody MemberSignupRequestDTO request) {
         try {
-            // 1. 서비스에서 아이디/비밀번호 검증
-            Member member = authService.authenticate(username, password);
+            // 💡 서비스에서 DTO를 직접 받아옵니다.
+            MemberLoginResponseDTO response = authService.authenticate(request.getUsername(), request.getPassword());
 
-            // 2. 검증 통과 시 JWT 토큰(자유이용권) 발급
-            String token = jwtUtil.createToken(member.getId(),member.getUsername(),member.getName());
-
-            // 3. 프론트엔드로 토큰 전달
-            return ResponseEntity.ok(new TokenResponseDTO(token,member.getId(),member.getUsername(),member.getName()));
-
+            return ResponseEntity.ok(response);
         } catch (IllegalArgumentException e) {
-            return ResponseEntity.status(401).body(Map.of("error", "아이디 또는 비밀번호가 잘못되었습니다."));
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(Map.of("error", e.getMessage()));
         }
     }
 
-    //중복체크
+    // 아이디 중복체크
     @GetMapping("/check-username")
     public ResponseEntity<?> checkUsername(@RequestParam String username) {
         log.info("[회원가입] 아이디 중복 체크 요청: {}", username);
-
         boolean isAvailable = authService.checkUsernameAvailable(username);
         return ResponseEntity.ok(Map.of("available", isAvailable));
     }
 
+    // 아이디 찾기
     @PostMapping("/find-id")
     public ResponseEntity<?> findId(@RequestBody FindIdRequestDTO request) {
         try {
@@ -78,15 +69,76 @@ public class AuthController {
             return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
         }
     }
-
-    @PostMapping("/reset-password")
-    public ResponseEntity<?> resetPassword(@RequestBody ResetPwRequestDTO request) {
+    // 비회원 가입
+    @PostMapping("/guest-signup")
+    public ResponseEntity<?> guestSignup(@RequestBody GuestSignupRequestDTO request) {
         try {
-            String tempPw = authService.resetPassword(request);
-            // 보안상 로그에만 남기고 프론트에는 메시지만 전달 (현재는 테스트를 위해 반환 가능)
-            return ResponseEntity.ok(Map.of("message", "임시 비밀번호가 발급되었습니다.", "tempPw", tempPw));
+            authService.guestSignup(request);
+            return ResponseEntity.ok(Map.of("message", "비회원 등록이 완료되었습니다."));
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
         }
     }
+
+    // 비회원 로그인
+    @PostMapping("/guest-login")
+    public ResponseEntity<?> guestLogin(@RequestBody GuestLoginRequestDTO request) {
+        try {
+            String token = authService.guestAuthenticate(request.getName(), request.getTel(), request.getPassword());
+            return ResponseEntity.ok(Map.of("token", token, "name", request.getName()));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+        }
+    }
+    @PostMapping("/reset-password-request")
+    public ResponseEntity<?> requestPasswordReset(@RequestBody Map<String, String> request) {
+        try {
+            String username = request.get("username");
+            String email = request.get("email");
+            authService.sendPasswordResetLink(username, email);
+
+            // 프론트엔드에게는 보안상 성공했다는 메시지만 내려줍니다.
+            return ResponseEntity.ok().body(Map.of("message", "이메일이 발송되었습니다."));
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+        }
+    }
+
+    // 2. 이메일 링크를 통한 실제 비밀번호 '변경' 요청
+    @PostMapping("/reset-password")
+    public ResponseEntity<?> resetPassword(@RequestBody Map<String, String> request) {
+        try {
+            String token = request.get("token");
+            String newPassword = request.get("newPassword");
+
+            authService.resetPassword(token, newPassword);
+            return ResponseEntity.ok().body(Map.of("message", "비밀번호가 성공적으로 변경되었습니다."));
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+        }
+    }
+
+    // 💡 소셜(카카오) 로그인 엔드포인트
+    @PostMapping("/kakao")
+    public ResponseEntity<?> kakaoLogin(@RequestBody KakaoDTO.LoginRequest request) {
+        log.info("[카카오 로그인] 인가 코드 수신 완료");
+        KakaoLoginResponseDTO response = kakaoAuthService.login(request.getCode());
+        return ResponseEntity.ok(response);
+    }
+
+    @PostMapping("/naver")
+    public ResponseEntity<?> naverLogin(@RequestBody NaverDTO.LoginRequest request) {
+        log.info("[네이버 로그인] 인가 코드 및 상태 값 수신 완료");
+        // 네이버는 state 값도 같이 넘겨줍니다.
+        NaverLoginResponseDTO response = naverAuthService.login(request.getCode(), request.getState());
+        return ResponseEntity.ok(response);
+    }
+
+    @PostMapping("/google")
+    public ResponseEntity<?> googleLogin(@RequestBody GoogleDTO.LoginRequest request) {
+        log.info("[구글 로그인] 인가 코드 수신 완료");
+        GoogleLoginResponseDTO response = googleAuthService.login(request.getCode());
+        return ResponseEntity.ok(response);
+    }
+
 }

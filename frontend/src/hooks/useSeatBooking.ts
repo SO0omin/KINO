@@ -14,7 +14,13 @@ import { seatSocketService } from "../services/seatSocketService";
 import { seatBookingApi } from "../api/seatBookingApi";
 import { reservationApi } from "../api/reservationApi";
 
+// ✨ AuthContext 가져오기
+import { useAuth } from "../contexts/AuthContext";
+
 export const useSeatBooking = (screeningId: number) => {
+  // ✨ 로그인 상태 정보 가져오기 (회원번호, 비회원번호 등)
+  const { isGuest, memberId, guestId } = useAuth();
+
   //1) 데이터 보관 및 관리
   const [seats, setSeats] = useState<SeatViewModel[]>([]);
   const [screeningInfo, setScreeningInfo] = useState<ScreeningInfoViewModel | null>(null);
@@ -99,7 +105,7 @@ export const useSeatBooking = (screeningId: number) => {
     const isAlreadySelected = selectedSeats.some((s) => s.id === seat.id);
     const remainingCount = totalPersonnelCount - selectedSeats.length;
 
-    // 💡 완벽하게 복구된 [취소 로직] - ID 기반 필터링
+    // [취소 로직]
     if (isAlreadySelected) {
       const partnerNum = Number(getPartnerNumber(seat));
       const partnerSeat = realSeats.find(
@@ -209,10 +215,8 @@ export const useSeatBooking = (screeningId: number) => {
   }, [selectedSeats, personnel]);
 
   // 💡 메인 로직: 결제 프로세스 시작
-  const handleProceedToPayment = async (
-    navigate: any, 
-    memberId: number | null
-  ) => {
+  // 매개변수에서 memberId를 빼고, 훅 안에서 꺼낸 값을 바로 씁니다.
+  const handleProceedToPayment = async (navigate: any) => {
     if (selectedSeats.length === 0 || selectedSeats.length !== totalPersonnelCount) {
       showAlert("인원수에 맞게 좌석을 선택해주세요.");
       return;
@@ -220,10 +224,16 @@ export const useSeatBooking = (screeningId: number) => {
 
     try {
       const tickets = getFormattedTickets();
+      
+      let safeGuestId = null;
+      if (isGuest && guestId) {
+        safeGuestId = Number(String(guestId).replace(/\D/g, '')); 
+      } //숫자가 아닌 모든 문자(GUEST_ 등)를 제거
+
       const data = await reservationApi.holdSeats({
         screeningId,
-        memberId,
-        guestId: null,
+        memberId: isGuest ? null : memberId,
+        guestId: safeGuestId,
         tickets
       });
 
@@ -240,7 +250,6 @@ export const useSeatBooking = (screeningId: number) => {
   useEffect(() => {
     const loadInitialData = async () => {
       try {
-        // API에서 객체({ screeningInfo, seats })를 받아옵니다.
         const response: SeatBookingResponseDto = await seatBookingApi.getScreeningSeats(screeningId); 
         
         const mappedSeats = toSeatViewModels(response.seats);
@@ -262,7 +271,6 @@ export const useSeatBooking = (screeningId: number) => {
   }, [screeningId]);
 
   useEffect(() => {
-    // 💡 콜백 타입을 최상단에서 선언한 SeatInfoDto[] 로 사용합니다.
     seatSocketService.connect(screeningId, (updatedSeats: SeatInfoDto[]) => {
       setSeats(prevSeats => {
         return prevSeats.map(seat => {

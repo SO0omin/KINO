@@ -15,6 +15,9 @@
     "moduleDetection": "force",
     "jsx": "react-jsx",
 
+    /* ✨ 이 줄을 추가해 주세요! (TypeScript가 js 파일을 출력하지 않게 막음) */
+    "noEmit": true,
+
     /* Linting & strict mode */
     "strict": true,
     "noUnusedLocals": true,

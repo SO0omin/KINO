@@ -13,11 +13,14 @@ const VISIBLE_HOUR_COUNT = 10;
 const TicketingPage: React.FC = () => {
     // 💡 라우터를 통해 넘어온 선택된 영화 ID 캐치 (키 이름이 movieId든 preSelectedMovieId든 둘 다 대응하도록 수정!)
     const location = useLocation();
-    const preSelectedMovieId = location.state?.preSelectedMovieId || location.state?.movieId;
+    const preSelectedMovieId = location.state?.movieId ||location.state?.preSelectedMovieId || location.state?.movieId;
+    const preSelectedTheaterId = location.state?.theaterId || location.state?.preSelectedTheaterId || null;
+    const preSelectedRegionId = location.state?.regionId || null;
+    const preSelectedDate = location.state?.selectedDate || null;
 
     const dateList = generateDateList(30);
     // 💡 커스텀 훅으로 영화 ID를 넘겨서 초기값으로 세팅 (가장 깔끔한 방법)
-    const { states, setters, handlers, memos } = useTicketing(dateList, preSelectedMovieId);
+    const { states, setters, handlers, memos } = useTicketing(dateList, preSelectedMovieId, preSelectedTheaterId, preSelectedRegionId,preSelectedDate);
     const dateInputRef = useRef<HTMLInputElement>(null);
 
     const xBtnClass = "text-red-700 font-bold ml-1 hover:scale-125 transition-transform text-lg outline-none focus:outline-none focus-visible:outline-none !ring-0 !shadow-none !bg-transparent !border-none !p-0 select-none";

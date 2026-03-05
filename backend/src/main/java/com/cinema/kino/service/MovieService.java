@@ -134,6 +134,7 @@ public class MovieService {
                 .id(movie.getId())
                 .title(movie.getTitle())
                 .posterUrl(movie.getPosterUrl())
+                .description(movie.getDescription())
                 .releaseDate(movie.getReleaseDate().toString())
                 .bookingRate(movie.getBookingRate())
                 .ageRating(movie.getAgeRating().getValue())

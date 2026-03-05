@@ -3,6 +3,8 @@ package com.cinema.kino.repository;
 import com.cinema.kino.entity.Guest;
 import org.springframework.data.jpa.repository.JpaRepository;
 
+import java.util.Optional;
+
 /**
  * 비회원(Guest) 엔티티에 대한 데이터 접근 Repository
  *
@@ -21,7 +23,5 @@ import org.springframework.data.jpa.repository.JpaRepository;
  * 필요 시 Query Method 또는 @Query를 통해 확장 가능
  */
 public interface GuestRepository extends JpaRepository<Guest, Long> {
-
-    // JpaRepository에서 기본 findById(Long id) 제공됨
-    // 향후 비회원 이메일/전화번호 기반 조회가 필요하면 메서드 추가 가능
+    Optional<Guest> findByNameAndTel(String name, String tel);
 }

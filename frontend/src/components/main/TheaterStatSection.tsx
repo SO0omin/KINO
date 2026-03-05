@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import type { TheaterStat } from '../../types/main';
 
 interface TheaterStatSectionProps {

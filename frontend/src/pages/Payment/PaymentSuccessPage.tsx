@@ -1,8 +1,6 @@
 import { useEffect, useState, useRef } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { confirmPayment } from '../../api/paymentApi';
-import { Header } from '../../components/common/Header';
-import { Footer } from '../../components/common/Footer';
 import { CheckCircle2, XCircle, Ticket, Clock, CreditCard, ArrowRight } from 'lucide-react';
 
 export default function PaymentSuccessPage() {
@@ -75,7 +73,6 @@ export default function PaymentSuccessPage() {
   if (error) {
     return (
       <div className="min-h-screen bg-[#fdf4e3]">
-        <Header />
         <main className="max-w-[640px] mx-auto px-6 py-16">
           <div className="bg-white rounded-2xl p-10 shadow-lg border-2 border-red-100">
             <div className="flex justify-center mb-6">
@@ -118,7 +115,6 @@ export default function PaymentSuccessPage() {
             </div>
           </div>
         </main>
-        <Footer />
       </div>
     );
   }
@@ -126,7 +122,6 @@ export default function PaymentSuccessPage() {
   // 성공 상태
   return (
     <div className="min-h-screen bg-[#fdf4e3]">
-      <Header />
       <main className="max-w-[640px] mx-auto px-6 py-16">
         <div className="bg-white rounded-2xl shadow-2xl overflow-hidden border border-[#f5e6d3]">
           <div className="bg-gradient-to-br from-[#eb4d32] to-[#d43d22] p-10 text-white text-center relative overflow-hidden">
@@ -232,7 +227,6 @@ export default function PaymentSuccessPage() {
           </p>
         </div>
       </main>
-      <Footer />
     </div>
   );
 }

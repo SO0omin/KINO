@@ -1,5 +1,6 @@
 package com.cinema.kino.util;
 
+import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.security.Keys;
@@ -14,24 +15,63 @@ public class JwtUtil {
 
     private final Key key;
 
-    private final long EXPIRE_TIME = 1000 * 60 * 60; // 토큰 유효시간: 1시간
-
     public JwtUtil(@Value("${jwt.secret}") String secretKeyString) {
         this.key = Keys.hmacShaKeyFor(secretKeyString.getBytes());
     }
 
-    // 팔찌(토큰) 발급 메서드
+    //회원(Member)용 토큰 발급
     public String createToken(Long memberId, String username, String name) {
         Date now = new Date();
-        Date validity = new Date(now.getTime() + 1000 * 60 * 60L); // 1시간
+        Date validity = new Date(now.getTime() + 1000 * 60L); // 테스트용 1분
 
         return Jwts.builder()
-                .setSubject(username) // 기본 아이디
-                .claim("memberId", memberId) // 💡 페이로드에 회원번호 추가!
-                .claim("name", name)         // 💡 페이로드에 진짜 이름 추가!
+                .setSubject(username)
+                .claim("memberId", memberId)
+                .claim("name", name)
+                .claim("isGuest", false)
                 .setIssuedAt(now)
                 .setExpiration(validity)
                 .signWith(key, SignatureAlgorithm.HS256)
                 .compact();
+    }
+
+    //비회원(Guest)용 토큰 발급 메서드 추가!
+    public String createGuestToken(Long guestId, String name) {
+        Date now = new Date();
+        Date validity = new Date(now.getTime() + 1000 * 60 * 60L); // 테스트용 1분
+
+        return Jwts.builder()
+                .setSubject("GUEST_" + guestId) // 비회원은 아이디가 없으니 임의 식별자 부여
+                .claim("guestId", guestId)      // 비회원 PK
+                .claim("name", name)            // 비회원 이름
+                .claim("isGuest", true)
+                .setIssuedAt(now)
+                .setExpiration(validity)
+                .signWith(key, SignatureAlgorithm.HS256)
+                .compact();
+    }
+
+    public boolean validateToken(String token) {
+        try {
+            Jwts.parserBuilder().setSigningKey(key).build().parseClaimsJws(token);
+            return true;
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
+    public Claims getClaims(String token) {
+        return Jwts.parserBuilder()
+                .setSigningKey(key)
+                .build()
+                .parseClaimsJws(token)
+                .getBody();
+    }
+
+    public String getUsername(String token) {
+        return Jwts.parserBuilder().setSigningKey(key).build()
+                .parseClaimsJws(token)
+                .getBody()
+                .getSubject();
     }
 }

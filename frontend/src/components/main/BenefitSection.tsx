@@ -1,4 +1,3 @@
-import React from 'react';
 import type { CouponDTO } from '../../types/main';
 
 interface BenefitSectionProps {
