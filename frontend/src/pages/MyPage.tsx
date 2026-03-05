@@ -71,7 +71,7 @@ type PreferenceSnapshot = {
 export default function MyPage() {
   const navigate = useNavigate();
   const location = useLocation();
-  const { memberId: authMemberId } = useAuth();
+  const { memberId: authMemberId, isLoggedIn } = useAuth();
   const memberId = useMemo(() => {
     if (authMemberId && authMemberId > 0) {
       return authMemberId;
@@ -272,7 +272,7 @@ export default function MyPage() {
           setReviews(data); 
         })
         .catch((err) => {
-          console.error("리뷰 목록 로드 실패 🕵️‍♂️", err);
+          console.error("리뷰 목록 로드 실패", err);
         });
     }
   }, [memberId, isLoggedIn]);
