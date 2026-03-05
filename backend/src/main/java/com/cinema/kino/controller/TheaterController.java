@@ -12,7 +12,7 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api")
+@RequestMapping("/api/theaters")
 @RequiredArgsConstructor
 public class TheaterController {
 
@@ -20,7 +20,7 @@ public class TheaterController {
 
     /**
      * 탭에 표시할 지역 목록 (예: 서울, 경기/인천 등)
-     * GET /api/regions
+     * GET /api/theaters/regions
      */
     @GetMapping("/regions")
     public ResponseEntity<List<RegionDTO>> getRegions() {
@@ -32,7 +32,7 @@ public class TheaterController {
      * 그리드에 표시할 극장 전체 목록
      * GET /api/theaters
      */
-    @GetMapping("/theaters")
+    @GetMapping
     public ResponseEntity<List<TheaterDTO>> getTheaters() {
         List<TheaterDTO> theaters = theaterService.getAllTheaters();
         return ResponseEntity.ok(theaters);

@@ -7,7 +7,7 @@ import type { Region, Theater, Movie, Screening } from '../types/ticketing';
 const VISIBLE_COUNT = 10;
 //const VISIBLE_HOUR_COUNT = 10;
 
-export const useTicketing = (dateList: any[], initialMovieId?: number, initialTheaterId?: number, initialRegionId?: number) => {
+export const useTicketing = (dateList: any[], initialMovieId?: number, initialTheaterId?: number, initialRegionId?: number, initialDate?: string) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedScreeningData, setSelectedScreeningData] = useState<Screening | null>(null);
   const [currentSeats, setCurrentSeats] = useState<any[]>([]);
@@ -24,8 +24,14 @@ export const useTicketing = (dateList: any[], initialMovieId?: number, initialTh
   const [selectedMovies, setSelectedMovies] = useState<number[]>(initialMovieId ? [initialMovieId] : []);
   const [selectedTheaters, setSelectedTheaters] = useState<number[]>(initialTheaterId ? [initialTheaterId] : []);
   const [selectedTheatersInfo, setSelectedTheatersInfo] = useState<{id:number; name:string}[]>([]);
-  const [selectedDate, setSelectedDate] = useState<string>(getLocalDateString(new Date()));
-  const [startIndex, setStartIndex] = useState(0);
+  const [selectedDate, setSelectedDate] = useState<string>( initialDate ? initialDate : getLocalDateString(new Date()));
+  const [startIndex, setStartIndex] = useState(() => {
+  if (initialDate && dateList.length > 0) {
+    const foundIndex = dateList.findIndex(d => d.fullDate === initialDate);
+    return foundIndex !== -1 ? Math.max(0, Math.min(foundIndex, dateList.length - VISIBLE_COUNT)) : 0;
+  }
+  return 0;
+});
   const [selectedHour, setSelectedHour] = useState<number | null>(null);
   const [startHourIndex, setHourStartIndex] = useState(6);
 

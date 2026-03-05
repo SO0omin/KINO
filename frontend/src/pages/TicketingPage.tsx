@@ -16,10 +16,11 @@ const TicketingPage: React.FC = () => {
     const preSelectedMovieId = location.state?.movieId ||location.state?.preSelectedMovieId || location.state?.movieId;
     const preSelectedTheaterId = location.state?.theaterId || location.state?.preSelectedTheaterId || null;
     const preSelectedRegionId = location.state?.regionId || null;
+    const preSelectedDate = location.state?.selectedDate || null;
 
     const dateList = generateDateList(30);
     // 💡 커스텀 훅으로 영화 ID를 넘겨서 초기값으로 세팅 (가장 깔끔한 방법)
-    const { states, setters, handlers, memos } = useTicketing(dateList, preSelectedMovieId, preSelectedTheaterId, preSelectedRegionId);
+    const { states, setters, handlers, memos } = useTicketing(dateList, preSelectedMovieId, preSelectedTheaterId, preSelectedRegionId,preSelectedDate);
     const dateInputRef = useRef<HTMLInputElement>(null);
 
     const xBtnClass = "text-red-700 font-bold ml-1 hover:scale-125 transition-transform text-lg outline-none focus:outline-none focus-visible:outline-none !ring-0 !shadow-none !bg-transparent !border-none !p-0 select-none";

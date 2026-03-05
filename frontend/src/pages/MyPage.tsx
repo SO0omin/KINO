@@ -1,8 +1,10 @@
 import { useEffect, useMemo, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { ChevronRight, Home, Search } from "lucide-react";
-import { Header } from "../components/common/Header";
-import { Footer } from "../components/common/Footer";
+
+// ✨ useAuth 임포트 추가!
+import { useAuth } from "../contexts/AuthContext";
+
 import {
   cancelReservation,
   getMyCoupons,
@@ -107,27 +109,17 @@ const MENU_CONFIG: MenuItem[] = [
 ];
 
 function formatDateTime(value: string) {
-  // Some backends return non-ISO datetime (e.g. "2026-04-27 03:39:45.000000").
-  // Normalize and guard to avoid runtime crash on invalid date parsing.
   const normalized = value?.includes(" ") ? value.replace(" ", "T") : value;
   const date = new Date(normalized);
   if (Number.isNaN(date.getTime())) {
     return "-";
   }
-
   return date.toLocaleString("ko-KR", {
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-    hour: "2-digit",
-    minute: "2-digit",
+    year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit",
   });
 }
 
-function formatMoney(value: number) {
-  return `${value.toLocaleString()}원`;
-}
-
+function formatMoney(value: number) { return `${value.toLocaleString()}원`; }
 function formatYmd(value: string) {
   const d = new Date(value);
   const y = d.getFullYear();
@@ -135,49 +127,37 @@ function formatYmd(value: string) {
   const day = String(d.getDate()).padStart(2, "0");
   return `${y}-${m}-${day}`;
 }
-
 function formatDateDot(value?: string) {
   if (!value) return "-";
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return "-";
-
-  return `${date.getFullYear()}.${String(date.getMonth() + 1).padStart(2, "0")}.${String(
-    date.getDate()
-  ).padStart(2, "0")}`;
+  return `${date.getFullYear()}.${String(date.getMonth() + 1).padStart(2, "0")}.${String(date.getDate()).padStart(2, "0")}`;
 }
-
 function formatDateSimple(value: string) {
   const date = new Date(value?.includes(" ") ? value.replace(" ", "T") : value);
   if (Number.isNaN(date.getTime())) return "-";
-  return `${date.getFullYear()}.${String(date.getMonth() + 1).padStart(2, "0")}.${String(
-    date.getDate()
-  ).padStart(2, "0")}`;
+  return `${date.getFullYear()}.${String(date.getMonth() + 1).padStart(2, "0")}.${String(date.getDate()).padStart(2, "0")}`;
 }
-
 function shiftDays(base: Date, days: number) {
   const d = new Date(base);
   d.setDate(d.getDate() + days);
   return d;
 }
-
 function toMonthKey(value: string) {
   const d = new Date(value);
   const yyyy = d.getFullYear();
   const mm = String(d.getMonth() + 1).padStart(2, "0");
   return `${yyyy}-${mm}`;
 }
-
 function monthLabel(monthKey: string) {
   const [year, month] = monthKey.split("-");
   return `${year}년 ${Number(month)}월`;
 }
-
 function splitReservations(items: MyReservationItem[]) {
   const active = items.filter((item) => item.paymentStatus !== "CANCELLED");
   const cancelled = items.filter((item) => item.paymentStatus === "CANCELLED");
   return { active, cancelled };
 }
-
 function breadcrumbLabels(pageKey: PageKey) {
   if (pageKey === "dashboard") return ["나의 메가박스"];
   const byPage: Record<PageKey, string[]> = {
@@ -198,7 +178,6 @@ function breadcrumbLabels(pageKey: PageKey) {
   };
   return byPage[pageKey];
 }
-
 function EmptyLine({ message }: { message: string }) {
   return <div className="py-10 text-center text-base text-gray-300">{message}</div>;
 }
@@ -206,13 +185,26 @@ function EmptyLine({ message }: { message: string }) {
 export default function MyPage() {
   const navigate = useNavigate();
   const location = useLocation();
+  
+  // ✨ AuthContext에서 isGuest 가져오기!
+  const { isGuest, memberId: contextMemberId, guestId } = useAuth();
+
   const memberId = useMemo(() => {
+    // URL에 memberId가 있으면 우선 사용, 없으면 context 값 사용
     const q = new URLSearchParams(location.search).get("memberId");
-    return Number(q || 1);
-  }, [location.search]);
+    if (q) return Number(q);
+    return isGuest ? (guestId || 1) : (contextMemberId || 1);
+  }, [location.search, isGuest, contextMemberId, guestId]);
 
   const pageKey = PATH_TO_KEY[location.pathname] ?? "dashboard";
   const verificationToken = useMemo(() => new URLSearchParams(location.search).get("verifyToken") ?? "", [location.search]);
+
+  // ✨ 비회원이 엉뚱한 메뉴로 들어오려 하면 무조건 예매내역으로 튕겨냅니다!
+  useEffect(() => {
+    if (isGuest && pageKey !== "reservations") {
+      navigate("/my-page/reservations", { replace: true });
+    }
+  }, [isGuest, pageKey, navigate]);
 
   const [loading, setLoading] = useState(true);
   const [summary, setSummary] = useState<MyPageSummary | null>(null);
@@ -315,14 +307,21 @@ export default function MyPage() {
   const load = async () => {
     setLoading(true);
     try {
-      const [summaryData, reservationData] = await Promise.all([
-        getMyPageSummary(memberId),
-        getMyReservations(memberId),
-      ]);
-      setSummary(summaryData);
-      setReservations(reservationData);
+      // ✨ 비회원은 포인트 등급 요약(Summary)을 불러오지 않고, 예매내역만 가져옵니다.
+      if (isGuest) {
+        const reservationData = await getMyReservations(memberId);
+        setReservations(reservationData);
+        setSummary(null);
+      } else {
+        const [summaryData, reservationData] = await Promise.all([
+          getMyPageSummary(memberId),
+          getMyReservations(memberId),
+        ]);
+        setSummary(summaryData);
+        setReservations(reservationData);
+      }
     } catch (error: any) {
-      alert(error?.message ?? "마이페이지 데이터를 불러오지 못했습니다.");
+      alert(error?.message ?? "데이터를 불러오지 못했습니다.");
     } finally {
       setLoading(false);
     }
@@ -330,7 +329,7 @@ export default function MyPage() {
 
   useEffect(() => {
     load();
-  }, [memberId]);
+  }, [memberId, isGuest]);
 
   const loadMemberProfile = async () => {
     setProfileLoading(true);
@@ -828,7 +827,7 @@ export default function MyPage() {
   }, [activeReservations, appliedHistoryType, appliedMonth]);
 
   const purchaseRows = useMemo(() => {
-    const fromTime = new Date(`${appliedPurchaseFrom}T00:00:00`).getTime();
+    const fromTime = new Date(`${appliedPurchaseFrom}T00:00:0`).getTime();
     const toTime = new Date(`${appliedPurchaseTo}T23:59:59`).getTime();
 
     return reservations
@@ -2508,6 +2507,8 @@ export default function MyPage() {
   );
 
   const renderContent = () => {
+    if (isGuest) return renderReservations();
+
     if (pageKey === "dashboard") return renderDashboard();
     if (pageKey === "reservations") return renderReservations();
     if (pageKey === "vouchers-movie" || pageKey === "vouchers-store") return renderVouchers();
@@ -2523,6 +2524,10 @@ export default function MyPage() {
     return renderPayments();
   };
 
+  const visibleMenuConfig = isGuest 
+    ? MENU_CONFIG.filter((item) => item.key === "reservations") 
+    : MENU_CONFIG;
+
   return (
     <div className="min-h-screen bg-[#fdf4e3] text-[#000000]">
       {/*<Header />*/}
@@ -2530,10 +2535,10 @@ export default function MyPage() {
       <div className="border-y border-[#000000] bg-[#ffffff]">
         <div className="mx-auto flex h-12 max-w-[1200px] items-center gap-2 px-4 text-sm text-gray-500">
           <Home className="h-4 w-4" />
-          {crumbs.map((crumb, index) => (
+          {(isGuest ? ["비회원 예매조회"] : crumbs).map((crumb, index, arr) => (
             <div key={`${crumb}-${index}`} className="flex items-center gap-2">
               <ChevronRight className="h-4 w-4" />
-              <span className={index === crumbs.length - 1 ? "text-gray-700" : ""}>{crumb}</span>
+              <span className={index === arr.length - 1 ? "text-gray-700" : ""}>{crumb}</span>
             </div>
           ))}
         </div>
@@ -2544,12 +2549,12 @@ export default function MyPage() {
           <button
             type="button"
             className="w-full bg-[#000000] px-6 py-8 text-center text-xl font-semibold text-white"
-            onClick={() => moveMenu("/my-page")}
+            onClick={() => moveMenu(isGuest ? "/my-page/reservations" : "/my-page")}
           >
-            나의 메가박스
+            {isGuest ? "비회원 예매조회" : "나의 KINO"}
           </button>
 
-          {MENU_CONFIG.map((item) => {
+          {visibleMenuConfig.map((item) => {
             const active = item.key === "vouchers"
               ? pageKey === "vouchers-movie" || pageKey === "vouchers-store"
               : item.key === pageKey;
@@ -2579,29 +2584,32 @@ export default function MyPage() {
             );
           })}
 
-          <div className="border-t border-gray-200 bg-[#ffffff] px-4 py-3 text-base text-gray-700">회원정보</div>
-          <div className="px-5 pb-4 pt-2 text-sm text-gray-500">
-            <button
-              className={`block w-full text-left ${pageKey === "profile" ? "font-semibold text-[#eb4d32]" : "text-gray-500"}`}
-              onClick={() => moveMenu("/my-page/profile")}
-            >
-              · 개인정보 수정
-            </button>
-            <button
-              className={`mt-1 block w-full text-left ${pageKey === "profile-preferences" ? "font-semibold text-[#eb4d32]" : "text-gray-500"}`}
-              onClick={() => moveMenu("/my-page/profile/preferences")}
-            >
-              · 선호정보 수정
-            </button>
-          </div>
+          {/* ✨ 비회원일 때는 하단의 회원정보 관리 탭 통째로 가리기 */}
+          {!isGuest && (
+            <>
+              <div className="border-t border-gray-200 bg-[#ffffff] px-4 py-3 text-base text-gray-700">회원정보</div>
+              <div className="px-5 pb-4 pt-2 text-sm text-gray-500">
+                <button
+                  className={`block w-full text-left ${pageKey === "profile" ? "font-semibold text-[#eb4d32]" : "text-gray-500"}`}
+                  onClick={() => moveMenu("/my-page/profile")}
+                >
+                  · 개인정보 수정
+                </button>
+                <button
+                  className={`mt-1 block w-full text-left ${pageKey === "profile-preferences" ? "font-semibold text-[#eb4d32]" : "text-gray-500"}`}
+                  onClick={() => moveMenu("/my-page/profile/preferences")}
+                >
+                  · 선호정보 수정
+                </button>
+              </div>
+            </>
+          )}
         </aside>
 
         <main className="min-w-0 flex-1">
           {renderContent()}
         </main>
       </div>
-
-      <Footer />
 
       {showPasswordChangeModal ? (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4">

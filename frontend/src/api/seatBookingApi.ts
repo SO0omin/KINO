@@ -5,12 +5,11 @@ api를 분리할 때는 내부에서 실행되는 실질적인
 =================================== */
 
 import type { SeatBookingResponseDto } from "../types/dtos/seatBooking.dto";
-import axios from 'axios';
-
+import { api } from './api';
 
 export const seatBookingApi = {
   getScreeningSeats: async (screeningId: number): Promise<SeatBookingResponseDto> => {
-    const response = await axios.get(`/api/screenings/${screeningId}/seats`);
+    const response = await api.get(`/api/screenings/${screeningId}/seats`);
     return response.data;
   },
 };

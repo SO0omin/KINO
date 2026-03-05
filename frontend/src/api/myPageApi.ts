@@ -1,4 +1,4 @@
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:8080';
+import { api } from './api';
 
 export interface MyPageSummary {
   memberId: number;
@@ -144,56 +144,48 @@ export interface PointPasswordSmsVerifyResponse {
 }
 
 export async function getMyPageSummary(memberId: number): Promise<MyPageSummary> {
-  const response = await fetch(`${API_BASE_URL}/api/mypage/summary?memberId=${memberId}`);
-  if (!response.ok) {
-    const error = await response.json().catch(() => ({} as { message?: string }));
-    throw new Error(error.message || '마이페이지 요약 정보를 불러오지 못했습니다.');
+  try {
+    const response = await api.get(`/api/mypage/summary?memberId=${memberId}`);
+    return response.data;
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || '마이페이지 요약 정보를 불러오지 못했습니다.');
   }
-  return response.json();
 }
 
 export async function getMemberProfile(memberId: number): Promise<MemberProfile> {
-  const response = await fetch(`${API_BASE_URL}/api/mypage/profile?memberId=${memberId}`);
-  if (!response.ok) {
-    const error = await response.json().catch(() => ({} as { message?: string }));
-    throw new Error(error.message || '회원 정보를 불러오지 못했습니다.');
+  try {
+    const response = await api.get(`/api/mypage/profile?memberId=${memberId}`);
+    return response.data;
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || '회원 정보를 불러오지 못했습니다.');
   }
-  return response.json();
 }
 
 export async function updateMemberProfile(payload: MemberProfileUpdateRequest) {
-  const response = await fetch(`${API_BASE_URL}/api/mypage/profile`, {
-    method: 'PUT',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(payload),
-  });
-  if (!response.ok) {
-    const error = await response.json().catch(() => ({} as { message?: string }));
-    throw new Error(error.message || '회원 정보 수정에 실패했습니다.');
+  try {
+    const response = await api.put(`/api/mypage/profile`, payload);
+    return response.data;
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || '회원 정보 수정에 실패했습니다.');
   }
-  return response.json();
 }
 
 export async function updateMemberPassword(payload: MemberPasswordUpdateRequest) {
-  const response = await fetch(`${API_BASE_URL}/api/mypage/profile/password`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(payload),
-  });
-  if (!response.ok) {
-    const error = await response.json().catch(() => ({} as { message?: string }));
-    throw new Error(error.message || '비밀번호 변경에 실패했습니다.');
+  try {
+    const response = await api.post(`/api/mypage/profile/password`, payload);
+    return response.data;
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || '비밀번호 변경에 실패했습니다.');
   }
-  return response.json();
 }
 
 export async function getMyReservations(memberId: number): Promise<MyReservationItem[]> {
-  const response = await fetch(`${API_BASE_URL}/api/mypage/reservations?memberId=${memberId}`);
-  if (!response.ok) {
-    const error = await response.json().catch(() => ({} as { message?: string }));
-    throw new Error(error.message || '예매 내역을 불러오지 못했습니다.');
+  try {
+    const response = await api.get(`/api/mypage/reservations?memberId=${memberId}`);
+    return response.data;
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || '예매 내역을 불러오지 못했습니다.');
   }
-  return response.json();
 }
 
 export async function cancelReservation(
@@ -201,20 +193,12 @@ export async function cancelReservation(
   reservationId: number,
   reason = '사용자 요청 취소'
 ): Promise<CancelReservationResponse> {
-  const response = await fetch(
-    `${API_BASE_URL}/api/mypage/reservations/${reservationId}/cancel?memberId=${memberId}`,
-    {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ reason }),
-    }
-  );
-
-  if (!response.ok) {
-    const error = await response.json().catch(() => ({} as { message?: string }));
-    throw new Error(error.message || '환불 처리에 실패했습니다.');
+  try {
+    const response = await api.post(`/api/mypage/reservations/${reservationId}/cancel?memberId=${memberId}`, { reason });
+    return response.data;
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || '환불 처리에 실패했습니다.');
   }
-  return response.json();
 }
 
 export async function getMyVouchers(
@@ -222,182 +206,122 @@ export async function getMyVouchers(
   voucherType: VoucherType,
   status?: VoucherStatus
 ): Promise<MyVoucherItem[]> {
-  const query = new URLSearchParams({
-    memberId: String(memberId),
-    voucherType,
-  });
-  if (status) query.set('status', status);
+  try {
+    const query = new URLSearchParams({ memberId: String(memberId), voucherType });
+    if (status) query.set('status', status);
 
-  const response = await fetch(`${API_BASE_URL}/api/mypage/vouchers?${query.toString()}`);
-  if (!response.ok) {
-    const error = await response.json().catch(() => ({} as { message?: string }));
-    throw new Error(error.message || '관람권/교환권 목록을 불러오지 못했습니다.');
+    const response = await api.get(`/api/mypage/vouchers?${query.toString()}`);
+    return response.data;
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || '관람권/교환권 목록을 불러오지 못했습니다.');
   }
-  return response.json();
 }
 
-export async function registerVoucher(
-  payload: RegisterVoucherRequest
-): Promise<RegisterVoucherResponse> {
-  const response = await fetch(`${API_BASE_URL}/api/mypage/vouchers/register`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(payload),
-  });
-
-  if (!response.ok) {
-    const error = await response.json().catch(() => ({} as { message?: string }));
-    throw new Error(error.message || '관람권/교환권 등록에 실패했습니다.');
+export async function registerVoucher(payload: RegisterVoucherRequest): Promise<RegisterVoucherResponse> {
+  try {
+    const response = await api.post(`/api/mypage/vouchers/register`, payload);
+    return response.data;
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || '관람권/교환권 등록에 실패했습니다.');
   }
-  return response.json();
 }
 
 export async function getMyCoupons(memberId: number): Promise<MyCouponItem[]> {
-  const response = await fetch(`${API_BASE_URL}/api/coupons/my?memberId=${memberId}&includeAll=true`);
-  if (!response.ok) {
-    const error = await response.json().catch(() => ({} as { message?: string }));
-    throw new Error(error.message || '쿠폰 목록을 불러오지 못했습니다.');
+  try {
+    const response = await api.get(`/api/coupons/my?memberId=${memberId}&includeAll=true`);
+    return response.data;
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || '쿠폰 목록을 불러오지 못했습니다.');
   }
-  return response.json();
 }
 
 export async function redeemCoupon(memberId: number, code: string) {
-  const response = await fetch(`${API_BASE_URL}/api/coupons/redeem`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ memberId, code }),
-  });
-
-  if (!response.ok) {
-    const error = await response.json().catch(() => ({} as { message?: string }));
-    throw new Error(error.message || '쿠폰 등록에 실패했습니다.');
+  try {
+    const response = await api.post(`/api/coupons/redeem`, { memberId, code });
+    return response.data;
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || '쿠폰 등록에 실패했습니다.');
   }
-  return response.json();
 }
 
 export async function getMyMembershipCards(memberId: number): Promise<MyMembershipCardItem[]> {
-  const response = await fetch(`${API_BASE_URL}/api/mypage/cards?memberId=${memberId}`);
-  if (!response.ok) {
-    const error = await response.json().catch(() => ({} as { message?: string }));
-    throw new Error(error.message || '멤버십 카드 목록을 불러오지 못했습니다.');
+  try {
+    const response = await api.get(`/api/mypage/cards?memberId=${memberId}`);
+    return response.data;
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || '멤버십 카드 목록을 불러오지 못했습니다.');
   }
-  return response.json();
 }
 
-export async function registerMembershipCard(
-  payload: RegisterMembershipCardRequest
-): Promise<RegisterMembershipCardResponse> {
-  const response = await fetch(`${API_BASE_URL}/api/mypage/cards/register`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(payload),
-  });
-
-  if (!response.ok) {
-    const error = await response.json().catch(() => ({} as { message?: string }));
-    throw new Error(error.message || '멤버십 카드 등록에 실패했습니다.');
+export async function registerMembershipCard(payload: RegisterMembershipCardRequest): Promise<RegisterMembershipCardResponse> {
+  try {
+    const response = await api.post(`/api/mypage/cards/register`, payload);
+    return response.data;
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || '멤버십 카드 등록에 실패했습니다.');
   }
-  return response.json();
 }
 
-export async function getMyPointHistories(
-  memberId: number,
-  from: string,
-  to: string
-): Promise<MyPointHistoryItem[]> {
-  const query = new URLSearchParams({
-    memberId: String(memberId),
-    from,
-    to,
-  });
-
-  const response = await fetch(`${API_BASE_URL}/api/mypage/points?${query.toString()}`);
-  if (!response.ok) {
-    const error = await response.json().catch(() => ({} as { message?: string }));
-    throw new Error(error.message || '포인트 이용내역을 불러오지 못했습니다.');
+export async function getMyPointHistories(memberId: number, from: string, to: string): Promise<MyPointHistoryItem[]> {
+  try {
+    const query = new URLSearchParams({ memberId: String(memberId), from, to });
+    const response = await api.get(`/api/mypage/points?${query.toString()}`);
+    return response.data;
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || '포인트 이용내역을 불러오지 못했습니다.');
   }
-  return response.json();
 }
 
 export async function sendPointPasswordSms(memberId: number, phoneNumber: string) {
-  const response = await fetch(`${API_BASE_URL}/api/mypage/point-password/sms/send`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ memberId, phoneNumber }),
-  });
-
-  if (!response.ok) {
-    const error = await response.json().catch(() => ({} as { message?: string }));
-    throw new Error(error.message || '인증번호 발송에 실패했습니다.');
+  try {
+    const response = await api.post(`/api/mypage/point-password/sms/send`, { memberId, phoneNumber });
+    return response.data;
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || '인증번호 발송에 실패했습니다.');
   }
-  return response.json();
 }
 
-export async function verifyPointPasswordSms(
-  memberId: number,
-  phoneNumber: string,
-  authCode: string
-): Promise<PointPasswordSmsVerifyResponse> {
-  const response = await fetch(`${API_BASE_URL}/api/mypage/point-password/sms/verify`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ memberId, phoneNumber, authCode }),
-  });
-
-  if (!response.ok) {
-    const error = await response.json().catch(() => ({} as { message?: string }));
-    throw new Error(error.message || '휴대폰 인증 확인에 실패했습니다.');
+export async function verifyPointPasswordSms(memberId: number, phoneNumber: string, authCode: string): Promise<PointPasswordSmsVerifyResponse> {
+  try {
+    const response = await api.post(`/api/mypage/point-password/sms/verify`, { memberId, phoneNumber, authCode });
+    return response.data;
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || '휴대폰 인증 확인에 실패했습니다.');
   }
-  return response.json();
 }
 
-export async function updatePointPassword(
-  memberId: number,
-  verificationToken: string,
-  newPassword: string,
-  confirmPassword: string
-) {
-  const response = await fetch(`${API_BASE_URL}/api/mypage/point-password`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ memberId, verificationToken, newPassword, confirmPassword }),
-  });
-
-  if (!response.ok) {
-    const error = await response.json().catch(() => ({} as { message?: string }));
-    throw new Error(error.message || '포인트 비밀번호 설정에 실패했습니다.');
+export async function updatePointPassword(memberId: number, verificationToken: string, newPassword: string, confirmPassword: string) {
+  try {
+    const response = await api.post(`/api/mypage/point-password`, { memberId, verificationToken, newPassword, confirmPassword });
+    return response.data;
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || '포인트 비밀번호 설정에 실패했습니다.');
   }
-  return response.json();
 }
 
 export async function toggleMovieLike(movieId: number, memberId: number): Promise<boolean> {
-  const response = await fetch(`${API_BASE_URL}/api/movies/${movieId}/likes`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ memberId }),
-  });
-  if (!response.ok) {
-    const error = await response.json().catch(() => ({} as { message?: string }));
-    throw new Error(error.message || "찜 처리에 실패했습니다.");
+  try {
+    const response = await api.post(`/api/movies/${movieId}/likes`, { memberId });
+    return response.data;
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || '찜 처리에 실패했습니다.');
   }
-  return response.json();
 }
 
 export async function removeMovieLike(movieId: number, memberId: number) {
-  const response = await fetch(`${API_BASE_URL}/api/movies/${movieId}/likes?memberId=${memberId}`, {
-    method: "DELETE",
-  });
-  if (!response.ok) {
-    const error = await response.json().catch(() => ({} as { message?: string }));
-    throw new Error(error.message || "찜 취소에 실패했습니다.");
+  try {
+    const response = await api.delete(`/api/movies/${movieId}/likes?memberId=${memberId}`);
+    return response.data;
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || '찜 취소에 실패했습니다.');
   }
 }
 
 export async function getMyWishMovies(memberId: number): Promise<MyWishMovieItem[]> {
-  const response = await fetch(`${API_BASE_URL}/api/movies/likes?memberId=${memberId}`);
-  if (!response.ok) {
-    const error = await response.json().catch(() => ({} as { message?: string }));
-    throw new Error(error.message || "보고싶어 목록을 불러오지 못했습니다.");
+  try {
+    const response = await api.get(`/api/movies/likes?memberId=${memberId}`);
+    return response.data;
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || '보고싶어 목록을 불러오지 못했습니다.');
   }
-  return response.json();
 }

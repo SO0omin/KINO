@@ -16,6 +16,4 @@ public interface MemberRepository extends JpaRepository<Member, Long> {
 
     Optional<Member> findByNameAndEmail(String name, String email);
     Optional<Member> findByUsernameAndEmail(String username, String email);
-
-    // 비회원 로그인용 (예매번호 + 이름 + 전화번호 조합)은 나중에 ReservationRepository쪽에서 처리 예정
 }

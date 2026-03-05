@@ -9,6 +9,10 @@ import SeatBookingPage from "./pages/SeatBookingPage";
 import SignupPage from "./pages/SignupPage";
 import LoginPage from "./pages/LoginPage";
 import FindAccountPage from "./pages/FindAccountPage";
+import KakaoCallbackPage from "./pages/Callback/KakaoCallbackPage";
+import NaverCallbackPage from './pages/Callback/NaverCallbackPage';
+import GoogleCallbackPage from './pages/Callback/GoogleCallbackPage';
+import ResetPasswordPage from './pages/ResetPasswordPage';
 import MovieDetailPage from "./pages/MovieDetailPage";
 import MyPage from "./pages/MyPage"; 
 import PaymentPage from "./pages/Payment/PaymentPage";
@@ -43,6 +47,11 @@ function AppRoutes() {
                     <Route path="/signup" element={<SignupPage />} />
                     <Route path="/login" element={<LoginPage />} />
                     <Route path="/find-account" element={<FindAccountPage />} />
+                    <Route path="/oauth/callback/kakao" element={<KakaoCallbackPage />} />
+                    <Route path="/oauth/callback/naver" element={<NaverCallbackPage />} />
+                    <Route path="/oauth/callback/google" element={<GoogleCallbackPage />} />
+
+                    <Route path="/reset-password" element={<ResetPasswordPage />} />
 
                     {/* 결제 관련 */}
                     <Route path="/payment" element={<PaymentPage />} />

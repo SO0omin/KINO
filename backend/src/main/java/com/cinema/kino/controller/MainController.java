@@ -14,11 +14,6 @@ public class MainController {
 
     private final MainService mainService;
 
-    // 1. 서버가 잘 돌아가는지 확인하는 웰컴 메시지 (헬스 체크용)
-    @GetMapping("/")
-    public String welcome() {
-        return "Welcome to KINO! API Server is running... 🚀";
-    }
 
     // 2. 실제 프론트엔드에서 호출할 메인 페이지 데이터 API
     @GetMapping("/api/main")

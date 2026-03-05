@@ -17,7 +17,6 @@ import screenImg from "../assets/screen.png";
 
 //값 받을 때 사용
 import { useLocation, useNavigate  } from "react-router-dom";
-import { useAuth } from "../contexts/AuthContext";
 
 const SeatBooking = () => {
   const location = useLocation();
@@ -45,8 +44,6 @@ const SeatBooking = () => {
   } = useSeatBooking(screeningId);
 
   const [hoveredSeatId, setHoveredSeatId] = useState<number | null>(null);
-  const { memberId } = useAuth();
-  
 
   
 
@@ -261,7 +258,7 @@ const SeatBooking = () => {
                 </div>
 
                 <button
-                  onClick={() => handleProceedToPayment(navigate, memberId)}
+                  onClick={() => handleProceedToPayment(navigate)}
                   disabled={selectedSeats.length === 0 || selectedSeats.length !== totalPersonnelCount}
                   className={`w-full py-5 text-xl font-black font-serif italic tracking-widest uppercase border-[4px] border-black transition-all ${
                     (selectedSeats.length === 0 || selectedSeats.length !== totalPersonnelCount)

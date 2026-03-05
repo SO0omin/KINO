@@ -24,7 +24,7 @@ public class Guest {
     @Column(nullable = false, length = 20)
     private String tel;
 
-    @Column(nullable = false, length = 30)
+    @Column(nullable = false, length = 255) //해시
     private String password;
 
     @Column(unique = true)
