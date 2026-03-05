@@ -6,14 +6,14 @@ import { Menu, Search, Calendar, User } from "lucide-react";
 export const Gnb: React.FC = () => {
   const location = useLocation();
   const navigate = useNavigate();
-  
+
   // ✨ isGuest 가져오기 추가!
   const { isLoggedIn, isGuest, name, logout } = useAuth();
 
   // 메인 네비게이션 링크 데이터
   const mainNavLinks = [
     { label: "영화", path: "/movie-list" },
-    { label: "예매", path: "/ticketing" }, 
+    { label: "예매", path: "/ticketing" },
     { label: "상영시간표", path: "/timetables" },
     { label: "극장", path: "/theater-list" },
     { label: "스토어", path: "/store" },
@@ -89,8 +89,8 @@ export const Gnb: React.FC = () => {
               <button className="hover:text-[#eb4d32] transition-colors">
                 <Calendar size={24} />
               </button>
-              {/* ✨ 유저 아이콘 클릭 시: 회원/비회원이면 마이페이지(조회), 아니면 로그인 창 */}
-              <Link to={isLoggedIn || isGuest ? "/my-page" : "/login"} className="hover:text-[#eb4d32] transition-colors">
+              {/* 유저 아이콘 클릭 시 로그인 여부에 따라 마이페이지 또는 로그인 창으로 이동 */}
+              <Link to={isLoggedIn ? "/mypage" : "/login"} className="hover:text-[#eb4d32] transition-colors">
                 <User size={24} />
               </Link>
             </div>

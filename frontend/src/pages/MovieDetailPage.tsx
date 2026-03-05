@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
+import { useAuth } from '../contexts/AuthContext';
 import InfoTab from '../components/detail/InfoTab';
 import ReviewTab from '../components/detail/ReviewTab';
 import MediaTab from '../components/detail/MediaTab';
@@ -9,6 +10,7 @@ import ReviewWriteModal from '../components/detail/ReviewWriteModal';
 const MovieDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { memberId, isLoggedIn } = useAuth();
   
   const [movie, setMovie] = useState<any>(null);
   const [activeTab, setActiveTab] = useState('info');
@@ -22,18 +24,49 @@ const MovieDetail = () => {
 
   // --- 1. 데이터 연동 (백엔드) ---
   const fetchMovieData = useCallback(() => {
-    axios
-      .get(`http://localhost:8080/api/movies/${id}/detail?page=${currentPage}&sort=${currentSort}`)
-      .then((res) => {
-        setMovie(res.data);
-        setIsLiked(res.data.isLiked);
-      })
-      .catch((err) => console.error('KINO 데이터 로딩 실패!', err));
-  }, [id, currentPage, currentSort]);
+  if (!id) return;
+  const memberParam = isLoggedIn && memberId ? `&memberId=${memberId}` : '';
 
-  useEffect(() => {
-    fetchMovieData();
-  }, [fetchMovieData]);
+  axios
+    .get(`http://localhost:8080/api/movies/${id}/detail?page=${currentPage}&sort=${currentSort}${memberParam}`)
+    .then((res) => {
+      setMovie(res.data);
+      setIsLiked(res.data.isLiked);
+    })
+    .catch((err) => console.error('KINO 데이터 로딩 실패!', err));
+}, [id, currentPage, currentSort, isLoggedIn, memberId]);
+
+useEffect(() => {
+  let isLatest = true;
+
+  const loadData = async () => {
+    const storedMemberId = localStorage.getItem('memberId');
+    const effectiveMemberId = memberId || (storedMemberId ? Number(storedMemberId) : null);
+    
+    const memberParam = (isLoggedIn || storedMemberId) && effectiveMemberId 
+      ? `&memberId=${effectiveMemberId}` 
+      : '';
+
+    try {
+      const res = await axios.get(
+        `http://localhost:8080/api/movies/${id}/detail?page=${currentPage}&sort=${currentSort}${memberParam}`
+      );
+      
+      if (isLatest) {
+        setMovie(res.data);
+        setIsLiked(res.data.isLiked ?? res.data.liked);
+      }
+    } catch (err) {
+      console.error('KINO 데이터 로딩 실패!', err);
+    }
+  };
+
+  loadData();
+
+  return () => {
+    isLatest = false; // 이전 요청 무시
+  };
+}, [id, currentPage, currentSort, isLoggedIn, memberId]);
 
   useEffect(() => {
     setIsPlaying(false);
@@ -66,11 +99,20 @@ const MovieDetail = () => {
   const handlePause = () => { setIsPlaying(false); setIsSoundOn(false); };
 
   const handleLikeToggle = async () => {
+    if (!isLoggedIn) {
+      if (window.confirm('로그인이 필요한 서비스입니다. 로그인 페이지로 이동하시겠습니까?')) {
+        navigate('/login');
+      }
+      return;
+    }
+
     try {
-      const res = await axios.post(`http://localhost:8080/api/movies/${id}/like`);
+      const res = await axios.post(`http://localhost:8080/api/movies/${id}/likes`, {
+        memberId: memberId 
+      });
       setIsLiked(res.data);
     } catch (err) {
-      console.error('좋아요 토글 실패 🕵️‍♂️', err);
+      console.error('좋아요 실패 🕵️‍♂️', err);
     }
   };
 
@@ -79,10 +121,25 @@ const MovieDetail = () => {
     setCurrentPage(0); // 페이지를 첫 페이지(0)로 초기화
   };
 
+  const handleWriteReviewClick = () => {
+    if (!isLoggedIn) {
+      if (window.confirm('로그인이 필요한 서비스입니다. 로그인 페이지로 이동하시겠습니까?')) {
+        navigate('/login');
+      }
+      return;
+    }
+    setIsReviewModalOpen(true);
+  };
+
   const handleReviewSubmit = async (reviewData: any) => {
+
     try {
-      await axios.post('http://localhost:8080/api/reviews', reviewData);
-      alert('리뷰가 등록되었습니다');
+      const finalData = {
+        ...reviewData,
+        memberId: memberId 
+      };
+
+      await axios.post('http://localhost:8080/api/reviews', finalData);
       setIsReviewModalOpen(false);
       fetchMovieData();
     } catch (err) {
@@ -237,7 +294,7 @@ const MovieDetail = () => {
               onPageChange={setCurrentPage}
               onSortChange={setCurrentSort}
               currentSort={currentSort}
-              onWriteClick={() => setIsReviewModalOpen(true)}
+              onWriteClick={handleWriteReviewClick}
             />
           )}
           {activeTab === 'media' && <MediaTab data={movie} />}

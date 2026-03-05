@@ -21,6 +21,14 @@ public class MyPageDTO {
         private Long memberId;
         private String memberName;
         private Integer availablePoints;
+        private Integer pendingPoints;
+        private Integer expiringPointsThisMonth;
+        private Integer vipTicketPoints;
+        private Integer vipStorePoints;
+        private Integer vipEventPoints;
+        private String pointTier;
+        private String nextPointTier;
+        private Integer pointsToNextTier;
         private Integer availableCouponCount;
         private Integer paidReservationCount;
         private Integer reviewCount;
@@ -39,6 +47,7 @@ public class MyPageDTO {
         private String tel;
         private String email;
         private LocalDate birthDate;
+        private String profileImage;
     }
 
     @Getter
@@ -52,6 +61,7 @@ public class MyPageDTO {
         private String tel;
         private String email;
         private LocalDate birthDate;
+        private String profileImage;
     }
 
     @Getter
@@ -251,5 +261,14 @@ public class MyPageDTO {
     public static class PointPasswordSmsVerifyResponse {
         private String verificationToken;
         private String message;
+    }
+
+    @Getter @Setter @Builder
+    @NoArgsConstructor @AllArgsConstructor
+    public static class MyReviewItem {
+        private Long id;
+        private String movieTitle;
+        private String content;
+        private String createdAt;
     }
 }

@@ -241,25 +241,35 @@ const TicketingPage: React.FC = () => {
                                 ) : (
                                     <>
                                         {states.selectedMovies.map((mId) => (
-                                            <div
-                                                key={mId}
-                                                className="relative aspect-[2/3] border-2 border-black bg-white shadow-[6px_6px_0_0_rgba(0,0,0,0.1)]"
-                                            >
-                                                <div className="absolute inset-0 p-2 flex items-center justify-center">
+                                            <div key={mId} className="relative aspect-[2/3] border-2 border-black bg-white shadow-[6px_6px_0_0_rgba(0,0,0,0.1)] overflow-hidden">
+                                            {(() => {
+                                                const movie = states.movies.find((m) => m.id === mId);
+                                                return movie?.posterUrl ? (
+                                                // 1. 포스터가 있을 때: 이미지 출력
+                                                <img 
+                                                    src={movie.posterUrl} 
+                                                    alt={movie.title} 
+                                                    className="w-full h-full object-cover" 
+                                                />
+                                                ) : (
+                                                // 2. 포스터가 없을 때: 제목 텍스트 출력
+                                                <div className="absolute inset-0 p-2 flex items-center justify-center bg-[#f4f1ea]">
                                                     <p className="text-[10px] text-center font-bold leading-tight uppercase overflow-hidden">
-                                                        {states.movies.find((m) => m.id === mId)?.title}
+                                                    {movie?.title}
                                                     </p>
                                                 </div>
-                                                <button
-                                                    onClick={(e) => {
-                                                        e.stopPropagation();
-                                                        handlers.toggleMovie(mId);
-                                                    }}
-                                                    className={`absolute -top-2 -right-2 bg-red-700 text-white w-6 h-6 border-2 border-black flex items-center justify-center text-xs font-bold ${xBtnClass}`}
-                                                    style={{ WebkitTapHighlightColor: 'transparent' }}
-                                                >
-                                                    ×
-                                                </button>
+                                                );
+                                            })()}
+
+                                            <button
+                                                onClick={(e) => {
+                                                e.stopPropagation();
+                                                handlers.toggleMovie(mId);
+                                                }}
+                                                className={`absolute -top-1 -right-1 bg-red-700 text-white w-6 h-6 border-2 border-black flex items-center justify-center text-xs font-bold z-10 ${xBtnClass}`}
+                                            >
+                                                ×
+                                            </button>
                                             </div>
                                         ))}
                                         {Array.from({ length: 3 - states.selectedMovies.length }).map((_, i) => (

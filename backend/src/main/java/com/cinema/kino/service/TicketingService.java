@@ -110,7 +110,10 @@ public class TicketingService {
         } else if (regionId != null) {
             return getTheatersByRegion(regionId);
         }
-        return Collections.emptyList();
+        // No filter: return every theater so generic dropdowns can render full theater list.
+        return theaterRepository.findAll().stream()
+                .map(TheaterDTO::from)
+                .collect(Collectors.toList());
     }
 
     private final ScreeningSeatRepository screeningSeatRepository;
