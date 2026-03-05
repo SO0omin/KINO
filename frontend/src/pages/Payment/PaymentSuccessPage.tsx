@@ -205,7 +205,7 @@ export default function PaymentSuccessPage() {
 
             <div className="space-y-3">
               <button
-                onClick={() => navigate('/my-page')}
+                onClick={() => navigate('/mypage')}
                 className="w-full px-6 py-4 bg-[#eb4d32] text-white rounded-xl hover:bg-[#d43d22] transition-all font-medium shadow-lg shadow-orange-200 flex items-center justify-center gap-2 group"
               >
                 <span>예매 내역 확인하기</span>

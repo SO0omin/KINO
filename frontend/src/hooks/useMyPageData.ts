@@ -71,6 +71,12 @@ export function useMyPageData({
   );
 
   const load = useCallback(async () => {
+    if (memberId <= 0) {
+      setSummary(null);
+      setReservations([]);
+      setLoading(false);
+      return;
+    }
     setLoading(true);
     try {
       const [summaryData, reservationData] = await Promise.all([
@@ -87,6 +93,10 @@ export function useMyPageData({
   }, [memberId, notifyError]);
 
   const loadMemberProfile = useCallback(async () => {
+    if (memberId <= 0) {
+      setMemberProfile(null);
+      return null;
+    }
     setProfileLoading(true);
     try {
       const profile = await getMemberProfile(memberId);
@@ -101,6 +111,10 @@ export function useMyPageData({
   }, [memberId, notifyError]);
 
   const loadWishMovies = useCallback(async () => {
+    if (memberId <= 0) {
+      setWishMovies([]);
+      return [];
+    }
     setWishLoading(true);
     try {
       const rows = await getMyWishMovies(memberId);
@@ -118,6 +132,10 @@ export function useMyPageData({
   const loadVouchers = useCallback(async () => {
     const isVoucherPage = pageKey === "vouchers-movie" || pageKey === "vouchers-store";
     if (!isVoucherPage) return [];
+    if (memberId <= 0) {
+      setVoucherItems([]);
+      return [];
+    }
 
     setVoucherLoading(true);
     try {
@@ -140,6 +158,10 @@ export function useMyPageData({
 
   const loadCoupons = useCallback(async () => {
     if (pageKey !== "coupons") return [];
+    if (memberId <= 0) {
+      setCouponItems([]);
+      return [];
+    }
 
     setCouponLoading(true);
     try {
@@ -157,6 +179,10 @@ export function useMyPageData({
 
   const loadMembershipCards = useCallback(async () => {
     if (pageKey !== "cards") return [];
+    if (memberId <= 0) {
+      setMembershipCards([]);
+      return [];
+    }
 
     setMembershipCardLoading(true);
     try {
@@ -174,6 +200,10 @@ export function useMyPageData({
 
   const loadPointHistories = useCallback(async () => {
     if (pageKey !== "points") return [];
+    if (memberId <= 0) {
+      setPointRows([]);
+      return [];
+    }
 
     setPointLoading(true);
     try {

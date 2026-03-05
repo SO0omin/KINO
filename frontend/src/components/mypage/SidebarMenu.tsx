@@ -14,9 +14,9 @@ export function SidebarMenu({ currentPath, pageKey, onMoveMenu }: SidebarMenuPro
       <button
         type="button"
         className="w-full bg-[#000000] px-6 py-8 text-center text-xl font-semibold text-white"
-        onClick={() => onMoveMenu("/my-page")}
+        onClick={() => onMoveMenu("/mypage")}
       >
-        나의 메가박스
+        나의 키노
       </button>
 
       {MENU_CONFIG.map((item) => {
@@ -59,7 +59,7 @@ export function SidebarMenu({ currentPath, pageKey, onMoveMenu }: SidebarMenuPro
       <div className="px-5 pb-4 pt-2 text-sm text-gray-500">
         <button
           className={`block w-full text-left ${pageKey === "profile" ? "font-semibold text-[#eb4d32]" : "text-gray-500"}`}
-          onClick={() => onMoveMenu("/my-page/profile")}
+          onClick={() => onMoveMenu("/mypage/profile")}
         >
           · 개인정보 수정
         </button>
@@ -67,7 +67,7 @@ export function SidebarMenu({ currentPath, pageKey, onMoveMenu }: SidebarMenuPro
           className={`mt-1 block w-full text-left ${
             pageKey === "profile-preferences" ? "font-semibold text-[#eb4d32]" : "text-gray-500"
           }`}
-          onClick={() => onMoveMenu("/my-page/profile/preferences")}
+          onClick={() => onMoveMenu("/mypage/profile/preferences")}
         >
           · 선호정보 수정
         </button>

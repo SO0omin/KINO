@@ -1,6 +1,7 @@
 package com.cinema.kino.repository;
 
 import com.cinema.kino.entity.MemberPoint;
+import com.cinema.kino.entity.enums.PointType;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -53,4 +54,34 @@ public interface MemberPointRepository extends JpaRepository<MemberPoint, Long> 
     List<MemberPoint> findHistoriesByMemberIdAndRange(@Param("memberId") Long memberId,
                                                       @Param("fromDateTime") LocalDateTime fromDateTime,
                                                       @Param("toDateTime") LocalDateTime toDateTime);
+
+    @Query("""
+            SELECT COALESCE(SUM(mp.point), 0)
+            FROM MemberPoint mp
+            WHERE mp.member.id = :memberId
+              AND mp.pointType = :pointType
+            """)
+    int sumPointsByType(@Param("memberId") Long memberId,
+                        @Param("pointType") PointType pointType);
+
+    @Query("""
+            SELECT COALESCE(SUM(mp.point), 0)
+            FROM MemberPoint mp
+            WHERE mp.member.id = :memberId
+              AND mp.pointType = :pointType
+              AND mp.createdAt BETWEEN :fromDateTime AND :toDateTime
+            """)
+    int sumPointsByTypeAndRange(@Param("memberId") Long memberId,
+                                @Param("pointType") PointType pointType,
+                                @Param("fromDateTime") LocalDateTime fromDateTime,
+                                @Param("toDateTime") LocalDateTime toDateTime);
+
+    @Query("""
+            SELECT COALESCE(SUM(mp.point), 0)
+            FROM MemberPoint mp
+            WHERE mp.member.id = :memberId
+              AND mp.pointType = com.cinema.kino.entity.enums.PointType.EARN
+              AND mp.point > 0
+            """)
+    int sumPositiveEarnPoints(@Param("memberId") Long memberId);
 }

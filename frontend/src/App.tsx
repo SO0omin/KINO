@@ -1,4 +1,4 @@
-import { BrowserRouter as Router, Route, Routes } from "react-router-dom";
+import { BrowserRouter as Router, Navigate, Route, Routes, useLocation } from "react-router-dom";
 import { AuthProvider } from "./contexts/AuthContext";
 import Footer from "./components/common/Footer";
 import Gnb from "./components/common/Gnb";
@@ -13,6 +13,12 @@ import MyPage from "./pages/MyPage";
 import PaymentPage from "./pages/Payment/PaymentPage";
 import PaymentSuccessPage from "./pages/Payment/PaymentSuccessPage";
 import PaymentFailPage from "./pages/Payment/PaymentFailPage";
+
+function LegacyMyPageRedirect() {
+  const location = useLocation();
+  const nextPath = location.pathname.replace(/^\/my-page/, "/mypage");
+  return <Navigate to={`${nextPath}${location.search}`} replace />;
+}
 
 function AppRoutes() {
   return (
@@ -29,21 +35,23 @@ function AppRoutes() {
         <Route path="/payment" element={<PaymentPage />} />
         <Route path="/payment/success" element={<PaymentSuccessPage />} />
         <Route path="/payment/fail" element={<PaymentFailPage />} />
-        <Route path="/my-page" element={<MyPage />} />
-        <Route path="/my-page/reservations" element={<MyPage />} />
-        <Route path="/my-page/vouchers" element={<MyPage />} />
-        <Route path="/my-page/vouchers/movie" element={<MyPage />} />
-        <Route path="/my-page/vouchers/store" element={<MyPage />} />
-        <Route path="/my-page/coupons" element={<MyPage />} />
-        <Route path="/my-page/points" element={<MyPage />} />
-        <Route path="/my-page/point-password" element={<MyPage />} />
-        <Route path="/my-page/movie-story" element={<MyPage />} />
-        <Route path="/my-page/events" element={<MyPage />} />
-        <Route path="/my-page/inquiries" element={<MyPage />} />
-        <Route path="/my-page/payments" element={<MyPage />} />
-        <Route path="/my-page/cards" element={<MyPage />} />
-        <Route path="/my-page/profile" element={<MyPage />} />
-        <Route path="/my-page/profile/preferences" element={<MyPage />} />
+        <Route path="/my-page" element={<LegacyMyPageRedirect />} />
+        <Route path="/my-page/*" element={<LegacyMyPageRedirect />} />
+        <Route path="/mypage" element={<MyPage />} />
+        <Route path="/mypage/reservations" element={<MyPage />} />
+        <Route path="/mypage/vouchers" element={<MyPage />} />
+        <Route path="/mypage/vouchers/movie" element={<MyPage />} />
+        <Route path="/mypage/vouchers/store" element={<MyPage />} />
+        <Route path="/mypage/coupons" element={<MyPage />} />
+        <Route path="/mypage/points" element={<MyPage />} />
+        <Route path="/mypage/point-password" element={<MyPage />} />
+        <Route path="/mypage/movie-story" element={<MyPage />} />
+        <Route path="/mypage/events" element={<MyPage />} />
+        <Route path="/mypage/inquiries" element={<MyPage />} />
+        <Route path="/mypage/payments" element={<MyPage />} />
+        <Route path="/mypage/cards" element={<MyPage />} />
+        <Route path="/mypage/profile" element={<MyPage />} />
+        <Route path="/mypage/profile/preferences" element={<MyPage />} />
         <Route path="*" element={<div>홈페이지 또는 다른 페이지</div>} />
       </Routes>
       <Footer />

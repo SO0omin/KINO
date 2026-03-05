@@ -8,6 +8,8 @@ import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Optional;
 
 /**
@@ -70,4 +72,15 @@ public interface PaymentRepository extends JpaRepository<Payment, Long> {
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("select p from Payment p where p.merchantUid = :merchantUid")
     Optional<Payment> findByMerchantUidForUpdate(@Param("merchantUid") String merchantUid);
+
+    @Query("""
+            SELECT p
+            FROM Payment p
+            WHERE p.member.id = :memberId
+              AND p.paymentStatus = com.cinema.kino.entity.enums.PaymentStatus.PAID
+              AND p.paidAt IS NOT NULL
+              AND p.paidAt >= :fromDateTime
+            """)
+    List<Payment> findPaidPaymentsByMemberIdFrom(@Param("memberId") Long memberId,
+                                                 @Param("fromDateTime") LocalDateTime fromDateTime);
 }
