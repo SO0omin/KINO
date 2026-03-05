@@ -2,7 +2,6 @@ export type PageKey =
   | "dashboard"
   | "reservations"
   | "vouchers-movie"
-  | "vouchers-store"
   | "coupons"
   | "points"
   | "movie-story"
@@ -28,7 +27,6 @@ export const PATH_TO_KEY: Record<string, PageKey> = {
   "/mypage/reservations": "reservations",
   "/mypage/vouchers": "vouchers-movie",
   "/mypage/vouchers/movie": "vouchers-movie",
-  "/mypage/vouchers/store": "vouchers-store",
   "/mypage/coupons": "coupons",
   "/mypage/points": "points",
   "/mypage/point-password": "point-password",
@@ -41,15 +39,14 @@ export const PATH_TO_KEY: Record<string, PageKey> = {
 export const MENU_CONFIG: MenuItem[] = [
   { label: "예매/구매내역", key: "reservations", path: "/mypage/reservations" },
   {
-    label: "영화/스토어 관람권",
+    label: "영화 관람권",
     key: "vouchers",
     path: "/mypage/vouchers/movie",
     children: [
       { label: "영화관람권", path: "/mypage/vouchers/movie" },
-      { label: "스토어 교환권", path: "/mypage/vouchers/store" },
     ],
   },
-  { label: "메가박스/제휴쿠폰", key: "coupons", path: "/mypage/coupons" },
+  { label: "키노/제휴쿠폰", key: "coupons", path: "/mypage/coupons" },
   {
     label: "멤버십 포인트",
     key: "points",
@@ -69,9 +66,8 @@ export function breadcrumbLabels(pageKey: PageKey): string[] {
   const byPage: Record<PageKey, string[]> = {
     dashboard: ["나의 키노"],
     reservations: ["나의 키노", "예매/구매내역", "예매내역"],
-    "vouchers-movie": ["나의 키노", "영화/스토어 관람권", "영화관람권"],
-    "vouchers-store": ["나의 키노", "영화/스토어 관람권", "스토어 교환권"],
-    coupons: ["나의 키노", "메가박스/제휴쿠폰", "메가박스 쿠폰"],
+    "vouchers-movie": ["나의 키노", "영화 관람권", "영화관람권"],
+    coupons: ["나의 키노", "키노/제휴쿠폰", "키노 쿠폰"],
     points: ["나의 키노", "멤버십 포인트", "포인트 이용내역"],
     "movie-story": ["나의 키노", "나의 무비스토리", "무비타임라인"],
     cards: ["나의 키노", "멤버십 포인트", "멤버십 카드관리"],
