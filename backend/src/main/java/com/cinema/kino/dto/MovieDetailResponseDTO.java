@@ -2,6 +2,7 @@ package com.cinema.kino.dto;
 
 import lombok.*;
 import java.util.List;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 @Getter @Builder @AllArgsConstructor
 @NoArgsConstructor // JSON 파싱을 위해 추가
@@ -16,6 +17,7 @@ public class MovieDetailResponseDTO {
     private String ageRating;
     private int durationMin;
     private String dDay;
+    @JsonProperty("isLiked")
     private boolean isLiked;
 
     // 통계 및 이미지용 데이터

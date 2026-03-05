@@ -17,6 +17,7 @@ export interface Movie {
     id: number;
     title: string;
     ageRating: string;
+    posterUrl?: string;
     durationMin: number;
 }
 

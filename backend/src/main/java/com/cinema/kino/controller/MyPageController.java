@@ -116,4 +116,9 @@ public class MyPageController {
     ) {
         return ResponseEntity.ok(myPageService.updatePointPassword(request));
     }
+
+    @GetMapping("/reviews")
+    public ResponseEntity<List<MyPageDTO.MyReviewItem>> getMyReviews(@RequestParam Long memberId) {
+        return ResponseEntity.ok(myPageService.getMyReviews(memberId));
+    }
 }

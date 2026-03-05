@@ -138,6 +138,7 @@ public class MyPageService {
                 .tel(member.getTel())
                 .email(member.getEmail())
                 .birthDate(member.getBirthDate())
+                .profileImage(member.getProfileImage())
                 .build();
     }
 
@@ -158,6 +159,7 @@ public class MyPageService {
         member.setTel(request.getTel() == null ? null : request.getTel().trim());
         member.setEmail(request.getEmail() == null ? null : request.getEmail().trim());
         member.setBirthDate(request.getBirthDate());
+        member.setProfileImage(request.getProfileImage());
 
         return MyPageDTO.MessageResponse.builder()
                 .message("개인정보가 수정되었습니다.")
@@ -795,6 +797,18 @@ public class MyPageService {
 
         int pointsToNext = (next == null) ? 0 : Math.max(0, next.minPoints() - points);
         return new PointTierInfo(current.tierName(), next == null ? null : next.tierName(), pointsToNext);
+    }
+
+    @Transactional(readOnly = true)
+    public List<MyPageDTO.MyReviewItem> getMyReviews(Long memberId) {
+        return reviewRepository.findByMemberId(memberId).stream()
+                .map(r -> MyPageDTO.MyReviewItem.builder()
+                        .id(r.getId())
+                        .movieTitle(r.getMovie().getTitle())
+                        .content(r.getContent())
+                        .createdAt(r.getCreatedAt().toLocalDate().toString())
+                        .build())
+                .collect(Collectors.toList());
     }
 
     private record PointTierRule(String tierName, int minPoints) {

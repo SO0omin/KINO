@@ -25,6 +25,7 @@ export interface MemberProfile {
   tel?: string;
   email?: string;
   birthDate?: string;
+  profileImage?: string;
 }
 
 export interface MemberProfileUpdateRequest {
@@ -33,6 +34,7 @@ export interface MemberProfileUpdateRequest {
   tel?: string;
   email?: string;
   birthDate?: string;
+  profileImage?: string;
 }
 
 export interface MemberPasswordUpdateRequest {
@@ -150,6 +152,14 @@ export interface PointPasswordSmsVerifyResponse {
   verificationToken: string;
   message: string;
 }
+
+export interface MyReviewItem {
+  id: number;
+  movieTitle: string;
+  content: string;
+  createdAt: string;
+}
+
 
 export async function getMyPageSummary(memberId: number): Promise<MyPageSummary> {
   const response = await fetch(`${API_BASE_URL}/api/mypage/summary?memberId=${memberId}`);
@@ -407,5 +417,11 @@ export async function getMyWishMovies(memberId: number): Promise<MyWishMovieItem
     const error = await response.json().catch(() => ({} as { message?: string }));
     throw new Error(error.message || "보고싶어 목록을 불러오지 못했습니다.");
   }
+  return response.json();
+}
+
+export async function getMyReviews(memberId: number): Promise<MyReviewItem[]> {
+  const response = await fetch(`${API_BASE_URL}/api/mypage/reviews?memberId=${memberId}`);
+  if (!response.ok) throw new Error('리뷰 목록을 불러오지 못했습니다.');
   return response.json();
 }

@@ -16,6 +16,8 @@ import {
   verifyPointPasswordSms,
   registerVoucher,
   removeMovieLike,
+  getMyReviews,
+  type MyReviewItem,
 } from "../api/myPageApi";
 import { ticketingApi } from "../api/ticketingApi";
 import { useMyPageData } from "../hooks/useMyPageData";
@@ -167,7 +169,7 @@ export default function MyPage() {
   const [showReviewModal, setShowReviewModal] = useState(false);
   const [reviewMovieTitleInput, setReviewMovieTitleInput] = useState("");
   const [reviewContentInput, setReviewContentInput] = useState("");
-  const [reviews, setReviews] = useState<Array<{ id: string; movieTitle: string; content: string; createdAt: string }>>([]);
+  const [reviews, setReviews] = useState<MyReviewItem[]>([]);
   const {
     loading,
     summary,
@@ -204,15 +206,17 @@ export default function MyPage() {
     setProfileTel(memberProfile.tel ?? "");
     setProfileEmail(memberProfile.email ?? "");
     setProfileBirthDate(memberProfile.birthDate ?? "");
+    if (memberProfile.profileImage) {
+      setProfileImageUrl(memberProfile.profileImage);
+    }
   }, [memberProfile]);
 
   useEffect(() => {
     const savedWatched = localStorage.getItem(`movie-story-watched-${memberId}`);
-    const savedReviews = localStorage.getItem(`movie-story-reviews-${memberId}`);
     const savedPreferencesRaw = localStorage.getItem(`mypage-preferences-${memberId}`);
     setWatchedMovies(savedWatched ? JSON.parse(savedWatched) : []);
-    setReviews(savedReviews ? JSON.parse(savedReviews) : []);
 
+    
     if (savedPreferencesRaw) {
       try {
         const savedPreferences = JSON.parse(savedPreferencesRaw);
@@ -259,6 +263,19 @@ export default function MyPage() {
       });
     }
   }, [memberId]);
+
+  useEffect(() => {
+    if (isLoggedIn && memberId) {
+      getMyReviews(memberId)
+        .then((data) => {
+          // 백엔드에서 가져온 진짜 리뷰 리스트를 상태에 저장!
+          setReviews(data); 
+        })
+        .catch((err) => {
+          console.error("리뷰 목록 로드 실패 🕵️‍♂️", err);
+        });
+    }
+  }, [memberId, isLoggedIn]);
 
   useEffect(() => {
     if (!preferredTheaterId) {
@@ -324,10 +341,6 @@ export default function MyPage() {
   useEffect(() => {
     localStorage.setItem(`movie-story-watched-${memberId}`, JSON.stringify(watchedMovies));
   }, [memberId, watchedMovies]);
-
-  useEffect(() => {
-    localStorage.setItem(`movie-story-reviews-${memberId}`, JSON.stringify(reviews));
-  }, [memberId, reviews]);
 
   const handleRemoveWishMovie = async (movieId: number) => {
     try {
@@ -723,6 +736,7 @@ export default function MyPage() {
         tel: profileTel.trim(),
         email: profileEmail.trim(),
         birthDate: profileBirthDate || undefined,
+        profileImage: profileImageUrl,
       });
       alert(response?.message ?? "개인정보가 수정되었습니다.");
       await loadMemberProfile();

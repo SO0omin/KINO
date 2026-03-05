@@ -15,9 +15,7 @@ public class ReviewController {
 
     @PostMapping
     public ResponseEntity<Void> saveReview(@RequestBody ReviewSaveRequestDTO requestDTO) {
-        // 로그인 연동 전이므로 임시로 1번 멤버가 작성한 것으로 처리합니다.
-        Long tempMemberId = 1L;
-        reviewService.saveReview(tempMemberId, requestDTO);
+        reviewService.saveReview(requestDTO.getMemberId(), requestDTO);
         return ResponseEntity.ok().build();
     }
 }

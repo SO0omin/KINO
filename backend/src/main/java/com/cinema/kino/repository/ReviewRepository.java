@@ -9,10 +9,12 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.util.Arrays;
 import java.util.List;
 
 @Repository
 public interface ReviewRepository extends JpaRepository<Review, Long> {
+    List<Review> findByMemberId(Long memberId);
     long countByMemberId(Long memberId);
 
     // 1. 메인 페이지용: 5개 항목 평균으로 상위 리뷰 가져오기
@@ -36,4 +38,5 @@ public interface ReviewRepository extends JpaRepository<Review, Long> {
 
     // 기본 페이징 (최신순 등 일반 정렬용)
     Page<Review> findByMovieId(Long movieId, Pageable pageable);
+
 }

@@ -9,7 +9,7 @@ type TimelineRow = {
 };
 
 type ReviewItem = {
-  id: string;
+  id: number;
   movieTitle: string;
   content: string;
   createdAt: string;
