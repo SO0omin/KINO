@@ -345,7 +345,10 @@ export async function getMyWishMovies(memberId: number): Promise<MyWishMovieItem
 }
 
 export async function getMyReviews(memberId: number): Promise<MyReviewItem[]> {
-  const response = await fetch(`${API_BASE_URL}/api/mypage/reviews?memberId=${memberId}`);
-  if (!response.ok) throw new Error('리뷰 목록을 불러오지 못했습니다.');
-  return response.json();
+  try {
+    const response = await api.get(`/api/mypage/reviews?memberId=${memberId}`);
+    return response.data;
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || '리뷰 목록을 불러오지 못했습니다.');
+  }
 }
