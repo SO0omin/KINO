@@ -71,7 +71,7 @@ type PreferenceSnapshot = {
 export default function MyPage() {
   const navigate = useNavigate();
   const location = useLocation();
-  const { memberId: authMemberId } = useAuth();
+  const { memberId: authMemberId, isLoggedIn } = useAuth();
   const memberId = useMemo(() => {
     if (authMemberId && authMemberId > 0) {
       return authMemberId;
@@ -156,7 +156,6 @@ export default function MyPage() {
   const [preferredTheaterId, setPreferredTheaterId] = useState("");
   const [preferredTheaterName, setPreferredTheaterName] = useState("");
   const [availableMovieVoucherCount, setAvailableMovieVoucherCount] = useState(0);
-  const [availableStoreVoucherCount, setAvailableStoreVoucherCount] = useState(0);
   const [availableCouponCount, setAvailableCouponCount] = useState(0);
   const [savedPreferences, setSavedPreferences] = useState<PreferenceSnapshot | null>(null);
   const [socialNaverLinked, setSocialNaverLinked] = useState(false);
@@ -307,7 +306,6 @@ export default function MyPage() {
     if (pageKey !== "dashboard") return;
     if (memberId <= 0) {
       setAvailableMovieVoucherCount(0);
-      setAvailableStoreVoucherCount(0);
       setAvailableCouponCount(0);
       return;
     }
@@ -315,13 +313,11 @@ export default function MyPage() {
     let mounted = true;
     Promise.all([
       getMyVouchers(memberId, "MOVIE", "AVAILABLE"),
-      getMyVouchers(memberId, "STORE", "AVAILABLE"),
       getMyCoupons(memberId),
     ])
-      .then(([movieRows, storeRows, couponRows]) => {
+      .then(([movieRows, couponRows]) => {
         if (!mounted) return;
         setAvailableMovieVoucherCount(movieRows.length);
-        setAvailableStoreVoucherCount(storeRows.length);
         setAvailableCouponCount(
           couponRows.filter((coupon) => String(coupon.status).toUpperCase() === "AVAILABLE").length
         );
@@ -329,7 +325,6 @@ export default function MyPage() {
       .catch(() => {
         if (!mounted) return;
         setAvailableMovieVoucherCount(0);
-        setAvailableStoreVoucherCount(0);
         setAvailableCouponCount(0);
       });
 
@@ -400,18 +395,11 @@ export default function MyPage() {
   };
 
   const handleVoucherRegister = () => {
-    const isMovieVoucher = pageKey === "vouchers-movie";
     const digits = voucherRegisterCode.replace(/\D/g, "");
-    const valid = isMovieVoucher
-      ? digits.length === 12 || digits.length === 16
-      : digits.length === 16;
+    const valid = digits.length === 12 || digits.length === 16;
 
     if (!valid) {
-      setVoucherRegisterError(
-        isMovieVoucher
-          ? "영화관람권 번호는 12자리 또는 16자리 숫자만 가능합니다."
-          : "스토어 교환권 번호는 16자리 숫자만 가능합니다."
-      );
+      setVoucherRegisterError("영화관람권 번호는 12자리 또는 16자리 숫자만 가능합니다.");
       return;
     }
 
@@ -419,7 +407,7 @@ export default function MyPage() {
     setVoucherRegistering(true);
     registerVoucher({
       memberId,
-      voucherType: isMovieVoucher ? "MOVIE" : "STORE",
+      voucherType: "MOVIE",
       code: digits,
     })
       .then(async (response) => {
@@ -886,7 +874,6 @@ export default function MyPage() {
                 <ChevronRight className="h-5 w-5 text-gray-400" />
               </div>
               <p className="text-sm">영화관람권 <span className="float-right font-semibold">{availableMovieVoucherCount} 매</span></p>
-              <p className="mt-2 text-sm">스토어교환권 <span className="float-right font-semibold">{availableStoreVoucherCount} 매</span></p>
               <p className="mt-2 text-sm">할인/제휴쿠폰 <span className="float-right font-semibold">{availableCouponCount} 매</span></p>
             </button>
           </div>
@@ -1001,7 +988,6 @@ export default function MyPage() {
   const renderVouchers = () => {
     return (
       <VouchersSection
-        pageKey={pageKey}
         openVoucherRegisterModal={openVoucherRegisterModal}
         voucherItems={voucherItems}
         voucherStatus={voucherStatus}
@@ -1056,7 +1042,7 @@ export default function MyPage() {
   const renderPointPassword = () => (
     <section>
       <h1 className="text-4xl font-semibold text-[#000000]">포인트 비밀번호 설정</h1>
-      <p className="mt-5 text-xl text-[#000000]">· 메가박스 극장에서 멤버십 포인트를 사용하시려면 비밀번호가 필요합니다.</p>
+      <p className="mt-5 text-xl text-[#000000]">· 키노 극장에서 멤버십 포인트를 사용하시려면 비밀번호가 필요합니다.</p>
       <p className="text-xl text-[#000000]">· 사용하실 비밀번호 4자리를 입력해주세요.</p>
 
       <div className="mt-6 overflow-hidden rounded-sm border border-gray-200 bg-[#ffffff]">
@@ -1094,7 +1080,7 @@ export default function MyPage() {
         <p className="mb-2 text-2xl font-semibold">이용안내</p>
         <p>· 비밀번호는 숫자 4자리로 설정 가능하며, 연속된 숫자는 등록하실 수 없습니다.</p>
         <p>· 비밀번호 찾기는 불가하며, 해당 페이지를 통해 재설정 후 이용하실 수 있습니다.</p>
-        <p>· 메가박스 극장 매표소 및 매점에서 포인트 사용 시 비밀번호가 일치하지 않을 경우 사용이 제한되오니 주의하여 등록바랍니다.</p>
+        <p>· 키노 극장 매표소 및 매점에서 포인트 사용 시 비밀번호가 일치하지 않을 경우 사용이 제한되오니 주의하여 등록바랍니다.</p>
       </div>
 
       <div className="mt-8 flex justify-center gap-3">
@@ -1119,7 +1105,7 @@ export default function MyPage() {
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
           <h1 className="text-4xl font-semibold text-[#000000]">멤버십 카드관리</h1>
-          <p className="mt-5 text-sm text-gray-600">· 메가박스 계정에 등록된 멤버십 카드를 관리할 수 있습니다.</p>
+          <p className="mt-5 text-sm text-gray-600">· 키노 계정에 등록된 멤버십 카드를 관리할 수 있습니다.</p>
         </div>
         <button
           className="rounded border border-[#eb4d32] px-5 py-3 text-sm text-[#eb4d32]"
@@ -1270,7 +1256,7 @@ export default function MyPage() {
   const renderContent = () => {
     if (pageKey === "dashboard") return renderDashboard();
     if (pageKey === "reservations") return renderReservations();
-    if (pageKey === "vouchers-movie" || pageKey === "vouchers-store") return renderVouchers();
+    if (pageKey === "vouchers-movie") return renderVouchers();
     if (pageKey === "coupons") return renderCoupons();
     if (pageKey === "points") return renderPoints();
     if (pageKey === "point-password") return renderPointPassword();

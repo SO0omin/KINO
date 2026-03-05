@@ -42,14 +42,14 @@ export function CouponsSection({
 }: CouponsSectionProps) {
   return (
     <section>
-      <h1 className="text-4xl font-semibold text-[#000000]">메가박스/제휴쿠폰</h1>
+      <h1 className="text-4xl font-semibold text-[#000000]">키노/제휴쿠폰</h1>
 
       <div className="mt-5 flex border-b border-gray-200">
         <button
           className={`w-44 border border-b-0 px-4 py-2 text-sm ${couponTab === "megabox" ? "border-[#000000] bg-[#000000] text-[#ffffff]" : "border-gray-200 bg-[#ffffff] text-[#000000]"}`}
           onClick={() => setCouponTab("megabox")}
         >
-          메가박스 쿠폰
+          키노 쿠폰
         </button>
         <button
           className={`w-44 border border-b-0 px-4 py-2 text-sm ${couponTab === "partner" ? "border-[#000000] bg-[#000000] text-[#ffffff]" : "border-gray-200 bg-[#ffffff] text-[#000000]"}`}

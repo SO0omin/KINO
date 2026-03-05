@@ -163,15 +163,15 @@ export function MyPageModals(
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#000000]/70 px-4">
           <div className="w-full max-w-3xl overflow-hidden rounded-sm border border-[#000000] bg-[#ffffff]">
             <div className="flex items-center justify-between bg-[#000000] px-5 py-4">
-              <h3 className="text-3xl font-semibold text-[#ffffff]">{pageKey === "vouchers-movie" ? "영화관람권 등록" : "스토어 교환권 등록"}</h3>
+              <h3 className="text-3xl font-semibold text-[#ffffff]">영화관람권 등록</h3>
               <button className="text-4xl leading-none text-[#ffffff]" onClick={closeVoucherRegisterModal} aria-label="닫기">×</button>
             </div>
             <div className="space-y-6 bg-[#ffffff] p-6">
-              <p className="text-base text-[#000000]">{pageKey === "vouchers-movie" ? "보유하신 영화관람권 12자리 또는 16자리를 입력해주세요." : "보유하신 스토어 교환권 16자리를 입력해주세요."}</p>
+              <p className="text-base text-[#000000]">보유하신 영화관람권 12자리 또는 16자리를 입력해주세요.</p>
               <div className="rounded-sm bg-[#fdf4e3] p-4">
                 <div className="flex flex-wrap items-center gap-3">
-                  <label className="min-w-[120px] text-right text-base font-semibold text-[#000000]">{pageKey === "vouchers-movie" ? "관람권번호" : "스토어 교환권"}</label>
-                  <input value={voucherRegisterCode} onChange={(e) => { const digits = e.target.value.replace(/\D/g, ""); setVoucherRegisterCode(digits); if (voucherRegisterError) setVoucherRegisterError(""); }} maxLength={16} className="h-12 flex-1 border border-[#000000] bg-[#ffffff] px-3 text-base text-[#000000] outline-none" placeholder={pageKey === "vouchers-movie" ? "12자리 또는 16자리 입력" : "숫자만 입력해 주세요"} />
+                  <label className="min-w-[120px] text-right text-base font-semibold text-[#000000]">관람권번호</label>
+                  <input value={voucherRegisterCode} onChange={(e) => { const digits = e.target.value.replace(/\D/g, ""); setVoucherRegisterCode(digits); if (voucherRegisterError) setVoucherRegisterError(""); }} maxLength={16} className="h-12 flex-1 border border-[#000000] bg-[#ffffff] px-3 text-base text-[#000000] outline-none" placeholder="12자리 또는 16자리 입력" />
                   <button className="h-12 rounded-sm bg-[#eb4d32] px-6 text-base font-semibold text-[#ffffff]" onClick={handleVoucherRegister} disabled={voucherRegistering}>{voucherRegistering ? "등록 중..." : "등록"}</button>
                 </div>
                 {voucherRegisterError ? <p className="mt-2 text-sm text-[#eb4d32]">{voucherRegisterError}</p> : null}

@@ -43,7 +43,7 @@ function AppRoutes() {
         <Route path="/mypage/reservations" element={<MyPage />} />
         <Route path="/mypage/vouchers" element={<MyPage />} />
         <Route path="/mypage/vouchers/movie" element={<MyPage />} />
-        <Route path="/mypage/vouchers/store" element={<MyPage />} />
+        <Route path="/mypage/vouchers/store" element={<Navigate to="/mypage/vouchers/movie" replace />} />
         <Route path="/mypage/coupons" element={<MyPage />} />
         <Route path="/mypage/points" element={<MyPage />} />
         <Route path="/mypage/point-password" element={<MyPage />} />

@@ -130,7 +130,7 @@ export function useMyPageData({
   }, [memberId, notifyError]);
 
   const loadVouchers = useCallback(async () => {
-    const isVoucherPage = pageKey === "vouchers-movie" || pageKey === "vouchers-store";
+    const isVoucherPage = pageKey === "vouchers-movie";
     if (!isVoucherPage) return [];
     if (memberId <= 0) {
       setVoucherItems([]);
@@ -139,10 +139,9 @@ export function useMyPageData({
 
     setVoucherLoading(true);
     try {
-      const isMovieVoucher = pageKey === "vouchers-movie";
       const rows = await getMyVouchers(
         memberId,
-        isMovieVoucher ? "MOVIE" : "STORE",
+        "MOVIE",
         mapVoucherStatusToApi(voucherStatus)
       );
       setVoucherItems(rows);
@@ -234,7 +233,7 @@ export function useMyPageData({
   }, [pageKey, loadWishMovies]);
 
   useEffect(() => {
-    if (pageKey !== "vouchers-movie" && pageKey !== "vouchers-store") return;
+    if (pageKey !== "vouchers-movie") return;
     loadVouchers();
   }, [pageKey, loadVouchers]);
 

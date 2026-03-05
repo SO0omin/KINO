@@ -22,7 +22,7 @@ export function SidebarMenu({ currentPath, pageKey, onMoveMenu }: SidebarMenuPro
       {MENU_CONFIG.map((item) => {
         const active =
           item.key === "vouchers"
-            ? pageKey === "vouchers-movie" || pageKey === "vouchers-store"
+            ? pageKey === "vouchers-movie"
             : item.key === pageKey;
 
         return (
