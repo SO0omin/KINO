@@ -10,6 +10,7 @@ interface PaymentSummaryProps {
   paymentData: PaymentData;
   selectedPaymentMethod: TossPaymentType; // string 말고 고정 타입
   onPayment: () => void;
+  onBack: () => void;
   isProcessing?: boolean;
 }
 
@@ -24,6 +25,7 @@ export function PaymentSummary({
   paymentData,
   selectedPaymentMethod,
   onPayment,
+  onBack,
   isProcessing = false,
 }: PaymentSummaryProps) {
   const methodText = paymentMethodLabel[selectedPaymentMethod] ?? '결제수단 선택';
@@ -76,7 +78,10 @@ export function PaymentSummary({
         </div>
 
         <div className="flex gap-3">
-          <button className="flex-1 py-3 bg-white border-2 border-gray-300 rounded hover:bg-gray-50 transition-colors">
+          <button
+            onClick={onBack}
+            className="flex-1 py-3 bg-white border-2 border-gray-300 rounded hover:bg-gray-50 transition-colors"
+          >
             이전
           </button>
           <button

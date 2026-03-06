@@ -139,7 +139,7 @@ public class AuthService {
 
     // 비회원 인증
     @Transactional(readOnly = true)
-    public String guestAuthenticate(String name, String tel, String rawPassword) {
+    public GuestLoginResponseDTO guestAuthenticate(String name, String tel, String rawPassword) {
         Guest guest = guestRepository.findByNameAndTel(name, tel)
                 .orElseThrow(() -> new IllegalArgumentException("등록된 비회원 정보가 없습니다. 이름과 전화번호를 확인해 주세요."));
 
@@ -149,7 +149,13 @@ public class AuthService {
 
         log.info("✅ 비회원 인증 성공. 이름: {}", guest.getName());
 
-        return jwtUtil.createGuestToken(guest.getId(), guest.getName());
+        String token = jwtUtil.createGuestToken(guest.getId(), guest.getName());
+
+        return GuestLoginResponseDTO.builder()
+                .token(token)
+                .guestId(guest.getId())
+                .name(guest.getName())
+                .build();
     }
 
     @Transactional

@@ -63,7 +63,7 @@ const LoginPage: React.FC = () => {
         const { token, guestId, name } = response.data;
         
         guestLogin(token, guestId, name);
-        navigate(returnTo, { state: location.state }); 
+        navigate(`/mypage/reservations?guestId=${guestId}`, { replace: true }); 
 
       } catch (error: any) {
         const errMsg = error.response?.data?.error || "비회원 정보가 일치하지 않거나 등록되지 않았습니다.";

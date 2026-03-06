@@ -12,6 +12,7 @@ type PurchaseRow = {
 };
 
 type ReservationsSectionProps = {
+  guestView?: boolean;
   reservationTab: "reservation" | "purchase";
   setReservationTab: (value: "reservation" | "purchase") => void;
   historyType: "current" | "past";
@@ -47,6 +48,7 @@ type ReservationsSectionProps = {
 };
 
 export function ReservationsSection({
+  guestView = false,
   reservationTab,
   setReservationTab,
   historyType,
@@ -80,6 +82,260 @@ export function ReservationsSection({
   purchaseRows,
   cancelledReservations,
 }: ReservationsSectionProps) {
+  const parseDateTime = (value?: string) => {
+    if (!value) return new Date();
+    const normalized = value.includes(" ") ? value.replace(" ", "T") : value;
+    const d = new Date(normalized);
+    return Number.isNaN(d.getTime()) ? new Date() : d;
+  };
+
+  const formatGuestBookingNo = (reservationId: number, paidAt?: string) => {
+    const d = parseDateTime(paidAt);
+    const yy = String(d.getFullYear()).slice(-2);
+    const mm = String(d.getMonth() + 1).padStart(2, "0");
+    const dd = String(d.getDate()).padStart(2, "0");
+    const seq = String(reservationId).padStart(6, "0");
+    return `KINO-${yy}${mm}${dd}-${seq}`;
+  };
+
+  const openPrintVoucher = (item: MyReservationItem) => {
+    const bookingNo = formatGuestBookingNo(item.reservationId, item.paidAt);
+    const paidAtText = formatDateTime(item.paidAt ?? item.startTime);
+    const startTimeText = formatDateTime(item.startTime);
+    const seatsText = item.seatNames.join(", ") || "-";
+    const movieTitle = item.movieTitle;
+    const theaterText = `${item.theaterName} / ${item.screenName}`;
+    const peopleText = `성인 ${item.seatNames.length}명`;
+    const amountText = formatMoney(item.finalAmount);
+    const issueAtText = formatDateTime(new Date().toISOString());
+
+    const printWindow = window.open("", "_blank", "width=860,height=900");
+    if (!printWindow) {
+      alert("팝업이 차단되어 교환권을 열 수 없습니다. 팝업을 허용해 주세요.");
+      return;
+    }
+
+    const html = `
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="utf-8" />
+    <title>${bookingNo} 교환권</title>
+    <style>
+      * { box-sizing: border-box; }
+      body { margin: 0; padding: 28px; background: #f3f4f6; font-family: "Apple SD Gothic Neo", "Noto Sans KR", sans-serif; color: #111827; }
+      .ticket { max-width: 760px; margin: 0 auto; background: #ffffff; border: 2px solid #eb4d32; border-radius: 16px; overflow: hidden; }
+      .head { padding: 18px 22px; background: linear-gradient(135deg, #eb4d32, #d43d22); color: #fff; }
+      .head h1 { margin: 0; font-size: 22px; letter-spacing: 0.02em; }
+      .head p { margin: 6px 0 0 0; font-size: 13px; opacity: 0.95; }
+      .body { padding: 20px 22px 24px; }
+      .booking { margin-bottom: 16px; }
+      .booking .label { font-size: 12px; color: #6b7280; }
+      .booking .no { margin-top: 3px; font-size: 28px; font-weight: 800; color: #eb4d32; letter-spacing: 0.02em; }
+      .barcode { margin-top: 10px; padding: 10px 12px; background: #f9fafb; border: 1px solid #e5e7eb; font-family: monospace; letter-spacing: 0.2em; font-weight: 700; text-align: center; }
+      .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px 20px; margin-top: 14px; }
+      .item { font-size: 14px; line-height: 1.45; }
+      .item b { color: #111827; margin-right: 6px; }
+      .price { margin-top: 16px; padding: 12px; border-radius: 10px; background: #fff7f5; border: 1px solid #ffd8d0; font-size: 16px; font-weight: 700; color: #9a3412; }
+      .foot { margin-top: 18px; font-size: 12px; color: #6b7280; line-height: 1.5; }
+      .actions { margin: 18px auto 0; max-width: 760px; display: flex; gap: 8px; justify-content: flex-end; }
+      .btn { border: 1px solid #d1d5db; background: #fff; color: #111827; padding: 10px 14px; border-radius: 8px; font-size: 13px; cursor: pointer; }
+      .btn.primary { border-color: #eb4d32; background: #eb4d32; color: #fff; }
+      @media print {
+        body { background: #fff; padding: 0; }
+        .actions { display: none; }
+        .ticket { border-color: #111827; }
+      }
+    </style>
+  </head>
+  <body>
+    <section class="ticket">
+      <header class="head">
+        <h1>KINO MOVIE VOUCHER</h1>
+        <p>현장에서 직원에게 아래 교환권을 제시해 주세요.</p>
+      </header>
+      <div class="body">
+        <div class="booking">
+          <div class="label">예매번호</div>
+          <div class="no">${bookingNo}</div>
+        </div>
+        <div class="grid">
+          <div class="item"><b>영화명</b>${movieTitle}</div>
+          <div class="item"><b>관람인원</b>${peopleText}</div>
+          <div class="item"><b>극장/상영관</b>${theaterText}</div>
+          <div class="item"><b>관람좌석</b>${seatsText}</div>
+          <div class="item"><b>관람일시</b>${startTimeText}</div>
+          <div class="item"><b>결제일시</b>${paidAtText}</div>
+        </div>
+        <div class="price">결제금액 ${amountText}</div>
+        <div class="foot">
+          <div>발행시각: ${issueAtText}</div>
+          <div>본 교환권은 재출력이 가능하며, 유효 여부는 매표소 시스템 기준으로 판단됩니다.</div>
+        </div>
+      </div>
+    </section>
+
+    <div class="actions">
+      <button class="btn" onclick="window.close()">닫기</button>
+      <button class="btn primary" onclick="window.print()">인쇄하기</button>
+    </div>
+  </body>
+</html>`;
+
+    printWindow.document.open();
+    printWindow.document.write(html);
+    printWindow.document.close();
+    printWindow.focus();
+  };
+
+  if (guestView) {
+    return (
+      <section>
+        <h1 className="text-4xl font-semibold text-[#000000]">예매/취소내역</h1>
+
+        <div className="mt-8 rounded-sm bg-[#f1f2f5] p-5">
+          <div className="flex flex-wrap items-center gap-4 text-sm">
+            <span className="font-semibold text-[#000000]">구분</span>
+            <label className="flex items-center gap-2">
+              <input
+                type="radio"
+                checked={historyType === "current"}
+                onChange={() => setHistoryType("current")}
+              />
+              예매내역
+            </label>
+            <label className="flex items-center gap-2">
+              <input
+                type="radio"
+                checked={historyType === "past"}
+                onChange={() => setHistoryType("past")}
+              />
+              지난내역
+            </label>
+            <select
+              className="rounded border border-gray-300 bg-white px-3 py-2 text-sm disabled:bg-gray-100 disabled:text-gray-400"
+              value={selectedMonth}
+              onChange={(e) => setSelectedMonth(e.target.value)}
+              disabled={historyType === "current"}
+            >
+              {monthOptions.length === 0 ? (
+                <option value="">월 데이터 없음</option>
+              ) : (
+                monthOptions.map((month) => (
+                  <option key={month} value={month}>
+                    {monthLabel(month)}
+                  </option>
+                ))
+              )}
+            </select>
+            <button
+              className="flex items-center gap-1 rounded border border-gray-300 bg-white px-4 py-2 text-sm"
+              onClick={() => {
+                setAppliedHistoryType(historyType);
+                setAppliedMonth(historyType === "current" ? "" : selectedMonth);
+              }}
+            >
+              <Search className="h-4 w-4" /> 조회
+            </button>
+          </div>
+        </div>
+
+        <div className="mt-8">
+          <p className="text-2xl font-semibold text-[#000000]">총 {visibleReservations.length}건</p>
+          {loading ? (
+            <div className="mt-4 rounded border border-gray-200 bg-white py-12 text-center text-gray-500">불러오는 중...</div>
+          ) : visibleReservations.length === 0 ? (
+            <div className="mt-4 rounded border border-gray-200 bg-white py-12 text-center text-gray-500">예매 내역이 없습니다.</div>
+          ) : (
+            <div className="mt-4 space-y-4">
+              {visibleReservations.map((item) => (
+                <div key={item.reservationId} className="rounded-xl border border-gray-300 bg-white p-6">
+                  <div className="flex flex-col gap-5 lg:flex-row">
+                    <div className="h-[210px] w-[140px] shrink-0 overflow-hidden rounded border border-gray-200 bg-gray-100">
+                      {item.posterUrl ? (
+                        <img src={item.posterUrl} alt={item.movieTitle} className="h-full w-full object-cover" />
+                      ) : null}
+                    </div>
+                    <div className="flex-1">
+                      <p className="text-sm text-gray-600">
+                        예매번호{" "}
+                        <span className="text-2xl font-semibold text-[#eb4d32]">
+                          {formatGuestBookingNo(item.reservationId, item.paidAt)}
+                        </span>
+                      </p>
+                      <div className="mt-4 grid grid-cols-1 gap-y-2 text-sm text-[#000000] lg:grid-cols-2">
+                        <p><span className="font-semibold">영화명</span> {item.movieTitle}</p>
+                        <p><span className="font-semibold">관람인원</span> 성인 {item.seatNames.length}명</p>
+                        <p><span className="font-semibold">극장/상영관</span> {item.theaterName} / {item.screenName}</p>
+                        <p><span className="font-semibold">관람좌석</span> {item.seatNames.join(", ") || "-"}</p>
+                        <p><span className="font-semibold">관람일시</span> {formatDateTime(item.startTime)}</p>
+                        <p><span className="font-semibold">결제일시</span> {formatDateTime(item.paidAt ?? item.startTime)}</p>
+                      </div>
+                      <div className="mt-4 rounded bg-[#f3f4f6] px-4 py-3 text-sm font-semibold text-[#000000]">
+                        결제금액 {formatMoney(item.finalAmount)}
+                      </div>
+                    </div>
+                  </div>
+                  <div className="mt-4 flex justify-end gap-2">
+                    <button
+                      className="rounded border border-[#eb4d32] bg-white px-5 py-2 text-sm font-semibold text-[#eb4d32]"
+                      onClick={() => openPrintVoucher(item)}
+                    >
+                      교환권출력
+                    </button>
+                    {item.cancellable ? (
+                      <button
+                        className="rounded bg-[#eb4d32] px-5 py-2 text-sm font-semibold text-white hover:bg-[#d43d22]"
+                        disabled={isCancelling === item.reservationId}
+                        onClick={() => openCancelModal(item.reservationId)}
+                      >
+                        {isCancelling === item.reservationId ? "처리 중..." : "예매취소"}
+                      </button>
+                    ) : (
+                      <button
+                        className="cursor-not-allowed rounded bg-gray-300 px-5 py-2 text-sm font-semibold text-white"
+                        disabled
+                      >
+                        취소불가
+                      </button>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        <div className="mt-10">
+          <h2 className="text-2xl font-semibold text-[#eb4d32]">예매취소내역</h2>
+          <p className="mt-2 text-sm text-gray-600">· 상영일 기준 7일간 취소내역을 확인하실 수 있습니다.</p>
+          <div className="mt-4 overflow-hidden rounded-sm border border-gray-200 bg-white">
+            <div className="grid grid-cols-5 bg-[#ffffff] px-4 py-3 text-center text-sm font-semibold">
+              <span>취소일시</span>
+              <span>영화명</span>
+              <span>극장</span>
+              <span>상영일시</span>
+              <span>취소금액</span>
+            </div>
+            {cancelledReservations.length === 0 ? (
+              <div className="py-6 text-center text-gray-500">취소내역이 없습니다.</div>
+            ) : (
+              cancelledReservations.map((item) => (
+                <div key={item.reservationId} className="grid grid-cols-5 border-t border-gray-200 px-4 py-3 text-center text-sm">
+                  <span>{formatDateTime(item.cancelledAt ?? "")}</span>
+                  <span>{item.movieTitle}</span>
+                  <span>{item.theaterName}</span>
+                  <span>{formatDateTime(item.startTime)}</span>
+                  <span>{formatMoney(item.finalAmount)}</span>
+                </div>
+              ))
+            )}
+          </div>
+        </div>
+      </section>
+    );
+  }
+
   return (
     <section>
       <h1 className="text-4xl font-semibold text-[#000000]">예매/구매 내역</h1>
@@ -298,7 +554,7 @@ export function ReservationsSection({
             ) : (
               cancelledReservations.map((item) => (
                 <div key={item.reservationId} className="grid grid-cols-5 border-t border-gray-200 px-4 py-3 text-center text-sm">
-                  <span>{formatDateTime(item.startTime)}</span>
+                  <span>{formatDateTime(item.cancelledAt ?? "")}</span>
                   <span>{item.movieTitle}</span>
                   <span>{item.theaterName}</span>
                   <span>{formatDateTime(item.startTime)}</span>

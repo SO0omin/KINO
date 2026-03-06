@@ -202,12 +202,28 @@ public class MyPageService {
     }
 
     @Transactional(readOnly = true)
-    public List<MyPageDTO.ReservationItem> getReservations(Long memberId) {
-        List<Reservation> reservations = reservationRepository.findMyReservationsWithScreening(memberId);
+    public List<MyPageDTO.ReservationItem> getReservations(Long memberId, Long guestId) {
+        List<Reservation> reservations;
+        if (memberId != null && memberId > 0) {
+            reservations = reservationRepository.findMyReservationsWithScreening(memberId);
+        } else if (guestId != null && guestId > 0) {
+            reservations = reservationRepository.findGuestReservationsWithScreening(guestId);
+        } else {
+            throw new IllegalArgumentException("memberId 또는 guestId가 필요합니다.");
+        }
 
         List<MyPageDTO.ReservationItem> items = new ArrayList<>();
         for (Reservation reservation : reservations) {
             Payment payment = paymentRepository.findByReservation(reservation).orElse(null);
+            // 결제 실패/미완료 건은 예매내역에서 제외
+            if (payment == null) {
+                continue;
+            }
+            if (payment.getPaymentStatus() != PaymentStatus.PAID
+                    && payment.getPaymentStatus() != PaymentStatus.CANCELLED) {
+                continue;
+            }
+
             List<ScreeningSeat> seats = screeningSeatRepository.findByReservationId(reservation.getId());
             List<String> seatNames = seats.stream()
                     .map(s -> s.getSeat().getSeatRow() + s.getSeat().getSeatNumber())
@@ -227,6 +243,8 @@ public class MyPageService {
                     .theaterName(reservation.getScreening().getScreen().getTheater().getName())
                     .screenName(reservation.getScreening().getScreen().getName())
                     .startTime(reservation.getScreening().getStartTime())
+                    .paidAt(payment != null ? payment.getPaidAt() : null)
+                    .cancelledAt(payment != null ? payment.getCancelledAt() : null)
                     .finalAmount(payment != null ? payment.getFinalAmount() : reservation.getTotalPrice())
                     .reservationStatus(reservation.getStatus().name())
                     .paymentStatus(payment != null ? payment.getPaymentStatus().name() : "NONE")
@@ -238,11 +256,18 @@ public class MyPageService {
     }
 
     @Transactional
-    public MyPageDTO.CancelResponse cancelReservation(Long memberId, Long reservationId, String reason) {
+    public MyPageDTO.CancelResponse cancelReservation(Long memberId, Long guestId, Long reservationId, String reason) {
         Reservation reservation = reservationRepository.findById(reservationId)
                 .orElseThrow(() -> new IllegalArgumentException("예매 정보를 찾을 수 없습니다."));
 
-        if (reservation.getMember() == null || !reservation.getMember().getId().equals(memberId)) {
+        boolean isMemberOwner = memberId != null
+                && reservation.getMember() != null
+                && reservation.getMember().getId().equals(memberId);
+        boolean isGuestOwner = guestId != null
+                && reservation.getGuest() != null
+                && reservation.getGuest().getId().equals(guestId);
+
+        if (!isMemberOwner && !isGuestOwner) {
             throw new IllegalArgumentException("본인 예매만 취소할 수 있습니다.");
         }
 
@@ -261,7 +286,9 @@ public class MyPageService {
             executeTossCancelFull(payment.getImpUid(), reason == null || reason.isBlank() ? "사용자 요청 취소" : reason);
         }
 
+        LocalDateTime cancelledAt = LocalDateTime.now();
         payment.setPaymentStatus(PaymentStatus.CANCELLED);
+        payment.setCancelledAt(cancelledAt);
         reservation.setStatus(ReservationStatus.CANCELED);
 
         List<ScreeningSeat> seats = screeningSeatRepository.findByReservationId(reservationId);
@@ -304,7 +331,7 @@ public class MyPageService {
                 .reservationId(reservationId)
                 .reservationStatus(reservation.getStatus().name())
                 .paymentStatus(payment.getPaymentStatus().name())
-                .cancelledAt(LocalDateTime.now())
+                .cancelledAt(cancelledAt)
                 .build();
     }
 

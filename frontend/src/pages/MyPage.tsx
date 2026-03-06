@@ -71,7 +71,7 @@ type PreferenceSnapshot = {
 export default function MyPage() {
     const navigate = useNavigate();
     const location = useLocation();
-    const { memberId: authMemberId, isLoggedIn } = useAuth();
+    const { memberId: authMemberId, guestId: authGuestId, isGuest, isLoggedIn } = useAuth();
     const memberId = useMemo(() => {
         if (authMemberId && authMemberId > 0) {
             return authMemberId;
@@ -83,8 +83,20 @@ export default function MyPage() {
         }
         return 0;
     }, [location.search, authMemberId]);
+    const guestId = useMemo(() => {
+        if (authGuestId && authGuestId > 0) {
+            return authGuestId;
+        }
+        const queryValue = new URLSearchParams(location.search).get("guestId");
+        const parsedFromQuery = queryValue ? Number(queryValue) : NaN;
+        if (Number.isFinite(parsedFromQuery) && parsedFromQuery > 0) {
+            return parsedFromQuery;
+        }
+        return 0;
+    }, [location.search, authGuestId]);
 
     const pageKey = PATH_TO_KEY[location.pathname] ?? "dashboard";
+    const isGuestReservationOnly = isGuest && memberId <= 0 && guestId > 0;
     const verificationToken = useMemo(() => new URLSearchParams(location.search).get("verifyToken") ?? "", [location.search]);
 
     const [isCancelling, setIsCancelling] = useState<number | null>(null);
@@ -193,6 +205,7 @@ export default function MyPage() {
         loadMembershipCards,
     } = useMyPageData({
         memberId,
+        guestId,
         pageKey,
         voucherStatus,
         appliedPointFrom,
@@ -350,7 +363,10 @@ export default function MyPage() {
         setIsCancelling(reservationId);
         try {
             await cancelReservation(
-                memberId,
+                {
+                    memberId: memberId > 0 ? memberId : undefined,
+                    guestId: guestId > 0 ? guestId : undefined,
+                },
                 reservationId,
                 reason.trim() || "사용자 요청 취소"
             );
@@ -375,6 +391,13 @@ export default function MyPage() {
         const tab = new URLSearchParams(location.search).get("tab");
         setReservationTab(tab === "purchase" ? "purchase" : "reservation");
     }, [pageKey, location.search]);
+
+    useEffect(() => {
+        if (!isGuestReservationOnly) return;
+        if (location.pathname !== "/mypage/reservations") {
+            navigate(`/mypage/reservations?guestId=${guestId}`, { replace: true });
+        }
+    }, [guestId, isGuestReservationOnly, location.pathname, navigate]);
 
     const openCancelModal = (reservationId: number) => {
         setCancelTargetId(reservationId);
@@ -950,6 +973,7 @@ export default function MyPage() {
 
     const renderReservations = () => (
         <ReservationsSection
+            guestView={isGuestReservationOnly}
             reservationTab={reservationTab}
             setReservationTab={setReservationTab}
             historyType={historyType}
@@ -1254,6 +1278,7 @@ export default function MyPage() {
     );
 
     const renderContent = () => {
+        if (isGuestReservationOnly) return renderReservations();
         if (pageKey === "dashboard") return renderDashboard();
         if (pageKey === "reservations") return renderReservations();
         if (pageKey === "vouchers-movie") return renderVouchers();
@@ -1269,12 +1294,14 @@ export default function MyPage() {
 
     return (
         <div className="min-h-screen bg-[#fdf4e3] text-[#000000]">
-            <BreadcrumbBar crumbs={crumbs} />
+            <BreadcrumbBar crumbs={isGuestReservationOnly ? ["나의 키노", "예매/구매내역", "예매내역"] : crumbs} />
 
             <div className="mx-auto flex w-full max-w-[1200px] gap-8 px-4 py-10">
-                <SidebarMenu currentPath={location.pathname} pageKey={pageKey} onMoveMenu={moveMenu} />
+                {isGuestReservationOnly ? null : (
+                    <SidebarMenu currentPath={location.pathname} pageKey={pageKey} onMoveMenu={moveMenu} />
+                )}
 
-                <main className="min-w-0 flex-1">
+                <main className={`min-w-0 ${isGuestReservationOnly ? "w-full" : "flex-1"}`}>
                     {renderContent()}
                 </main>
             </div>

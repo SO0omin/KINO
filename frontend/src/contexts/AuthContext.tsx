@@ -24,6 +24,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [memberId, setMemberId] = useState<number | null>(null);
   const [guestId, setGuestId] = useState<number | null>(null);
 
+  const parseJwtPayload = (token: string): any | null => {
+    try {
+      const base64Url = token.split('.')[1];
+      const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+      const jsonPayload = decodeURIComponent(window.atob(base64).split('').map(function(c) {
+          return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+      }).join(''));
+      return JSON.parse(jsonPayload);
+    } catch {
+      return null;
+    }
+  };
+
   // 💡 로그아웃 함수 (useEffect 안에서 쓰기 위해 위로 올렸습니다)
   const logout = () => {
     localStorage.removeItem('jwt_token');
@@ -53,14 +66,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     if (token) {
       try {
         // 🚨 1. JWT 토큰 만료 검사 로직 추가 🚨
-        const base64Url = token.split('.')[1];
-        // 한글 이름 등 유니코드 깨짐 방지를 위한 안전한 디코딩 로직
-        const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
-        const jsonPayload = decodeURIComponent(window.atob(base64).split('').map(function(c) {
-            return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
-        }).join(''));
-
-        const decodedPayload = JSON.parse(jsonPayload);
+        const decodedPayload = parseJwtPayload(token);
+        if (!decodedPayload) {
+          logout();
+          return;
+        }
         const exp = decodedPayload.exp * 1000; // 초 단위를 밀리초로 변환
         const now = Date.now();
 
@@ -73,13 +83,23 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
         // 2. 만료되지 않았다면 정상적으로 상태 복구
         if (storedIsGuest === 'true' && storedName && storedGuestId) {
+          const parsedGuestId = Number(storedGuestId);
+          if (!Number.isFinite(parsedGuestId) || parsedGuestId <= 0) {
+            logout();
+            return;
+          }
           // 비회원 복구
           setIsGuest(true);
+          setIsLoggedIn(false);
+          setUsername("");
+          setMemberId(null);
           setName(storedName);
-          setGuestId(Number(storedGuestId));
+          setGuestId(parsedGuestId);
         } else if (storedUserName && storedName && storedMemberId) {
           // 회원 복구
           setIsLoggedIn(true);
+          setIsGuest(false);
+          setGuestId(null);
           setUsername(storedUserName);
           setName(storedName);
           setMemberId(Number(storedMemberId));
@@ -97,23 +117,40 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     localStorage.setItem('jwt_token', token);
     localStorage.setItem('username', username);
     localStorage.setItem('name', name);
-    localStorage.setItem('memberId', String(memberId)); 
+    localStorage.setItem('memberId', String(memberId));
+    localStorage.removeItem('isGuest');
+    localStorage.removeItem('guestId');
     setIsLoggedIn(true);
+    setIsGuest(false);
     setUsername(username);
     setName(name);
     setMemberId(memberId);
+    setGuestId(null);
   };
 
   // 비회원 로그인 함수
   const guestLogin = (token: string, guestId: number, name: string) => {
+    const payload = parseJwtPayload(token);
+    const claimedGuestId = Number(payload?.guestId);
+    const resolvedGuestId = Number.isFinite(guestId) && guestId > 0
+      ? guestId
+      : (Number.isFinite(claimedGuestId) && claimedGuestId > 0 ? claimedGuestId : null);
+    if (!resolvedGuestId) {
+      throw new Error('비회원 인증 정보가 없습니다.');
+    }
+
     localStorage.setItem('jwt_token', token); 
+    localStorage.removeItem('username');
+    localStorage.removeItem('memberId');
     localStorage.setItem('isGuest', 'true');
-    localStorage.setItem('guestId', String(guestId));
+    localStorage.setItem('guestId', String(resolvedGuestId));
     localStorage.setItem('name', name);
 
     setIsGuest(true);
     setIsLoggedIn(false); 
-    setGuestId(guestId);
+    setUsername("");
+    setMemberId(null);
+    setGuestId(resolvedGuestId);
     setName(name);
   };
 

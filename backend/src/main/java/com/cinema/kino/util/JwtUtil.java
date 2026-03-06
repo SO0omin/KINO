@@ -22,7 +22,7 @@ public class JwtUtil {
     //회원(Member)용 토큰 발급
     public String createToken(Long memberId, String username, String name) {
         Date now = new Date();
-        Date validity = new Date(now.getTime() + 1000 * 60L); // 테스트용 1분
+        Date validity = new Date(now.getTime() + 1000 * 60 * 60L); // 테스트용 1분
 
         return Jwts.builder()
                 .setSubject(username)
