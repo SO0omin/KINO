@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { ChevronLeft, ChevronRight, Calendar, Sun, Moon } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import ratingImages, { type AgeRatingType } from '../utils/getRatingImage';
 
 // --- 타입 정의 ---
 interface Movie { id: number; title: string; }
@@ -85,14 +86,14 @@ export default function TimetablePage() {
   const getDayName = (date: Date) => ['일', '월', '화', '수', '목', '금', '토'][date.getDay()];
   const isSameDate = (d1: Date, d2: Date) => formatYYYYMMDD(d1) === formatYYYYMMDD(d2);
 
-  const getAgeRatingColor = (rating: string) => {
-    switch (rating) {
-      case 'ALL': return 'bg-green-500 text-white';
-      case '12': return 'bg-blue-500 text-white';
-      case '15': return 'bg-yellow-500 text-white';
-      case '19': return 'bg-red-600 text-white';
-      default: return 'bg-gray-400 text-white';
-    }
+  const toAgeRatingType = (rating?: string): AgeRatingType => {
+    if (!rating) return 'ALL';
+    const normalized = String(rating).toUpperCase();
+    if (normalized === 'ALL') return 'ALL';
+    if (normalized === '12' || normalized === 'AGE_12') return 'AGE_12';
+    if (normalized === '15' || normalized === 'AGE_15') return 'AGE_15';
+    if (normalized === '18' || normalized === '19' || normalized === 'AGE_18' || normalized === 'AGE_19') return 'AGE_18';
+    return 'ALL';
   };
 
   // 초기 데이터 로딩
@@ -275,11 +276,11 @@ export default function TimetablePage() {
             {(activeTab === 'theater' ? timetableByTheater : timetableByMovie).map((item: any) => (
               <div key={item.movieId || item.theaterId} className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
                 <div className="flex items-center gap-3 mb-6 border-b border-gray-50 pb-4">
-                  {item.ageRating && (
-                    <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${getAgeRatingColor(item.ageRating)}`}>
-                      {item.ageRating === 'ALL' ? '전체' : item.ageRating}
-                    </span>
-                  )}
+                  <img
+                    src={ratingImages[toAgeRatingType(item.ageRating)]}
+                    alt={`관람등급 ${item.ageRating ?? 'ALL'}`}
+                    className="w-6 h-6 object-contain"
+                  />
                   <h3 className="text-xl font-bold text-gray-800">{item.movieTitle || item.theaterName}</h3>
                   {item.durationMin && <span className="text-sm text-gray-400">{item.durationMin}분</span>}
                 </div>

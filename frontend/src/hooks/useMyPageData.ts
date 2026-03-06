@@ -22,6 +22,7 @@ import type { PageKey } from "../types/mypage";
 
 type UseMyPageDataOptions = {
   memberId: number;
+  guestId?: number | null;
   pageKey: PageKey;
   voucherStatus: UiVoucherStatus;
   appliedPointFrom: string;
@@ -31,6 +32,7 @@ type UseMyPageDataOptions = {
 
 export function useMyPageData({
   memberId,
+  guestId,
   pageKey,
   voucherStatus,
   appliedPointFrom,
@@ -71,7 +73,9 @@ export function useMyPageData({
   );
 
   const load = useCallback(async () => {
-    if (memberId <= 0) {
+    const hasMember = memberId > 0;
+    const hasGuest = !!guestId && guestId > 0;
+    if (!hasMember && !hasGuest) {
       setSummary(null);
       setReservations([]);
       setLoading(false);
@@ -79,9 +83,15 @@ export function useMyPageData({
     }
     setLoading(true);
     try {
+      const reservationPromise = getMyReservations({
+        memberId: hasMember ? memberId : undefined,
+        guestId: hasGuest ? guestId : undefined,
+      });
+      const summaryPromise = hasMember ? getMyPageSummary(memberId) : Promise.resolve(null);
+
       const [summaryData, reservationData] = await Promise.all([
-        getMyPageSummary(memberId),
-        getMyReservations(memberId),
+        summaryPromise,
+        reservationPromise,
       ]);
       setSummary(summaryData);
       setReservations(reservationData);
@@ -90,7 +100,7 @@ export function useMyPageData({
     } finally {
       setLoading(false);
     }
-  }, [memberId, notifyError]);
+  }, [guestId, memberId, notifyError]);
 
   const loadMemberProfile = useCallback(async () => {
     if (memberId <= 0) {

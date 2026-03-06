@@ -222,6 +222,16 @@ export const useSeatBooking = (screeningId: number) => {
       return;
     }
 
+    if (!isGuest && !memberId) {
+      showAlert("로그인 정보가 없습니다. 다시 로그인해 주세요.");
+      return;
+    }
+
+    if (isGuest && !guestId) {
+      showAlert("비회원 인증 정보가 없습니다. 비회원 로그인 후 다시 시도해 주세요.");
+      return;
+    }
+
     try {
       const tickets = getFormattedTickets();
       
@@ -240,8 +250,13 @@ export const useSeatBooking = (screeningId: number) => {
       if (data.reservationId) {
         navigate(`/payment?reservationId=${data.reservationId}`);
       }
-    } catch (error) {
-      showAlert("좌석 선점에 실패했습니다. 이미 선택된 좌석일 수 있습니다.");
+    } catch (error: any) {
+      const message =
+        error?.response?.data?.message ||
+        error?.response?.data?.error ||
+        error?.message ||
+        "좌석 선점에 실패했습니다.";
+      showAlert(message);
     }
   };
 

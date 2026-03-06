@@ -8,7 +8,6 @@ import org.springframework.data.repository.query.Param;
 
 import java.util.List;
 import java.util.Map;
-import java.util.List;
 import java.util.Optional;
 
 public interface ReservationRepository extends JpaRepository<Reservation, Long> {
@@ -44,6 +43,17 @@ public interface ReservationRepository extends JpaRepository<Reservation, Long> 
             ORDER BY r.createdAt DESC
             """)
     List<Reservation> findMyReservationsWithScreening(@Param("memberId") Long memberId);
+
+    @Query("""
+            SELECT r FROM Reservation r
+            JOIN FETCH r.screening s
+            JOIN FETCH s.movie
+            JOIN FETCH s.screen sc
+            JOIN FETCH sc.theater
+            WHERE r.guest.id = :guestId
+            ORDER BY r.createdAt DESC
+            """)
+    List<Reservation> findGuestReservationsWithScreening(@Param("guestId") Long guestId);
 
     long countByMemberIdAndStatus(Long memberId, ReservationStatus status);
 }
