@@ -2,14 +2,25 @@ import { useEffect, useState, useRef } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { confirmPayment } from '../../api/paymentApi';
 import { CheckCircle2, XCircle, Ticket, Clock, CreditCard, ArrowRight } from 'lucide-react';
+import { useAuth } from '../../contexts/AuthContext';
+
+function formatDisplayBookingNo(id: number, date = new Date()) {
+  const yy = String(date.getFullYear()).slice(-2);
+  const mm = String(date.getMonth() + 1).padStart(2, '0');
+  const dd = String(date.getDate()).padStart(2, '0');
+  const seq = String(id).padStart(6, '0');
+  return `KINO-${yy}${mm}${dd}-${seq}`;
+}
 
 export default function PaymentSuccessPage() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
+  const { isGuest } = useAuth();
   const [isConfirming, setIsConfirming] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [paymentId, setPaymentId] = useState<number | null>(null);
   const reservationId = searchParams.get('reservationId');
+  const displayBookingNo = paymentId ? formatDisplayBookingNo(paymentId) : null;
   
   // [추가된 안전장치] API 중복 호출 방지
   const isCalled = useRef(false);
@@ -151,14 +162,14 @@ export default function PaymentSuccessPage() {
                   </div>
                   <div>
                     <p className="text-xs text-gray-500 mb-1">예매번호</p>
-                    <p className="text-2xl font-bold text-gray-900">#{paymentId}</p>
+                    <p className="text-2xl font-bold text-gray-900">{displayBookingNo ?? '-'}</p>
                   </div>
                 </div>
                 {/* 복사 버튼 기능은 나중에 구현 (일단 UI만) */}
                 <button 
                   className="text-[#eb4d32] text-sm font-medium hover:underline"
                   onClick={() => {
-                    if(paymentId) navigator.clipboard.writeText(paymentId.toString());
+                    if (displayBookingNo) navigator.clipboard.writeText(displayBookingNo);
                   }}
                 >
                   복사
@@ -189,14 +200,16 @@ export default function PaymentSuccessPage() {
               </div>
             </div>
 
-            <div className="bg-gray-50 rounded-lg p-4 mb-6 border border-gray-200">
-              <p className="text-sm text-gray-600 leading-relaxed">
-                <span className="font-medium text-gray-900">📧 예매 확인 메일</span>이 발송되었습니다.<br />
-                <span className="text-xs text-gray-500">
-                  예매 내역은 마이페이지에서 확인 및 취소하실 수 있습니다.
-                </span>
-              </p>
-            </div>
+            {!isGuest ? (
+              <div className="bg-gray-50 rounded-lg p-4 mb-6 border border-gray-200">
+                <p className="text-sm text-gray-600 leading-relaxed">
+                  <span className="font-medium text-gray-900">📧 예매 확인 메일</span>이 발송되었습니다.<br />
+                  <span className="text-xs text-gray-500">
+                    예매 내역은 마이페이지에서 확인 및 취소하실 수 있습니다.
+                  </span>
+                </p>
+              </div>
+            ) : null}
 
             <div className="space-y-3">
               <button

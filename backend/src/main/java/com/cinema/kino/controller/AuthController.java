@@ -84,8 +84,12 @@ public class AuthController {
     @PostMapping("/guest-login")
     public ResponseEntity<?> guestLogin(@RequestBody GuestLoginRequestDTO request) {
         try {
-            String token = authService.guestAuthenticate(request.getName(), request.getTel(), request.getPassword());
-            return ResponseEntity.ok(Map.of("token", token, "name", request.getName()));
+            GuestLoginResponseDTO response = authService.guestAuthenticate(
+                    request.getName(),
+                    request.getTel(),
+                    request.getPassword()
+            );
+            return ResponseEntity.ok(response);
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
         }

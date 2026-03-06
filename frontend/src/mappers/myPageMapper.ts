@@ -98,7 +98,7 @@ export function toPurchaseRows(
 
   return reservations
     .map((item) => {
-      const paymentDate = new Date(item.startTime);
+      const paymentDate = new Date(item.paidAt ?? item.startTime);
       const isCancelled =
         item.paymentStatus === "CANCELLED" || item.reservationStatus === "CANCELED";
       return {

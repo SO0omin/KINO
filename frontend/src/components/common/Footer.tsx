@@ -1,36 +1,17 @@
 export function Footer() {
   return (
-    <footer className="bg-white border-t border-gray-300">
-      <div className="max-w-[1200px] mx-auto px-6 py-8">
-        <div className="flex justify-between mb-6">
-          <div className="flex gap-6 text-sm">
-            <a href="#" className="text-gray-700 hover:text-[#eb4d32]">회사소개</a>
-            <a href="#" className="text-gray-700 hover:text-[#eb4d32]">인재채용</a>
-            <a href="#" className="text-gray-700 hover:text-[#eb4d32]">사회공헌</a>
-            <a href="#" className="text-gray-700 hover:text-[#eb4d32]">제휴/광고/부대사업문의</a>
-            <a href="#" className="text-gray-700 hover:text-[#eb4d32]">이용약관</a>
-            <a href="#" className="font-bold hover:text-[#eb4d32]">개인정보처리방침</a>
-            <a href="#" className="text-gray-700 hover:text-[#eb4d32]">법적고지</a>
-            <a href="#" className="text-gray-700 hover:text-[#eb4d32]">이메일주소무단수집거부</a>
-            <a href="#" className="text-gray-700 hover:text-[#eb4d32]">윤리경영</a>
-          </div>
-        </div>
-        
-        <div className="text-sm text-gray-600 mb-4">
-          <p className="mb-1">서울특별시 강남구 도산대로 156 2층 드림센터(역삼동 737-17) ARS 1544-0070</p>
-          <p className="mb-1">대표이메일 m.dreamcenter@partner.megabox.co.kr 대표자명 홍미리 · 개인정보보호책임자 211-86-59478 · 사업자등록번호 2019-서울강남-00722 · 통신판매업신고번호 no.722</p>
-          <p>COPYRIGHT © MegaboxJoongAng, Inc. All rights reserved</p>
-        </div>
-
-        <div className="flex items-center gap-4">
-          <div className="text-2xl font-bold text-gray-400">MEGABOX</div>
-          <div className="flex gap-2">
-            <div className="w-8 h-8 bg-gray-300 rounded-full"></div>
-            <div className="w-8 h-8 bg-gray-300 rounded-full"></div>
-            <div className="w-8 h-8 bg-gray-300 rounded-full"></div>
-            <div className="w-8 h-8 bg-gray-300 rounded-full"></div>
-          </div>
-        </div>
+    <footer className="border-t border-[#e7d9c5] bg-white text-[#1f2937]">
+      <div className="mx-auto max-w-[1200px] px-6 py-12">
+        <p className="text-xs uppercase tracking-[0.32em] text-[#eb4d32]">Team Project</p>
+        <h2 className="mt-3 text-4xl font-black tracking-tight text-[#eb4d32]">KINO</h2>
+        <p className="mt-4 max-w-none text-sm leading-6 text-[#4b5563] md:whitespace-nowrap">
+          KINO는 영화 예매 흐름을 직접 설계하고 구현한 팀 프로젝트입니다.
+          실제 서비스처럼 자연스럽게 동작하는 경험을 목표로, 프론트엔드와 백엔드를 함께 완성했습니다.
+        </p>
+        <div className="mt-8 h-px w-full bg-[#e7d9c5]" />
+        <p className="mt-6 text-xs tracking-wide text-[#6b7280]">
+          Crafted by Team KINO. For learning, collaboration, and better movie-booking UX.
+        </p>
       </div>
     </footer>
   );
