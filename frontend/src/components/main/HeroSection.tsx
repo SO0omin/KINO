@@ -41,13 +41,13 @@ const HeroSection = ({ movies }: HeroSectionProps) => {
       </div>
 
       {/* 3. 중앙 영화관 스크린 프레임 & 내부 정보 (하이브리드 핵심) */}
-      <div className="relative z-20 w-full max-w-[85%] aspect-video border-[16px] border-[#151515] shadow-[0_0_80px_rgba(0,0,0,0.8)] overflow-hidden rounded-sm group transition-transform duration-700">
-        
+      <div className="relative z-20 w-full max-w-6xl px-4 md:px-0 aspect-video border-[16px] border-[#151515] shadow-[0_0_80px_rgba(0,0,0,0.8)] overflow-hidden rounded-sm group">
+
         {/* 비디오 레이어 */}
-        <div className="absolute inset-0 pointer-events-none">
+        <div className="absolute inset-0 pointer-events-none overflow-hidden bg-zinc-900">
            <iframe
             src={videoSrc}
-            className="w-full h-full scale-[1.05] group-hover:scale-110 transition-transform duration-[2000ms]"
+            className="absolute w-[115%] h-[115%] top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 transition-transform duration-[2000ms] group-hover:scale-110"
             frameBorder="0"
             allow="autoplay; encrypted-media"
             title="Screen Trailer"
@@ -72,7 +72,7 @@ const HeroSection = ({ movies }: HeroSectionProps) => {
           <div className="pointer-events-auto">
             <button 
               onClick={() => navigate(`/movie-detail/${currentMovie.id}`)}
-              className="px-8 py-3 bg-white text-black font-serif italic text-lg hover:bg-[#f4f1ea] transition-all shadow-[6px_6px_0_0_rgba(255,255,255,0.2)] active:translate-x-1 active:translate-y-1 active:shadow-none uppercase tracking-tight"
+              className="px-6 py-2.5 md:px-10 md:py-4 bg-white text-black font-serif italic text-sm md:text-lg hover:bg-[#f4f1ea] transition-all shadow-[6px_6px_0_0_rgba(255,255,255,0.2)] active:translate-x-1 active:translate-y-1 active:shadow-none uppercase tracking-tight"
             >
               View Details
             </button>

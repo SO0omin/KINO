@@ -26,8 +26,8 @@ public class MovieStatScheduler {
     @Scheduled(cron = "0 * * * * *")
     @Transactional
     public void updateMovieStatistics() {
-        System.out.println("====== [BINGO] 스케줄러 정상 작동 중! ======");
-        log.info("KINO 예매율 및 관객수 업데이트 배치 시작... 🚀");
+        System.out.println("====== 스케줄러 정상 작동 중! ======");
+        log.info("KINO 예매율 및 관객수 업데이트 배치 시작");
 
         // 1. 시스템 전체 유효 관객수 (PAID 상태인 인원 합계)
         Long totalAudience = reservationRepository.sumAllTotalNum(ReservationStatus.PAID);

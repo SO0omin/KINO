@@ -1,6 +1,17 @@
-import { Link } from 'react-router-dom';
+import { useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 
 const QuickMenuSection = () => {
+  const [keyword, setKeyword] = useState(""); // 검색어 상태
+  const navigate = useNavigate();
+
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!keyword.trim()) return;
+
+    navigate('/movie-list', { state: { keyword: keyword } });
+  };
+
   return (
     <section className="max-w-7xl mx-auto px-10">
       <div className="w-full bg-white border-[6px] border-black p-1 shadow-[16px_16px_0_0_#000] relative">
@@ -8,19 +19,21 @@ const QuickMenuSection = () => {
         <div className="border-2 border-black/10 p-8 flex flex-col md:flex-row items-center justify-between gap-12">
           
           {/* 1. Search - Vintage Ledger Style */}
-          <div className="flex-1 w-full relative group">
+          <form onSubmit={handleSearch} className="flex-1 w-full relative group">
             <label className="absolute -top-12 left-0 font-typewriter text-[10px] text-black/40 uppercase tracking-widest">Search Archive</label>
             <div className="relative">
               <input 
                 type="text" 
                 placeholder="ENTER TITLE..." 
+                value={keyword}
+                onChange={(e) => setKeyword(e.target.value)}
                 className="w-full bg-transparent border-b-2 border-black py-4 pl-2 pr-12 font-mono text-lg text-black placeholder:text-black/20 focus:outline-none focus:border-red-800 transition-all uppercase"
               />
-              <button className="absolute right-2 top-1/2 -translate-y-1/2 text-black hover:scale-110 transition-transform">
+              <button type="submit" className="absolute right-2 top-1/2 -translate-y-1/2 text-black hover:scale-110 transition-transform">
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
               </button>
             </div>
-          </div>
+          </form>
 
           {/* Vertical Divider */}
           <div className="hidden md:block w-px h-24 bg-black/10 mx-4" />
@@ -28,7 +41,7 @@ const QuickMenuSection = () => {
           {/* 2. Quick Links - Classic Program Style */}
           <div className="flex-[1.5] w-full grid grid-cols-1 sm:grid-cols-3 gap-8">
             
-            <Link to="/schedule" className="group flex flex-col items-center text-center gap-4 p-4 hover:bg-black hover:text-white transition-all border-2 border-transparent hover:border-black">
+            <Link to="/timetables" className="group flex flex-col items-center text-center gap-4 p-4 hover:bg-black hover:text-white transition-all border-2 border-transparent hover:border-black">
               <div className="p-3 border-2 border-black group-hover:border-white transition-colors">
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="18" height="18" x="3" y="4" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
               </div>

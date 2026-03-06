@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import ratingImages, { type AgeRatingType } from "../utils/getRatingImage";
 import axios from 'axios';
 import { Heart, Search } from 'lucide-react'; // 💡 하트 아이콘 추가
@@ -16,28 +16,41 @@ interface Movie {
   ageRating: string;
   likeCount: number;
   isLiked: boolean;
+  avgRating: number;
 }
 
 export default function MovieListPage() {
   const navigate = useNavigate();
+  const location = useLocation();
+  const stateKeyword = location.state?.keyword || "";
   const { isLoggedIn, isGuest, memberId } = useAuth();
   const [activeTab, setActiveTab] = useState<'ALL' | 'UPCOMING'>('ALL');
   const [movies, setMovies] = useState<Movie[]>([]);
   const [isLoading, setIsLoading] = useState(false);
 
-  const [searchQuery, setSearchQuery] = useState(""); // 검색창 입력값
-  const [appliedSearch, setAppliedSearch] = useState(""); // 실제 검색에 사용될 값 (엔터/버튼 클릭 시 업데이트)
+  const [searchQuery, setSearchQuery] = useState(stateKeyword); // 입력창 초기화
+  const [appliedSearch, setAppliedSearch] = useState(stateKeyword); // 실제 검색에 사용될 값 (엔터/버튼 클릭 시 업데이트)
   const [sortOrder, setSortOrder] = useState<'RELEASE_DATE' | 'TITLE_ASC'>('RELEASE_DATE');
 
+  useEffect(() => {
+    if (location.state?.keyword) {
+      // 검색 로직이 실행된 후, 현재 주소의 state를 초기화합니다.
+      navigate(location.pathname, { replace: true, state: {} });
+    }
+  }, [location.pathname, navigate]);
+  
   // 탭이 바뀔 때마다 백엔드 API 호출
   useEffect(() => {
     const fetchMovies = async () => {
+      const storedMemberId = localStorage.getItem('memberId');
+      const effectiveMemberId = memberId || (storedMemberId ? Number(storedMemberId) : null);
+
       setIsLoading(true);
       try {
         const response = await axios.get(`/api/movies`, {
           params: { 
             type: activeTab, 
-            memberId: memberId || null,
+            memberId: effectiveMemberId,
             keyword: appliedSearch, // 💡 백엔드로 검색어 전송!
             sort: activeTab === 'UPCOMING' ? sortOrder : undefined // 💡 백엔드로 정렬 방식 전송!
           }
@@ -171,40 +184,42 @@ export default function MovieListPage() {
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8">
             {movies.map((movie, index) => (
-              <div key={movie.id} className="flex flex-col group">
-                {/* 포스터 영역 (호버 시 예매 버튼 등장) */}
-                <div className="relative overflow-hidden rounded-lg shadow-md aspect-[2/3] mb-4">
+              <div key={movie.id} className="flex flex-col"> 
+                
+                {/* 포스터 영역 */}
+                <div 
+                  className="relative overflow-hidden rounded-lg shadow-md aspect-[2/3] mb-4 cursor-pointer group"
+                  onClick={() => navigate(`/movie-detail/${movie.id}`)} //  상세 페이지 이동
+                >
                   <img 
                     src={movie.posterUrl} 
                     alt={movie.title} 
                     className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
                   />
-                  {/* 순위 뱃지 (전체 영화 탭일 때만) */}
+                  
+                  {/* 순위 뱃지 */}
                   {activeTab === 'ALL' && (
                     <div className="absolute top-0 bg-[#696969] left-0 text-white font-bold text-xl px-4 py-2 opacity-90 rounded-br-lg">
                       {index + 1}
                     </div>
                   )}
-                  {/* 호버 오버레이 */}
-                  <div className="absolute inset-0 bg-black/80 opacity-0 group-hover:opacity-100 transition-opacity duration-300 p-5 flex flex-col">
-                  
-                  {/* 1. 상단 설명글 영역 */}
-                  <div className="text-white text-sm leading-relaxed line-clamp-6 text-justify">
-                    {movie.description || "등록된 소개글이 없습니다."}
-                  </div>
 
-                  {/* 2. 하단 영역 (mt-auto가 이 부분을 바닥으로 쫙 밀어냅니다) */}
-                  <div className="mt-auto">
-                    <hr className="border-[#696969] opacity-50 mb-3" />
-                    <div className="text-white text-center font-bold text-sm flex items-center justify-center gap-2">
-                      <span>관람평</span>
-                      {/* 💡 임시로 8.9점을 넣었습니다. 나중에 백엔드 데이터(movie.reviewScore 등)로 교체하세요! */}
-                      <span className="text-lg text-[#eb4d32]">8.9</span>
-                      <span>점</span>
+                  {/* 호버 오버레이 (포스터 위에만 나타남) */}
+                  <div className="absolute inset-0 bg-black/80 opacity-0 group-hover:opacity-100 transition-opacity duration-300 p-5 flex flex-col">
+                    <div className="text-white text-sm leading-relaxed line-clamp-6 text-justify">
+                      {movie.description || "등록된 소개글이 없습니다."}
+                    </div>
+                    <div className="mt-auto">
+                      <hr className="border-[#696969] opacity-50 mb-3" />
+                      <div className="text-white text-center font-bold text-sm flex items-center justify-center gap-2">
+                        <span>관람평</span>
+                        <span className="text-lg text-[#eb4d32]">
+                          {movie.avgRating > 0 ? movie.avgRating.toFixed(1) : "0.0"}
+                        </span>
+                        <span>점</span>
+                      </div>
                     </div>
                   </div>
-
-                </div>
                 </div>
 
                 {/* 영화 정보 영역 */}
@@ -216,12 +231,15 @@ export default function MovieListPage() {
                   />
                   <h3 className="text-lg font-bold text-gray-800 truncate">{movie.title}</h3>
                 </div>
-                <div className="text-sm text-gray-500 flex justify-between">
+                
+                <div className="text-sm text-gray-500 flex justify-between mb-2">
                   <span>예매율 {movie.bookingRate}%</span>
                   <span>{movie.releaseDate} 개봉</span>
                 </div>
-                <div className="text-sm text-gray-500 flex justify-between">
-                  {/* 찜 버튼 영역 */}
+
+                {/* 버튼 영역 */}
+                <div className="text-sm text-gray-500 flex justify-between items-center mt-auto">
+                  {/* 찜 버튼 */}
                   <button 
                     onClick={() => handleLikeToggle(movie.id, movie.isLiked)}
                     className="flex items-center gap-1.5 text-gray-500 hover:text-[#eb4d32] transition-colors"
@@ -233,13 +251,13 @@ export default function MovieListPage() {
                     <span className="text-sm font-bold">{movie.likeCount}</span>
                   </button>
 
-                  {/* 예매 버튼 영역 */}
+                  {/* 예매 버튼 */}
                   <button 
-                  onClick={() => navigate('/ticketing', { state: { preSelectedMovieId: movie.id } })}
-                  className="bg-gray-100 text-gray-700 text-xs font-bold py-2 px-6 rounded hover:bg-[#eb4d32] hover:text-white transition-colors"
-                >
-                  예매하기
-                </button>
+                    onClick={() => navigate('/ticketing', { state: { preSelectedMovieId: movie.id } })}
+                    className="bg-gray-100 text-gray-700 text-xs font-bold py-2 px-6 rounded hover:bg-[#eb4d32] hover:text-white transition-colors"
+                  >
+                    예매하기
+                  </button>
                 </div>
               </div>
             ))}

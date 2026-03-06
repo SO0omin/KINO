@@ -1,11 +1,10 @@
 package com.cinema.kino.dto;
 
-
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-
 import java.math.BigDecimal;
 
 @Getter
@@ -23,6 +22,9 @@ public class MovieResponseDTO {
     private String ageRating;    // 관람등급 (ALL, 12, 15, 18)
 
     private long likeCount;
+    @JsonProperty("isLiked")
     private boolean isLiked;
+
+    private Double avgRating;
 
 }

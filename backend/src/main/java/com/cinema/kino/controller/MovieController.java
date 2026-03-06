@@ -39,10 +39,9 @@ public class MovieController {
     @GetMapping("/{id}/detail")
     public ResponseEntity<MovieDetailResponseDTO> getMovieDetail(
             @PathVariable Long id,
-            @RequestParam(value = "memberId", required = false) Long memberId, // 💡 프론트에서 보내는 memberId 받기 추가!
+            @RequestParam(value = "memberId", required = false) Long memberId,
             @PageableDefault(size = 10, sort = "id", direction = Sort.Direction.DESC) Pageable pageable) {
 
-        // 💡 서비스로 id, memberId, pageable 3개를 사이좋게 넘겨줍니다.
         return ResponseEntity.ok(movieService.getMovieDetail(id, memberId, pageable));
     }
 }
