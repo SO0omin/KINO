@@ -43,18 +43,22 @@ public class MyPageController {
     }
 
     @GetMapping("/reservations")
-    public ResponseEntity<List<MyPageDTO.ReservationItem>> getReservations(@RequestParam Long memberId) {
-        return ResponseEntity.ok(myPageService.getReservations(memberId));
+    public ResponseEntity<List<MyPageDTO.ReservationItem>> getReservations(
+            @RequestParam(required = false) Long memberId,
+            @RequestParam(required = false) Long guestId
+    ) {
+        return ResponseEntity.ok(myPageService.getReservations(memberId, guestId));
     }
 
     @PostMapping("/reservations/{reservationId}/cancel")
     public ResponseEntity<MyPageDTO.CancelResponse> cancelReservation(
-            @RequestParam Long memberId,
+            @RequestParam(required = false) Long memberId,
+            @RequestParam(required = false) Long guestId,
             @PathVariable Long reservationId,
             @RequestBody(required = false) MyPageDTO.CancelRequest request
     ) {
         String reason = request != null ? request.getReason() : null;
-        return ResponseEntity.ok(myPageService.cancelReservation(memberId, reservationId, reason));
+        return ResponseEntity.ok(myPageService.cancelReservation(memberId, guestId, reservationId, reason));
     }
 
     @GetMapping("/vouchers")

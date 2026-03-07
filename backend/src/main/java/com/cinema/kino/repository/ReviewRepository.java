@@ -31,12 +31,19 @@ public interface ReviewRepository extends JpaRepository<Review, Long> {
     // 2. 특정 영화의 모든 리뷰 (기존 유지)
     List<Review> findByMovieId(Long movieId);
 
-    // 상세 페이지용: 5개 항목의 합산 점수를 기준으로 정렬할 수 있게 커스텀 쿼리 작성
+    // 3. ✨ 상세 페이지용: 한 번에 모든 평균값 가져오기 (반환 타입을 Object로 설정)
+    @Query("SELECT " +
+            "AVG((r.scoreDirection + r.scoreStory + r.scoreVisual + r.scoreActor + r.scoreOst) / 5.0), " +
+            "AVG(r.scoreDirection), AVG(r.scoreStory), AVG(r.scoreVisual), AVG(r.scoreActor), AVG(r.scoreOst) " +
+            "FROM Review r WHERE r.movie.id = :movieId")
+    Object findAllAverageScoresByMovieId(@Param("movieId") Long movieId);
+
+    // 4. ✨ 상세 페이지용: 평점순 정렬 페이징
     @Query("SELECT r FROM Review r WHERE r.movie.id = :movieId " +
             "ORDER BY (r.scoreDirection + r.scoreStory + r.scoreVisual + r.scoreActor + r.scoreOst) DESC, r.id DESC")
     Page<Review> findByMovieIdOrderByAverageScore(@Param("movieId") Long movieId, Pageable pageable);
 
-    // 기본 페이징 (최신순 등 일반 정렬용)
+    // 5. 기본 페이징
     Page<Review> findByMovieId(Long movieId, Pageable pageable);
 
 }

@@ -89,6 +89,8 @@ public class MyPageDTO {
         private String theaterName;
         private String screenName;
         private LocalDateTime startTime;
+        private LocalDateTime paidAt;
+        private LocalDateTime cancelledAt;
         private Integer finalAmount;
         private String reservationStatus;
         private String paymentStatus;

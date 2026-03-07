@@ -16,8 +16,6 @@ export const Gnb: React.FC = () => {
     { label: "예매", path: "/ticketing" },
     { label: "상영시간표", path: "/timetables" },
     { label: "극장", path: "/theater-list" },
-    { label: "스토어", path: "/store" },
-    { label: "혜택", path: "/benefits" },
   ];
 
   // 로그아웃 핸들러 (회원/비회원 공통으로 완벽하게 작동함)
@@ -32,12 +30,8 @@ export const Gnb: React.FC = () => {
       {/* Top Bar (최상단 유틸리티 메뉴) */}
       <div className="bg-white border-b border-gray-200">
         <div className="max-w-[1200px] mx-auto px-6 py-2 flex justify-between items-center text-sm text-gray-600">
-          {/* 좌측 메뉴 */}
-          <div className="flex gap-6">
-            <Link to="/vip" className="hover:text-[#eb4d32] transition-colors">VIP LOUNGE</Link>
-            <Link to="/membership" className="hover:text-[#eb4d32] transition-colors">멤버십</Link>
-            <Link to="/cs" className="hover:text-[#eb4d32] transition-colors">고객센터</Link>
-          </div>
+          {/* 좌측 영역 비움 */}
+          <div />
           
           {/* 우측 메뉴 (✨ 인증 상태 조건 변경) */}
           <div className="flex gap-6 items-center">
@@ -90,7 +84,7 @@ export const Gnb: React.FC = () => {
                 <Calendar size={24} />
               </button>
               {/* 유저 아이콘 클릭 시 로그인 여부에 따라 마이페이지 또는 로그인 창으로 이동 */}
-              <Link to={isLoggedIn ? "/mypage" : "/login"} className="hover:text-[#eb4d32] transition-colors">
+              <Link to={isGuest ? "/mypage/reservations" : isLoggedIn ? "/mypage" : "/login"} className="hover:text-[#eb4d32] transition-colors">
                 <User size={24} />
               </Link>
             </div>

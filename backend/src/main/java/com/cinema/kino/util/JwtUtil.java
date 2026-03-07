@@ -22,7 +22,7 @@ public class JwtUtil {
     //회원(Member)용 토큰 발급
     public String createToken(Long memberId, String username, String name) {
         Date now = new Date();
-        Date validity = new Date(now.getTime() + 1000  * 60 * 60L); // 테스트용 1분
+        Date validity = new Date(now.getTime() + 1000 * 60 * 60L); // 테스트용 1분
 
         return Jwts.builder()
                 .setSubject(username)
@@ -38,7 +38,7 @@ public class JwtUtil {
     //비회원(Guest)용 토큰 발급 메서드 추가!
     public String createGuestToken(Long guestId, String name) {
         Date now = new Date();
-        Date validity = new Date(now.getTime() + 1000 * 60 * 60L); // 테스트용 1분
+        Date validity = new Date(now.getTime() + 1000 * 60 * 60L * 60); // 테스트용 1분
 
         return Jwts.builder()
                 .setSubject("GUEST_" + guestId) // 비회원은 아이디가 없으니 임의 식별자 부여

@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { BookingInfo } from '../../components/payment/BookingInfo';
 import { DiscountSection } from '../../components/payment/DiscountSection';
 import { PaymentMethodSection } from '../../components/payment/PaymentMethodSection';
@@ -46,6 +46,7 @@ function buildTicketTypeText(seats: Array<{ priceType?: PriceType }>): string {
 }
 
 export default function PaymentPage() {
+  const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const reservationId = parseInt(searchParams.get('reservationId') || '0', 10);
 
@@ -258,6 +259,14 @@ export default function PaymentPage() {
   };
 
   // console.log("🚨 서버에서 온 예약 상세 데이터:", reservationDetail); 디버깅용
+  const handleBack = () => {
+    if (window.history.length > 1) {
+      navigate(-1);
+      return;
+    }
+    navigate('/ticketing');
+  };
+
   return (
     <div className="min-h-screen bg-[#fdf4e3]">
       <main className="max-w-[1200px] mx-auto px-6 pb-16 pt-8">
@@ -302,6 +311,7 @@ export default function PaymentPage() {
             <PaymentSummary
               paymentData={paymentData}
               selectedPaymentMethod={selectedPaymentMethod}
+              onBack={handleBack}
               onPayment={handlePayment}
               isProcessing={isLoading}
             />
