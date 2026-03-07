@@ -5,6 +5,8 @@ export const api = axios.create({
   timeout: 5000,
 });
 
+let isRedirecting = false;
+
 //  서버로 출발하기 전에 팔찌 차기!
 api.interceptors.request.use(
   (config) => {
@@ -27,17 +29,26 @@ api.interceptors.response.use(
   },
   (error) => {
     if (error.response && (error.response.status === 401 || error.response.status === 403)) {
-      alert("로그인이 만료되었거나 권한이 없습니다. 다시 로그인해 주세요.");
-
-      localStorage.removeItem('jwt_token');
-      localStorage.removeItem('username');
-      localStorage.removeItem('name');
-      localStorage.removeItem('memberId');
-      localStorage.removeItem('isGuest');
-      localStorage.removeItem('guestId');
       
-      window.location.href = '/login'; 
+      if (!isRedirecting) {
+        isRedirecting = true; // 자물쇠 잠금
+
+        alert("로그인이 만료되었거나 권한이 없습니다. 다시 로그인해 주세요.");
+
+        localStorage.removeItem('jwt_token');
+        localStorage.removeItem('username');
+        // ... (나머지 스토리지 삭제 로직)
+        
+        setTimeout(() => {
+          window.location.href = '/login';
+          isRedirecting = false; 
+        }, 10); 
+      }
+      
+      return new Promise(() => {}); 
     }
+
+    // 401이나 403이 아닌 다른 진짜 에러(500 서버 에러 등)만 컴포넌트로 넘겨줍니다.
     return Promise.reject(error);
   }
 );

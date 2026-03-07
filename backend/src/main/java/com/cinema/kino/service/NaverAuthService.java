@@ -58,6 +58,7 @@ public class NaverAuthService {
                     .token(token)
                     .username(member.getUsername())
                     .name(member.getName())
+                    .memberId(member.getId())
                     .build();
         } else {
             // 🔴 미가입 회원: 프론트로 데이터 뿌리기

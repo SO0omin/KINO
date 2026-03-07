@@ -93,6 +93,10 @@ export default function MovieListPage() {
     }
   };
 
+  const handleMovieClick = (movieId: number) => {
+    // 영화 ID가 1이라면 '/movies/1' 경로로 이동합니다.
+    navigate(`/movies/${movieId}`); 
+  };
 
   return (
       <div className="max-w-[1200px] mx-auto px-6 py-12">
@@ -172,6 +176,7 @@ export default function MovieListPage() {
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8">
             {movies.map((movie, index) => (
               <div key={movie.id} className="flex flex-col group">
+                <button onClick={() => handleMovieClick(movie.id)}>
                 {/* 포스터 영역 (호버 시 예매 버튼 등장) */}
                 <div className="relative overflow-hidden rounded-lg shadow-md aspect-[2/3] mb-4">
                   <img 
@@ -241,6 +246,7 @@ export default function MovieListPage() {
                   예매하기
                 </button>
                 </div>
+              </button>
               </div>
             ))}
           </div>

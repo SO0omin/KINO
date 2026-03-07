@@ -48,6 +48,7 @@ public class GoogleAuthService {
                     .token(token)
                     .username(member.getUsername())
                     .name(member.getName())
+                    .memberId(member.getId())
                     .build();
         } else {
             String randomUsername = "user_" + UUID.randomUUID().toString().substring(0, 8);

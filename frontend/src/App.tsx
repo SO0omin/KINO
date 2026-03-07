@@ -34,7 +34,7 @@ function AppRoutes() {
                     <Route path="/" element={<MainPage />} />
                     <Route path="/movie-list" element={<MovieListPage />} />
                     <Route path="/theater-list" element={<TheaterListPage />} />
-                    <Route path="/movie-detail/:id" element={<MovieDetailPage />} />
+                    <Route path="/movies/:id" element={<MovieDetailPage />} />
                     <Route path="/timetables" element={<TimetablePage />} />
 
                     {/* 마이페이지 리다이렉트 및 메인 */}
