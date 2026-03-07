@@ -2,9 +2,10 @@ import React, { useMemo, useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 //import { useSeatWebSocket } from '../../hooks/useSeatWebSocket';
 import { seatBookingApi } from '../../api/seatBookingApi'; // API 서비스 임포트
-import { getSeatColor, getRatingDetails } from '../../mappers/ticketingMapper';
+import { getSeatColor, getRatingDetails, mapRatingToStyle } from '../../mappers/ticketingMapper';
 import type { Screening, Seat } from '../../types/ticketing';
 import { useAuth } from '../../contexts/AuthContext';
+import ratingImages, { type AgeRatingType } from "../../utils/getRatingImage";
 
 interface Props {
   isOpen: boolean;
@@ -86,7 +87,16 @@ const SeatPreviewModal: React.FC<Props> = ({ isOpen, onClose, screening, seats: 
 
   const totalSeats = currentSeats.length;
   const availableCount = currentSeats.filter(s => s.status === 'AVAILABLE').length;
-  const ratingData = getRatingDetails(screening.ageRating);
+
+  const ratingStyle = mapRatingToStyle(screening.ageRating);
+
+  // 2. 이미지 에셋 키값으로 변환 ('12' -> 'AGE_12')
+  const finalKey = ratingStyle.text === 'ALL' 
+      ? 'ALL' 
+      : `AGE_${ratingStyle.text}`;
+
+  // 3. 변환된 키로 상세 텍스트 정보(highlight, desc 등)를 가져옵니다.
+  const ratingData = getRatingDetails(finalKey);
 
   const modalStyles = `
     .modal-paper { background-color: #f4f1ea; background-image: url('https://www.transparenttextures.com/patterns/p6.png'); }
@@ -177,9 +187,11 @@ const SeatPreviewModal: React.FC<Props> = ({ isOpen, onClose, screening, seats: 
           <div className="flex justify-center items-center w-full">
             <div className="flex flex-col items-center text-center gap-2">
               <div className="flex items-center gap-3">
-                <span className={`${ratingData.color} text-white w-6 h-6 flex items-center justify-center font-bold text-[10px] border border-black/20 shadow-[2px_2px_0_0_#000]`}>
-                  {ratingData.label}
-                </span>
+                <img 
+                  src={ratingImages[finalKey as AgeRatingType] || ratingImages.ALL} 
+                  alt={finalKey}
+                  className="w-7 h-7 object-contain shadow-[2px_2px_0_0_#000]" 
+                />
                 <p className="text-sm italic text-black font-bold tracking-tight whitespace-nowrap">
                   본 상영은 <span className="underline decoration-2">{ratingData.highlight}</span>입니다.
                 </p>

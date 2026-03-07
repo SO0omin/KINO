@@ -6,6 +6,7 @@ import { mapRatingToStyle } from '../mappers/ticketingMapper';
 import type { Screening } from '../types/ticketing';
 import SeatPreviewModal from '../components/ticketing/SeatPreviewModal';
 import FilmStrip from '../components/ticketing/FilmStrip';
+import ratingImages, { type AgeRatingType } from "../utils/getRatingImage";
 
 const VISIBLE_COUNT = 10;
 const VISIBLE_HOUR_COUNT = 10;
@@ -171,9 +172,9 @@ const TicketingPage: React.FC = () => {
                                                 key={t.id}
                                                 className="flex items-center justify-between border-2 border-black px-2 py-2 bg-white shadow-[3px_3px_0_0_rgba(0,0,0,0.1)] h-12"
                                             >
-                        <span className="text-[12px] uppercase font-bold truncate flex-1 tracking-tighter leading-none">
-                          {t.name}
-                        </span>
+                                                <span className="text-[12px] uppercase font-bold truncate flex-1 tracking-tighter leading-none">
+                                                {t.name}
+                                                </span>
                                                 <button
                                                     onClick={(e) => {
                                                         e.stopPropagation();
@@ -219,14 +220,14 @@ const TicketingPage: React.FC = () => {
                                                 : 'text-black hover:bg-[#f4f1ea]'
                                         } ${!memos.movieSet.has(m.id) && states.selectedTheaters.length > 0 ? 'opacity-50' : ''}`}
                                     >
-                    <span
-                        className={`${style.color} text-white text-[10px] font-bold w-7 h-7 flex items-center justify-center border-2 border-black shadow-[2px_2px_0_0_#000] shrink-0 mr-4 uppercase font-mono`}
-                    >
-                      {style.text}
-                    </span>
-                                        <span className="text-sm font-bold uppercase tracking-tight truncate group-hover:italic">
-                      {m.title}
-                    </span>
+                                    <img 
+                                        src={ratingImages[m.ageRating as AgeRatingType] || ratingImages.ALL} 
+                                        alt={m.ageRating}
+                                        className="w-6 h-6 object-contain mr-4 shrink-0" 
+                                    />
+                                    <span className="text-sm font-bold uppercase tracking-tight truncate group-hover:italic">
+                                    {m.title}
+                                    </span>
                                     </div>
                                 );
                             })}
@@ -308,12 +309,19 @@ const TicketingPage: React.FC = () => {
                         <div className="p-8 text-left flex-1 overflow-y-auto bg-white/20 custom-scrollbar">
                             {Object.keys(memos.groupedScreenings).length > 0 ? (
                                 Object.entries(memos.groupedScreenings).map(([title, items]) => {
-                                    const rating = mapRatingToStyle(items[0]?.ageRating || 'ALL');
+                                    const ratingStyle = mapRatingToStyle(items[0]?.ageRating || 'ALL');
+                                    const finalKey = ratingStyle.text === 'ALL' 
+                                        ? 'ALL' 
+                                        : `AGE_${ratingStyle.text}`;
                                     const groups = items.reduce((acc, s) => { const key = `${s.theaterName}|${s.screenType}`; if (!acc[key]) acc[key] = []; acc[key].push(s); return acc; }, {} as Record<string, Screening[]>);
                                     return (
                                         <div key={title} className="mb-10 border-l-[8px] border-black pl-6">
                                             <div className="flex items-center gap-3 mb-5">
-                                                <span className={`${rating.color} text-white text-[10px] font-bold w-7 h-7 flex items-center justify-center border-2 border-black shadow-[2px_2px_0_0_#000] uppercase font-mono`}>{rating.text}</span>
+                                                <img 
+                                                    src={ratingImages[finalKey as AgeRatingType] || ratingImages.ALL} 
+                                                    alt={finalKey}
+                                                    className="w-7 h-7 object-contain shrink-0 shadow-[2px_2px_0_0_rgba(0,0,0,1)]" 
+                                                />
                                                 <h3 className="font-serif text-3xl italic tracking-tighter text-black uppercase">{title}</h3>
                                             </div>
                                             {Object.entries(groups).map(([key, times]) => {

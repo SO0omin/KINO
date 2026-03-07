@@ -39,7 +39,7 @@ function AppRoutes() {
 
                     {/* 마이페이지 리다이렉트 및 메인 */}
                     <Route path="/mypage" element={<MyPage />} />
-                    <Route path="/mypage/:subpath" element={<MyPage />} />
+                    <Route path="/mypage/*" element={<MyPage />} />
                     <Route path="/mypage/vouchers/store" element={<Navigate to="/mypage/vouchers/movie" replace />} />
 
                     {/* 예매 및 좌석 관련 */}
