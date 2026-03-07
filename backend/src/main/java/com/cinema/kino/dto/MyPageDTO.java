@@ -20,6 +20,7 @@ public class MyPageDTO {
     public static class SummaryResponse {
         private Long memberId;
         private String memberName;
+        private String profileImage;
         private Integer availablePoints;
         private Integer pendingPoints;
         private Integer expiringPointsThisMonth;

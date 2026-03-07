@@ -16,6 +16,7 @@ public class NaverLoginResponseDTO {
     private String providerId;
     private String username;
     private String name;
+    private Long memberId;
     private String profileImage;
 
     // 💡 네이버 연동을 위해 새로 추가된 필드들

@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { MapPin, Info } from 'lucide-react';
+import { MapPin, } from 'lucide-react'; //Info
 import axios from 'axios';
 
 // 타입 정의
@@ -126,7 +126,7 @@ const TheaterListPage = () => {
                     >
                       예매하기
                     </button>
-                    <button 
+                    {/*<button 
                       className="px-4 py-3 border border-gray-200 text-gray-400 rounded-lg hover:bg-gray-50 hover:text-gray-600 transition-all"
                       onClick={(e) => {
                         e.stopPropagation();
@@ -134,7 +134,7 @@ const TheaterListPage = () => {
                       }}
                     >
                       <Info className="w-5 h-5" />
-                    </button>
+                    </button>*/}
                   </div>
                 </div>
               ))}

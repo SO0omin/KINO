@@ -827,7 +827,19 @@ export default function MyPage() {
                     <div className="bg-[#000000] px-8 py-9">
                         <div className="flex flex-col gap-8 lg:flex-row lg:items-center lg:justify-between">
                             <div className="flex items-center gap-5">
-                                <div className="flex h-24 w-24 items-center justify-center rounded-3xl bg-[#eb4d32] text-2xl font-bold">W</div>
+                                <div className="flex h-24 w-24 items-center justify-center overflow-hidden rounded-3xl bg-[#eb4d32] text-2xl font-bold text-[#ffffff]">
+                                    {/* 백엔드에서 내려주는 이름(profileImage)으로 정확히 매칭! */}
+                                    {summary?.profileImage ? (
+                                        <img 
+                                            src={summary.profileImage} 
+                                            alt="profile" 
+                                            className="h-full w-full object-cover" 
+                                        />
+                                    ) : (
+                                        // 프로필 이미지가 없을 때 이름의 첫 글자를 보여주는 센스
+                                        <span>{summary?.memberName ? summary.memberName.charAt(0) : "W"}</span>
+                                    )}
+                                </div>
                                 <div>
                                     <h1 className="text-3xl font-semibold leading-none">안녕하세요!</h1>
                                     <p className="mt-2 text-3xl font-semibold leading-none">{(summary?.availablePoints ?? 0).toLocaleString()} P</p>

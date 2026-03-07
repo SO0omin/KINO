@@ -3,6 +3,7 @@ import { api } from './api';
 export interface MyPageSummary {
   memberId: number;
   memberName: string;
+  profileImage?: string;
   availablePoints: number;
   pendingPoints: number;
   expiringPointsThisMonth: number;

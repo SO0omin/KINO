@@ -110,6 +110,7 @@ public class MyPageService {
         return MyPageDTO.SummaryResponse.builder()
                 .memberId(member.getId())
                 .memberName(member.getName())
+                .profileImage(member.getProfileImage())
                 .availablePoints(availablePoints)
                 .pendingPoints(pendingPoints)
                 .expiringPointsThisMonth(expiringThisMonth)

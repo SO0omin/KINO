@@ -14,6 +14,7 @@ public class GoogleLoginResponseDTO {
     private String provider;
     private String username;
     private String name;
+    private Long memberId;
     private String providerId;
     private String profileImage;
     private String email;
