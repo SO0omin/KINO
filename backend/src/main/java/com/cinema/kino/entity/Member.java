@@ -40,7 +40,7 @@ public class Member {
     private String email;
 
     @Builder.Default
-    @Column(name = "profile_image")
+    @Column(name = "profile_image", columnDefinition = "LONGTEXT") // longtext 대응
     private String profileImage = "default";
 
     @Column(name = "point_password", length = 100)

@@ -14,6 +14,16 @@ const KakaoCallbackPage = () => {
 
     if (code) {
       isProcessed.current = true;
+
+      if (window.opener) {
+        window.opener.postMessage({ 
+          type: 'SOCIAL_LINK', 
+          provider: 'KAKAO', 
+          code: code 
+        }, window.location.origin);
+        window.close(); // 할 일 끝났으니 팝업 닫기
+        return; // 밑에 있는 axios(일반 로그인) 실행 안 되게 막기!
+      }
       
       axios.post('/api/auth/kakao', { code })
         .then(res => {

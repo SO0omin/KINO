@@ -83,7 +83,7 @@ public class NaverAuthService {
         }
     }
 
-    private String getNaverAccessToken(String code, String state) {
+    public String getNaverAccessToken(String code, String state) {
         RestTemplate rt = new RestTemplate();
         HttpHeaders headers = new HttpHeaders();
         headers.add("Content-type", "application/x-www-form-urlencoded;charset=utf-8");

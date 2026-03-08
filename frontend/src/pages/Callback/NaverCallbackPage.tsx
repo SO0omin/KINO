@@ -19,6 +19,17 @@ const NaverCallbackPage = () => {
 
     if (code && state) {
       isProcessed.current = true;
+
+      if (window.opener) {
+        window.opener.postMessage({ 
+          type: 'SOCIAL_LINK', 
+          provider: 'NAVER', 
+          code: code,
+          state: state
+        }, window.location.origin);
+        window.close(); // 팝업 닫기
+        return; // 실행 중단!
+      }
       
       // 💡 네이버는 code와 함께 state 값도 필수로 보내야 합니다.
       axios.post('/api/auth/naver', { code, state })

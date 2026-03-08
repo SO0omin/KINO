@@ -12,7 +12,6 @@ import com.cinema.kino.repository.SocialAccountRepository; // 💡 추가
 import com.cinema.kino.util.JwtUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -30,6 +29,7 @@ public class AuthService {
     private final GuestRepository guestRepository;
     private final SocialAccountRepository socialAccountRepository; // 💡 소셜 계정 레포지토리 주입
     private final PasswordResetTokenRepository passwordResetTokenRepository;
+    private final MailService mailService;
     private final PasswordEncoder passwordEncoder;
     private final JavaMailSender mailSender;
     private final JwtUtil jwtUtil;
@@ -183,29 +183,9 @@ public class AuthService {
         passwordResetTokenRepository.save(resetToken);
 
         // 6. 진짜 이메일 발송!
-        // 💡 프론트엔드의 비밀번호 재설정 전용 화면 주소에 토큰을 파라미터로 달아서 보냅니다.
-        String resetUrl = "http://localhost:5173/reset-password?token=" + token;
-
-        SimpleMailMessage message = new SimpleMailMessage();
-        message.setTo(member.getEmail()); // 받는 사람 (가입 이메일)
-        message.setSubject("[Kino Cinema] 비밀번호 재설정 안내"); // 메일 제목
-        message.setText("안녕하세요, " + member.getName() + "님.\n\n"
-                + "아래 링크를 클릭하여 새로운 비밀번호를 설정해 주세요.\n"
-                + "해당 링크는 30분 동안만 유효합니다.\n\n"
-                + resetUrl); // 메일 내용 (링크 포함)
-
-        try {
-            mailSender.send(message);
-            log.info("📧 비밀번호 재설정 이메일 발송 성공: {}", member.getEmail());
-        } catch (Exception e) {
-            log.error("❌ 이메일 발송 실패", e);
-            throw new RuntimeException("이메일 발송에 실패했습니다. 관리자에게 문의하세요.");
-        }
+        mailService.sendPasswordResetEmail(member, token);
     }
 
-    /**
-     * 2. [검증 및 변경] 사용자가 이메일 링크를 타고 들어와 새 비밀번호를 입력했을 때 실행됩니다.
-     */
     @Transactional
     public void resetPassword(String token, String newPassword) {
         // 1. 넘어온 토큰 문자열로 DB에서 진짜 토큰 뭉치를 찾습니다.

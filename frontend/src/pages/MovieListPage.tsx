@@ -189,38 +189,39 @@ export default function MovieListPage() {
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8">
             {movies.map((movie, index) => (
               <div key={movie.id} className="flex flex-col group">
-                <button onClick={() => handleMovieClick(movie.id)}>
                 {/* 포스터 영역 (호버 시 예매 버튼 등장) */}
                 <div className="relative overflow-hidden rounded-lg shadow-md aspect-[2/3] mb-4">
-                  <img 
-                    src={movie.posterUrl} 
-                    alt={movie.title} 
-                    className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
-                  />
-                  
-                  {/* 순위 뱃지 */}
-                  {activeTab === 'ALL' && (
-                    <div className="absolute top-0 bg-[#696969] left-0 text-white font-bold text-xl px-4 py-2 opacity-90 rounded-br-lg">
-                      {index + 1}
-                    </div>
-                  )}
+                  <button onClick={() => handleMovieClick(movie.id)}>
+                    <img 
+                      src={movie.posterUrl} 
+                      alt={movie.title} 
+                      className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                    />
+                    
+                    {/* 순위 뱃지 */}
+                    {activeTab === 'ALL' && (
+                      <div className="absolute top-0 bg-[#696969] left-0 text-white font-bold text-xl px-4 py-2 opacity-90 rounded-br-lg">
+                        {index + 1}
+                      </div>
+                    )}
 
-                  {/* 호버 오버레이 (포스터 위에만 나타남) */}
-                  <div className="absolute inset-0 bg-black/80 opacity-0 group-hover:opacity-100 transition-opacity duration-300 p-5 flex flex-col">
-                    <div className="text-white text-sm leading-relaxed line-clamp-6 text-justify">
-                      {movie.description || "등록된 소개글이 없습니다."}
-                    </div>
-                    <div className="mt-auto">
-                      <hr className="border-[#696969] opacity-50 mb-3" />
-                      <div className="text-white text-center font-bold text-sm flex items-center justify-center gap-2">
-                        <span>관람평</span>
-                        <span className="text-lg text-[#eb4d32]">
-                          {movie.avgRating > 0 ? movie.avgRating.toFixed(1) : "0.0"}
-                        </span>
-                        <span>점</span>
+                    {/* 호버 오버레이 (포스터 위에만 나타남) */}
+                    <div className="absolute inset-0 bg-black/80 opacity-0 group-hover:opacity-100 transition-opacity duration-300 p-5 flex flex-col">
+                      <div className="text-white text-sm leading-relaxed line-clamp-6 text-justify">
+                        {movie.description || "등록된 소개글이 없습니다."}
+                      </div>
+                      <div className="mt-auto">
+                        <hr className="border-[#696969] opacity-50 mb-3" />
+                        <div className="text-white text-center font-bold text-sm flex items-center justify-center gap-2">
+                          <span>관람평</span>
+                          <span className="text-lg text-[#eb4d32]">
+                            {movie.avgRating > 0 ? movie.avgRating.toFixed(1) : "0.0"}
+                          </span>
+                          <span>점</span>
+                        </div>
                       </div>
                     </div>
-                  </div>
+                  </button>
                 </div>
 
                 {/* 영화 정보 영역 */}
@@ -260,7 +261,6 @@ export default function MovieListPage() {
                     예매하기
                   </button>
                 </div>
-              </button>
               </div>
             ))}
           </div>

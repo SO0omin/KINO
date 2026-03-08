@@ -38,6 +38,9 @@ public class Reservation {
     @Column(name = "total_num", nullable = false)
     private Integer totalNum;
 
+    @Column(unique = true, length = 20)
+    private String reservationNumber;
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private ReservationStatus status;

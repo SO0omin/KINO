@@ -58,14 +58,34 @@ public interface ScreeningSeatRepository extends JpaRepository<ScreeningSeat, Lo
     // 7. [수민] 만료된 홀드 좌석 일괄 해제 스케줄러용
     @Modifying(clearAutomatically = true)
     @Query("""
-    UPDATE ScreeningSeat ss
-    SET ss.status = com.cinema.kino.entity.enums.SeatStatus.AVAILABLE,
-        ss.holdExpiresAt = null,
-        ss.heldByMember = null,
-        ss.heldByGuest = null,
-        ss.reservation = null  
-    WHERE ss.status = com.cinema.kino.entity.enums.SeatStatus.HELD
-      AND ss.holdExpiresAt < :now
+        UPDATE ScreeningSeat ss 
+        SET ss.status = com.cinema.kino.entity.enums.SeatStatus.AVAILABLE,
+            ss.holdExpiresAt = null,
+            ss.heldByMember = null,
+            ss.heldByGuest = null
+        WHERE ss.holdExpiresAt < :now 
+          AND ss.status IN (com.cinema.kino.entity.enums.SeatStatus.HELD, com.cinema.kino.entity.enums.SeatStatus.RESERVED)
     """)
-    int releaseExpiredSeats(@Param("now") LocalDateTime now);
+    int releaseExpiredSeatsOnly(@Param("now") LocalDateTime now);
+
+    // 💡 추가: 만료된 좌석들에 연결된 예약 ID들만 안전하게 조회해오는 쿼리
+    @Query("""
+        SELECT DISTINCT ss.reservation.id 
+        FROM ScreeningSeat ss 
+        WHERE ss.holdExpiresAt < :now 
+          AND ss.reservation IS NOT NULL
+    """)
+    List<Long> findReservationIdsToCancel(@Param("now") LocalDateTime now);
+
+    @Modifying(clearAutomatically = true)
+    @Query("""
+        UPDATE ScreeningSeat ss 
+        SET ss.status = com.cinema.kino.entity.enums.SeatStatus.AVAILABLE,
+            ss.holdExpiresAt = null,
+            ss.heldByMember = null,
+            ss.heldByGuest = null,
+            ss.reservation = null 
+        WHERE ss.holdExpiresAt < :now
+    """)
+    int releaseExpiredSeatsAndClearReservation(@Param("now") LocalDateTime now);
 }

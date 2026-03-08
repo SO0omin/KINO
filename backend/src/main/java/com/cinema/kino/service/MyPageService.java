@@ -16,18 +16,9 @@ import com.cinema.kino.entity.enums.ReservationStatus;
 import com.cinema.kino.entity.enums.SeatStatus;
 import com.cinema.kino.entity.enums.VoucherStatus;
 import com.cinema.kino.entity.enums.VoucherType;
-import com.cinema.kino.repository.MemberCouponRepository;
-import com.cinema.kino.repository.MembershipCardRepository;
-import com.cinema.kino.repository.MemberPointRepository;
-import com.cinema.kino.repository.MemberRepository;
-import com.cinema.kino.repository.MovieLikeRepository;
-import com.cinema.kino.repository.PaymentRepository;
-import com.cinema.kino.repository.PointPasswordVerificationRepository;
-import com.cinema.kino.repository.ReservationRepository;
-import com.cinema.kino.repository.ReviewRepository;
-import com.cinema.kino.repository.ScreeningSeatRepository;
-import com.cinema.kino.repository.VoucherCodeRepository;
+import com.cinema.kino.repository.*;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
@@ -52,6 +43,7 @@ import java.util.UUID;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.stream.Collectors;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class MyPageService {
@@ -75,8 +67,10 @@ public class MyPageService {
     private final ReviewRepository reviewRepository;
     private final MovieLikeRepository movieLikeRepository;
     private final VoucherCodeRepository voucherCodeRepository;
+    private final SocialAccountRepository socialAccountRepository;
     private final SmsService smsService;
     private final PasswordEncoder passwordEncoder;
+    private final ReservationTicketRepository reservationTicketRepository;
 
     @Value("${toss.secret-key}")
     private String secretKey;
@@ -92,7 +86,7 @@ public class MyPageService {
 
     private static final String TOSS_CANCEL_URL_PREFIX = "https://api.tosspayments.com/v1/payments/";
 
-    @Transactional(readOnly = true)
+    @Transactional(readOnly = true) //마이 페이지 처음부분
     public MyPageDTO.SummaryResponse getSummary(Long memberId) {
         Member member = memberRepository.findById(memberId)
                 .orElseThrow(() -> new IllegalArgumentException("회원 정보를 찾을 수 없습니다."));
@@ -140,6 +134,10 @@ public class MyPageService {
                 .email(member.getEmail())
                 .birthDate(member.getBirthDate())
                 .profileImage(member.getProfileImage())
+                .hasPointPassword(member.getPointPassword() != null)
+                .socialKakaoLinked(socialAccountRepository.existsByMemberIdAndProvider(memberId, "KAKAO"))
+                .socialGoogleLinked(socialAccountRepository.existsByMemberIdAndProvider(memberId, "GOOGLE"))
+                .socialNaverLinked(socialAccountRepository.existsByMemberIdAndProvider(memberId, "NAVER"))
                 .build();
     }
 
@@ -216,12 +214,10 @@ public class MyPageService {
         List<MyPageDTO.ReservationItem> items = new ArrayList<>();
         for (Reservation reservation : reservations) {
             Payment payment = paymentRepository.findByReservation(reservation).orElse(null);
-            // 결제 실패/미완료 건은 예매내역에서 제외
-            if (payment == null) {
-                continue;
-            }
-            if (payment.getPaymentStatus() != PaymentStatus.PAID
-                    && payment.getPaymentStatus() != PaymentStatus.CANCELLED) {
+
+
+            // && payment.getPaymentStatus() == PaymentStatus.FAILED
+            if (payment != null  && payment.getPaymentStatus() == PaymentStatus.FAILED) {
                 continue;
             }
 
@@ -229,13 +225,14 @@ public class MyPageService {
             List<String> seatNames = seats.stream()
                     .map(s -> s.getSeat().getSeatRow() + s.getSeat().getSeatNumber())
                     .collect(Collectors.toList());
+            LocalDateTime holdExpiresAt = null;
+            if (!seats.isEmpty()) {
+                holdExpiresAt = seats.get(0).getHoldExpiresAt();
+            }
 
-            boolean cancellable =
-                    reservation.getStatus() == ReservationStatus.PAID &&
-                    payment != null &&
-                    payment.getPaymentStatus() == PaymentStatus.PAID &&
-                    (mockCancelEnabled || (payment.getImpUid() != null && !payment.getImpUid().isBlank())) &&
-                    reservation.getScreening().getStartTime().isAfter(LocalDateTime.now());
+            // 상영 시작 전이고, 아직 취소되지 않은 예약이면 모두 취소 가능 (결제 대기 상태 포함)
+            boolean cancellable = reservation.getScreening().getStartTime().isAfter(LocalDateTime.now())
+                    && reservation.getStatus() != ReservationStatus.CANCELED;
 
             items.add(MyPageDTO.ReservationItem.builder()
                     .reservationId(reservation.getId())
@@ -248,9 +245,11 @@ public class MyPageService {
                     .cancelledAt(payment != null ? payment.getCancelledAt() : null)
                     .finalAmount(payment != null ? payment.getFinalAmount() : reservation.getTotalPrice())
                     .reservationStatus(reservation.getStatus().name())
-                    .paymentStatus(payment != null ? payment.getPaymentStatus().name() : "NONE")
+                    // 결제 정보가 없으면 기본값으로 PENDING 처리
+                    .paymentStatus(payment != null ? payment.getPaymentStatus().name() : "PENDING")
                     .seatNames(seatNames)
                     .cancellable(cancellable)
+                    .holdExpiresAt(holdExpiresAt)
                     .build());
         }
         return items;
@@ -291,6 +290,8 @@ public class MyPageService {
         payment.setPaymentStatus(PaymentStatus.CANCELLED);
         payment.setCancelledAt(cancelledAt);
         reservation.setStatus(ReservationStatus.CANCELED);
+
+        reservationTicketRepository.deleteAllByReservationId(reservationId);
 
         List<ScreeningSeat> seats = screeningSeatRepository.findByReservationId(reservationId);
         for (ScreeningSeat seat : seats) {

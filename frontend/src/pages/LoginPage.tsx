@@ -151,34 +151,68 @@ const LoginPage: React.FC = () => {
             
             {/* 💡 소셜 로그인 버튼 영역 */}
             {activeTab === 'MEMBER' && (
-              <div className="flex flex-col gap-2 mt-4">
-                <div className="relative flex py-2 items-center">
+              <div className="flex flex-col items-center mt-8 px-4 w-full">
+                {/* 구분선 (빈티지 시네마 스타일) */}
+                <div className="relative flex w-full max-w-sm py-2 items-center mb-6">
                   <div className="flex-grow border-t border-gray-300"></div>
-                  <span className="flex-shrink-0 mx-4 text-gray-400 text-sm">또는 간편 로그인</span>
+                  <span className="flex-shrink-0 mx-4 text-gray-400 text-[10px] font-mono tracking-[0.2em] uppercase">
+                    SNS Login
+                  </span>
                   <div className="flex-grow border-t border-gray-300"></div>
                 </div>
                 
-                <button 
-                  type="button"
-                  onClick={() => window.location.href = KAKAO_AUTH_URL}
-                  className="w-full py-3 bg-[#FEE500] text-black font-bold rounded flex items-center justify-center gap-2 hover:bg-[#ebd300] transition-colors"
-                >
-                  카카오로 시작하기
-                </button>
-                <button 
-                  type="button"
-                  onClick={() => window.location.href = NAVER_AUTH_URL}
-                  className="w-full py-3 bg-[#03C75A] text-white font-bold rounded flex items-center justify-center gap-2 hover:bg-[#02b351] transition-colors"
-                >
-                  네이버로 시작하기
-                </button>
-                <button 
-                  type="button"
-                  onClick={() => window.location.href = GOOGLE_AUTH_URL}
-                  className="w-full py-3 bg-white border border-gray-300 text-gray-700 font-bold rounded flex items-center justify-center gap-2 hover:bg-gray-50 transition-colors"
-                >
-                  구글로 시작하기
-                </button>
+                {/* 아이콘 버튼 컨테이너 */}
+                <div className="flex items-center justify-center gap-10">
+                  
+                  {/* 1. 카카오 */}
+                  <button 
+                    type="button"
+                    onClick={() => window.location.href = KAKAO_AUTH_URL}
+                    className="group flex flex-col items-center gap-2 transition-transform duration-300 hover:scale-125 active:scale-95 focus:outline-none"
+                  >
+                    <div className="w-11 h-11 flex items-center justify-center">
+                      <img 
+                        src="/src/assets/kakao_login_btn.png" 
+                        alt="Kakao" 
+                        className="w-full h-full object-contain" 
+                      />
+                    </div>
+                    <span className="text-[9px] font-mono text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity uppercase tracking-tighter">Kakao</span>
+                  </button>
+
+                  {/* 2. 네이버 */}
+                  <button 
+                    type="button"
+                    onClick={() => window.location.href = NAVER_AUTH_URL}
+                    className="group flex flex-col items-center gap-2 transition-transform duration-300 hover:scale-125 active:scale-95 focus:outline-none"
+                  >
+                    <div className="w-11 h-11 flex items-center justify-center">
+                      <img 
+                        src="/src/assets/naver_login_btn.png" 
+                        alt="Naver" 
+                        className="w-full h-full object-contain" 
+                      />
+                    </div>
+                    <span className="text-[9px] font-mono text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity uppercase tracking-tighter">Naver</span>
+                  </button>
+
+                  {/* 3. 구글 (이미지 버전) */}
+                  <button 
+                    type="button"
+                    onClick={() => window.location.href = GOOGLE_AUTH_URL}
+                    className="group flex flex-col items-center gap-2 transition-transform duration-300 hover:scale-125 active:scale-95 focus:outline-none"
+                  >
+                    <div className="w-11 h-11 flex items-center justify-center">
+                      <img 
+                        src="/src/assets/google_login_btn.png" 
+                        alt="Google" 
+                        className="w-full h-full object-contain" 
+                      />
+                    </div>
+                    <span className="text-[9px] font-mono text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity uppercase tracking-tighter">Google</span>
+                  </button>
+
+                </div>
               </div>
             )}
 
