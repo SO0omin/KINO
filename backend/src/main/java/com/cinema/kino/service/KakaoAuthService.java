@@ -76,7 +76,7 @@ public class KakaoAuthService {
         }
     }
 
-    private String getKakaoAccessToken(String code) {
+    public String getKakaoAccessToken(String code) {
         RestTemplate rt = new RestTemplate();
         HttpHeaders headers = new HttpHeaders();
         headers.add("Content-type", "application/x-www-form-urlencoded;charset=utf-8");

@@ -1,5 +1,6 @@
 import { Search } from "lucide-react";
 import type { MyReservationItem } from "../../../api/myPageApi";
+import {ReservationTimer} from "../modals/ReservationTimer";
 
 type PurchaseRow = {
   id: number;
@@ -29,6 +30,7 @@ type ReservationsSectionProps = {
   formatMoney: (value: number) => string;
   isCancelling: number | null;
   openCancelModal: (reservationId: number) => void;
+  onClickPay: (reservationId: number) => void; // 결제하러 가기 클릭 핸들러 추가
   purchaseSelectType: "all" | "movie";
   setPurchaseSelectType: (value: "all" | "movie") => void;
   purchaseStatusType: "all" | "purchase" | "cancel";
@@ -65,6 +67,7 @@ export function ReservationsSection({
   formatMoney,
   isCancelling,
   openCancelModal,
+  onClickPay,
   purchaseSelectType,
   setPurchaseSelectType,
   purchaseStatusType,
@@ -96,6 +99,11 @@ export function ReservationsSection({
     const dd = String(d.getDate()).padStart(2, "0");
     const seq = String(reservationId).padStart(6, "0");
     return `KINO-${yy}${mm}${dd}-${seq}`;
+  };
+  
+  const isPayable = (paymentStatus?: string, holdExpiresAt?: string) => {
+    if (paymentStatus !== "READY" || !holdExpiresAt) return false;
+    return new Date(holdExpiresAt).getTime() > Date.now();
   };
 
   const openPrintVoucher = (item: MyReservationItem) => {
@@ -239,8 +247,7 @@ export function ReservationsSection({
             </button>
           </div>
         </div>
-
-        <div className="mt-8">
+          <div className="mt-8">
           <p className="text-2xl font-semibold text-[#000000]">총 {visibleReservations.length}건</p>
           {loading ? (
             <div className="mt-4 rounded border border-gray-200 bg-white py-12 text-center text-gray-500">불러오는 중...</div>
@@ -248,60 +255,75 @@ export function ReservationsSection({
             <div className="mt-4 rounded border border-gray-200 bg-white py-12 text-center text-gray-500">예매 내역이 없습니다.</div>
           ) : (
             <div className="mt-4 space-y-4">
-              {visibleReservations.map((item) => (
-                <div key={item.reservationId} className="rounded-xl border border-gray-300 bg-white p-6">
-                  <div className="flex flex-col gap-5 lg:flex-row">
-                    <div className="h-[210px] w-[140px] shrink-0 overflow-hidden rounded border border-gray-200 bg-gray-100">
-                      {item.posterUrl ? (
-                        <img src={item.posterUrl} alt={item.movieTitle} className="h-full w-full object-cover" />
-                      ) : null}
+              {visibleReservations.map((item) => {
+                const canPay = isPayable(item.paymentStatus, item.holdExpiresAt); // ✨ 결제 가능 여부 체크
+
+                return (
+                  <div key={item.reservationId} className="rounded-xl border border-gray-300 bg-white p-6">
+                    <div className="flex flex-col gap-5 lg:flex-row">
+                      <div className="h-[210px] w-[140px] shrink-0 overflow-hidden rounded border border-gray-200 bg-gray-100">
+                        {item.posterUrl ? <img src={item.posterUrl} alt={item.movieTitle} className="h-full w-full object-cover" /> : null}
+                      </div>
+                      <div className="flex-1">
+                        <p className="text-sm text-gray-600">
+                          예매번호 <span className="text-2xl font-semibold text-[#eb4d32]">{formatGuestBookingNo(item.reservationId, item.paidAt)}</span>
+                        </p>
+                        <div className="mt-4 grid grid-cols-1 gap-y-2 text-sm text-[#000000] lg:grid-cols-2">
+                          <p><span className="font-semibold">영화명</span> {item.movieTitle}</p>
+                          <p><span className="font-semibold">관람인원</span> 성인 {item.seatNames.length}명</p>
+                          <p><span className="font-semibold">극장/상영관</span> {item.theaterName} / {item.screenName}</p>
+                          <p><span className="font-semibold">관람좌석</span> {item.seatNames.join(", ") || "-"}</p>
+                          <p><span className="font-semibold">관람일시</span> {formatDateTime(item.startTime)}</p>
+                          <p><span className="font-semibold">결제일시</span> {canPay ? "-" : formatDateTime(item.paidAt ?? item.startTime)}</p>
+                        </div>
+                        <div className="mt-4 flex items-center justify-between rounded bg-[#f3f4f6] px-4 py-3 text-sm font-semibold text-[#000000]">
+                          <span>결제금액 {formatMoney(item.finalAmount)}</span>
+                          {canPay && item.holdExpiresAt && (
+                            <div className="flex items-center gap-2">
+                              <span className="text-gray-500 text-xs font-normal">남은 결제 시간</span>
+                              <ReservationTimer expiresAt={item.holdExpiresAt} />
+                            </div>
+                          )}
+                          {canPay && <span className="text-[#eb4d32]">(결제 대기 중)</span>}
+                        </div>
+                      </div>
                     </div>
-                    <div className="flex-1">
-                      <p className="text-sm text-gray-600">
-                        예매번호{" "}
-                        <span className="text-2xl font-semibold text-[#eb4d32]">
-                          {formatGuestBookingNo(item.reservationId, item.paidAt)}
-                        </span>
-                      </p>
-                      <div className="mt-4 grid grid-cols-1 gap-y-2 text-sm text-[#000000] lg:grid-cols-2">
-                        <p><span className="font-semibold">영화명</span> {item.movieTitle}</p>
-                        <p><span className="font-semibold">관람인원</span> 성인 {item.seatNames.length}명</p>
-                        <p><span className="font-semibold">극장/상영관</span> {item.theaterName} / {item.screenName}</p>
-                        <p><span className="font-semibold">관람좌석</span> {item.seatNames.join(", ") || "-"}</p>
-                        <p><span className="font-semibold">관람일시</span> {formatDateTime(item.startTime)}</p>
-                        <p><span className="font-semibold">결제일시</span> {formatDateTime(item.paidAt ?? item.startTime)}</p>
-                      </div>
-                      <div className="mt-4 rounded bg-[#f3f4f6] px-4 py-3 text-sm font-semibold text-[#000000]">
-                        결제금액 {formatMoney(item.finalAmount)}
-                      </div>
+                    <div className="mt-4 flex justify-end gap-2">
+                      {/* ✨ 결제하러 가기 버튼 (비회원 뷰) */}
+                      {canPay && (
+                        <button
+                          className="rounded bg-[#111827] px-5 py-2 text-sm font-semibold text-white hover:bg-black"
+                          onClick={() => onClickPay(item.reservationId)}
+                        >
+                          결제하러 가기
+                        </button>
+                      )}
+                      
+                      {/* 결제가 안 된 상태면 교환권 출력 숨김 처리 */}
+                      {!canPay && (
+                        <button
+                          className="rounded border border-[#eb4d32] bg-white px-5 py-2 text-sm font-semibold text-[#eb4d32]"
+                          onClick={() => openPrintVoucher(item)}
+                        >
+                          교환권출력
+                        </button>
+                      )}
+
+                      {item.cancellable ? (
+                        <button
+                          className="rounded bg-[#eb4d32] px-5 py-2 text-sm font-semibold text-white hover:bg-[#d43d22]"
+                          disabled={isCancelling === item.reservationId}
+                          onClick={() => openCancelModal(item.reservationId)}
+                        >
+                          {isCancelling === item.reservationId ? "처리 중..." : "예매취소"}
+                        </button>
+                      ) : (
+                        <button className="cursor-not-allowed rounded bg-gray-300 px-5 py-2 text-sm font-semibold text-white" disabled>취소불가</button>
+                      )}
                     </div>
                   </div>
-                  <div className="mt-4 flex justify-end gap-2">
-                    <button
-                      className="rounded border border-[#eb4d32] bg-white px-5 py-2 text-sm font-semibold text-[#eb4d32]"
-                      onClick={() => openPrintVoucher(item)}
-                    >
-                      교환권출력
-                    </button>
-                    {item.cancellable ? (
-                      <button
-                        className="rounded bg-[#eb4d32] px-5 py-2 text-sm font-semibold text-white hover:bg-[#d43d22]"
-                        disabled={isCancelling === item.reservationId}
-                        onClick={() => openCancelModal(item.reservationId)}
-                      >
-                        {isCancelling === item.reservationId ? "처리 중..." : "예매취소"}
-                      </button>
-                    ) : (
-                      <button
-                        className="cursor-not-allowed rounded bg-gray-300 px-5 py-2 text-sm font-semibold text-white"
-                        disabled
-                      >
-                        취소불가
-                      </button>
-                    )}
-                  </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           )}
         </div>
@@ -411,30 +433,57 @@ export function ReservationsSection({
               <div className="py-12 text-center text-gray-500">예매 내역이 없습니다.</div>
             ) : (
               <div className="divide-y divide-gray-200">
-                {visibleReservations.map((item) => (
-                  <div key={item.reservationId} className="flex flex-col gap-4 p-5 lg:flex-row lg:items-center lg:justify-between">
-                    <div>
-                      <p className="text-lg font-semibold">{item.movieTitle}</p>
-                      <p className="text-sm text-gray-600">{item.theaterName} / {item.screenName}</p>
-                      <p className="text-sm text-gray-600">{formatDateTime(item.startTime)}</p>
-                      <p className="text-sm text-gray-600">좌석: {item.seatNames.join(", ") || "-"}</p>
+                {visibleReservations.map((item) => {
+                  const canPay = isPayable(item.paymentStatus, item.holdExpiresAt); //결제 가능 여부 체크
+
+                  return (
+                    <div key={item.reservationId} className="flex flex-col gap-4 p-5 lg:flex-row lg:items-center lg:justify-between">
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <p className="text-lg font-semibold">{item.movieTitle}</p>
+                          {canPay && <span className="rounded bg-red-100 px-2 py-0.5 text-xs font-bold text-red-600">결제 대기</span>}
+                          {!canPay && item.paymentStatus == "PAID" && <span className="rounded bg-green-100 px-2 py-0.5 text-xs font-bold text-green-600">결제 완료</span>}
+                        </div>
+                        <p className="mt-1 text-sm text-gray-600">{item.theaterName} / {item.screenName}</p>
+                        <p className="text-sm text-gray-600">{formatDateTime(item.startTime)}</p>
+                        <p className="text-sm text-gray-600">좌석: {item.seatNames.join(", ") || "-"}</p>
+                      </div>
+                      <div className="flex flex-col items-end gap-2 text-right">
+                        {canPay && item.holdExpiresAt && (
+                            <div className="flex items-center gap-2">
+                              <span className="text-gray-500 text-xs font-normal">남은 결제 시간</span>
+                              <ReservationTimer expiresAt={item.holdExpiresAt} />
+                            </div>
+                          )}
+                        <p className="font-semibold">{formatMoney(item.finalAmount)}</p>
+                        
+                        <div className="flex gap-2">
+                          {/* ✨ 결제하러 가기 버튼 (환불하기 옆/위에 배치) */}
+                          {canPay && (
+                            <button
+                              className="rounded border border-[#111827] bg-[#111827] px-4 py-2 text-sm text-white hover:bg-black"
+                              onClick={() => onClickPay(item.reservationId)}
+                            >
+                              결제하러 가기
+                            </button>
+                          )}
+
+                          {item.cancellable ? (
+                            <button
+                              className="rounded border border-[#eb4d32] px-4 py-2 text-sm text-[#eb4d32] hover:bg-red-50"
+                              disabled={isCancelling === item.reservationId}
+                              onClick={() => openCancelModal(item.reservationId)}
+                            >
+                              {isCancelling === item.reservationId ? "처리 중..." : "환불하기"}
+                            </button>
+                          ) : (
+                            <span className="inline-block rounded bg-gray-100 px-4 py-2 text-sm text-gray-500">환불 불가</span>
+                          )}
+                        </div>
+                      </div>
                     </div>
-                    <div className="text-right">
-                      <p className="font-semibold">{formatMoney(item.finalAmount)}</p>
-                      {item.cancellable ? (
-                        <button
-                          className="mt-2 rounded border border-[#eb4d32] px-4 py-2 text-sm text-[#eb4d32]"
-                          disabled={isCancelling === item.reservationId}
-                          onClick={() => openCancelModal(item.reservationId)}
-                        >
-                          {isCancelling === item.reservationId ? "처리 중..." : "환불하기"}
-                        </button>
-                      ) : (
-                        <span className="mt-2 inline-block rounded bg-gray-100 px-4 py-2 text-sm text-gray-500">환불 불가</span>
-                      )}
-                    </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             )}
           </div>

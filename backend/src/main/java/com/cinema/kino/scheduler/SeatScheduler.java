@@ -14,12 +14,12 @@ public class SeatScheduler {
 
     private final ScreeningSeatRepository screeningSeatRepository;
 
-    @Scheduled(fixedRate = 50000)
+    @Scheduled(fixedRate = 60000)
     @Transactional
     public void releaseExpiredSeats() {
 
         int updated = screeningSeatRepository
-                .releaseExpiredSeats(LocalDateTime.now());
+                .releaseExpiredSeatsOnly(LocalDateTime.now());
 
         if (updated > 0) {
             System.out.println("만료 좌석 해제: " + updated + "개");

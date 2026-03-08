@@ -55,7 +55,7 @@ public class ScreeningSeat {
     /* =========================
        도메인 메서드
        ========================= */
-    public void hold(Long memberId, Long guestId) { //다건 처리:
+    public void hold(Long memberId, Long guestId) {
         if (this.status != SeatStatus.AVAILABLE) {
             throw new IllegalStateException("이미 선택된 좌석입니다.");
         }
@@ -77,12 +77,14 @@ public class ScreeningSeat {
         this.heldByMember = null;
         this.heldByGuest = null;
         this.holdExpiresAt = null;
+        this.reservation = null; // 예약 연결 해제
     }
 
-    public void reserve() {
+    public void reserve(Reservation reservation) {
         if (this.status != SeatStatus.HELD) {
             throw new IllegalStateException("선택되지 않은 좌석은 예약할 수 없습니다.");
         }
         this.status = SeatStatus.RESERVED;
+        this.reservation = reservation;
     }
 }

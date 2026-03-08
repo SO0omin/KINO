@@ -18,9 +18,11 @@ type ProfileSectionProps = {
   setProfileEmail: (value: string) => void;
   setShowPasswordChangeModal: (value: boolean) => void;
   openPointPhoneModal: () => void;
+  hasPointPassword: boolean;
   socialNaverLinked: boolean;
   socialKakaoLinked: boolean;
-  toggleSocialLink: (provider: "naver" | "kakao") => void;
+  socialGoogleLinked: boolean;
+  toggleSocialLink: (provider: "naver" | "kakao" | "google") => void;
   loadMemberProfile: () => Promise<void>;
 };
 
@@ -42,8 +44,10 @@ export function ProfileSection({
   setProfileEmail,
   setShowPasswordChangeModal,
   openPointPhoneModal,
+  hasPointPassword,
   socialNaverLinked,
   socialKakaoLinked,
+  socialGoogleLinked,
   toggleSocialLink,
   loadMemberProfile,
 }: ProfileSectionProps) {
@@ -57,10 +61,10 @@ export function ProfileSection({
           <div className="bg-[#ffffff] px-5 py-5 text-base font-semibold text-[#000000]">프로필 사진</div>
           <div className="flex items-center gap-3 px-3 py-3">
             <div className="h-16 w-16 overflow-hidden rounded-full border border-gray-200 bg-gray-100">
-              {profileImageUrl ? (
+              {profileImageUrl && profileImageUrl != "default" ? (
                 <img src={profileImageUrl} alt="profile" className="h-full w-full object-cover" />
               ) : (
-                <div className="flex h-full w-full items-center justify-center text-xs text-gray-400">이미지</div>
+                <div className="flex h-full w-full items-center justify-center text-xs text-white-600">K</div>
               )}
             </div>
             <label className="cursor-pointer rounded border border-gray-300 bg-[#ffffff] px-4 py-2 text-sm text-[#000000]">
@@ -163,15 +167,40 @@ export function ProfileSection({
         <div className="grid grid-cols-[170px_1fr]">
           <div className="bg-[#ffffff] px-5 py-4 text-base font-semibold text-[#000000]">멤버십 포인트 사용시 비밀번호 설정</div>
           <div className="flex items-center gap-4 px-4 py-3 text-sm">
-            <button
-              className="rounded border border-gray-300 px-3 py-2"
-              onClick={openPointPhoneModal}
-            >
-              포인트 비밀번호 설정
-            </button>
-            <label className="flex items-center gap-1"><input type="radio" name="pointuse" defaultChecked />사용안함</label>
-            <label className="flex items-center gap-1"><input type="radio" name="pointuse" />사용함</label>
-          </div>
+          <button
+            className="rounded border border-gray-300 px-3 py-2"
+            onClick={openPointPhoneModal}
+          >
+            포인트 비밀번호 설정
+          </button>
+          
+          {/* 💡 hasPointPassword 값에 따라 라디오 버튼 상태 결정 */}
+          <label className="flex items-center gap-1 cursor-default">
+            <input 
+              type="radio" 
+              name="pointuse" 
+              // 💡 비밀번호가 null이면(false) '사용안함'이 true가 되어야 함
+              checked={memberProfile?.hasPointPassword === false} 
+              readOnly 
+            />
+            <span className={!memberProfile?.hasPointPassword ? "text-[#000000] font-semibold" : "text-gray-400"}>
+              사용안함
+            </span>
+          </label>
+
+          <label className="flex items-center gap-1 cursor-default">
+            <input 
+              type="radio" 
+              name="pointuse" 
+              // 💡 비밀번호가 존재하면(true) '사용함'이 true가 됨
+              checked={memberProfile?.hasPointPassword === true} 
+              readOnly 
+            />
+            <span className={memberProfile?.hasPointPassword ? "text-[#000000] font-semibold" : "text-gray-400"}>
+              사용함
+            </span>
+          </label>
+        </div>
         </div>
       </div>
 
@@ -194,24 +223,35 @@ export function ProfileSection({
           <span>연동정보</span>
           <span className="text-center">연결</span>
         </div>
-        {["네이버", "카카오"].map((row) => (
-          <div key={row} className="grid grid-cols-[120px_1fr_120px] border-b border-gray-200 px-4 py-3 text-sm">
-            <span>{row}</span>
-            <span className="text-gray-500">
-              {row === "네이버"
-                ? (socialNaverLinked ? "네이버 계정 연동됨" : "연결된 계정정보가 없습니다.")
-                : (socialKakaoLinked ? "카카오 계정 연동됨" : "연결된 계정정보가 없습니다.")}
-            </span>
-            <div className="text-center">
-              <button
-                className="rounded bg-[#000000] px-3 py-1.5 text-xs text-[#ffffff]"
-                onClick={() => toggleSocialLink(row === "네이버" ? "naver" : "kakao")}
-              >
-                {row === "네이버" ? (socialNaverLinked ? "해제" : "연동") : (socialKakaoLinked ? "해제" : "연동")}
-              </button>
+        {["네이버", "카카오", "구글"].map((row) => {
+          // 💡 매핑을 통해 코드를 훨씬 직관적으로 정리했습니다.
+          const isLinked = 
+            row === "네이버" ? socialNaverLinked : 
+            row === "카카오" ? socialKakaoLinked : 
+            socialGoogleLinked; // 부모 컴포넌트(props)에 socialGoogleLinked 추가 필수!
+
+          const providerKey = 
+            row === "네이버" ? "naver" : 
+            row === "카카오" ? "kakao" : 
+            "google";
+
+          return (
+            <div key={row} className="grid grid-cols-[120px_1fr_120px] border-b border-gray-200 px-4 py-3 text-sm">
+              <span>{row}</span>
+              <span className="text-gray-500">
+                {isLinked ? `${row} 계정 연동됨` : "연결된 계정정보가 없습니다."}
+              </span>
+              <div className="text-center">
+                <button
+                  className="rounded bg-[#000000] px-3 py-1.5 text-xs text-[#ffffff]"
+                  onClick={() => toggleSocialLink(providerKey)}
+                >
+                  {isLinked ? "해제" : "연동"}
+                </button>
+              </div>
             </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
 
       <h2 className="mt-8 text-4xl font-semibold text-[#eb4d32]">스페셜 멤버십 가입내역</h2>

@@ -1,10 +1,13 @@
 package com.cinema.kino.controller;
 
 import com.cinema.kino.dto.MyPageDTO;
+import com.cinema.kino.dto.SocialLinkRequestDTO;
 import com.cinema.kino.service.MyPageService;
+import com.cinema.kino.service.SocialLinkService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.security.web.bind.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
@@ -17,6 +20,7 @@ import java.util.List;
 public class MyPageController {
 
     private final MyPageService myPageService;
+    private final SocialLinkService socialLinkService;
 
     @GetMapping("/summary")
     public ResponseEntity<MyPageDTO.SummaryResponse> getSummary(@RequestParam Long memberId) {
@@ -125,4 +129,33 @@ public class MyPageController {
     public ResponseEntity<List<MyPageDTO.MyReviewItem>> getMyReviews(@RequestParam Long memberId) {
         return ResponseEntity.ok(myPageService.getMyReviews(memberId));
     }
+
+    /**
+     * [마이페이지] 소셜 계정 연동 (Link)
+     */
+    @PostMapping("/social/link")
+    public ResponseEntity<?> linkSocialAccount(
+            @RequestHeader("Authorization") String authHeader, // 헤더 그대로 받기
+            @RequestBody SocialLinkRequestDTO request) {
+
+        // 서비스로 그대로 패스!
+        socialLinkService.linkSocialAccount(authHeader, request.getProvider(), request.getCode(),request.getState());
+
+        return ResponseEntity.ok().body("소셜 계정이 성공적으로 연동되었습니다.");
+    }
+
+    /**
+     * [마이페이지] 소셜 계정 해제 (Unlink)
+     */
+    @DeleteMapping("/social/unlink")
+    public ResponseEntity<?> unlinkSocialAccount(
+            @RequestHeader("Authorization") String authHeader, // 헤더 그대로 받기
+            @RequestParam("provider") String provider) {
+
+        // 서비스로 그대로 패스!
+        socialLinkService.unlinkSocialAccount(authHeader, provider);
+
+        return ResponseEntity.ok().body(provider + " 연동이 해제되었습니다.");
+    }
+
 }

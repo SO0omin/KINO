@@ -4,10 +4,12 @@ import com.cinema.kino.dto.PaymentDTO;
 import com.cinema.kino.entity.*;
 import com.cinema.kino.entity.enums.*;
 import com.cinema.kino.repository.*;
+import jakarta.mail.internet.MimeMessage;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.*;
+import org.springframework.mail.SimpleMailMessage;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.HttpStatusCodeException;
@@ -15,8 +17,10 @@ import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 
 import java.nio.charset.StandardCharsets;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -33,12 +37,15 @@ public class PaymentService {
     private final TicketPriceRepository ticketPriceRepository;
     private final MemberCouponRepository memberCouponRepository;
     private final MemberPointRepository memberPointRepository;
+    private final MemberRepository memberRepository;
 
     @Value("${toss.secret-key}")
     private String secretKey;
 
     private static final String TOSS_CONFIRM_URL = "https://api.tosspayments.com/v1/payments/confirm";
     private static final String TOSS_CANCEL_URL_PREFIX = "https://api.tosspayments.com/v1/payments/";
+
+    private final MailService mailService;
 
     /**
      * 예매 상세 정보 조회 (결제 대기 화면용)
@@ -272,9 +279,16 @@ public class PaymentService {
             payment.setPgProvider("TOSS");
 
             reservation.setStatus(ReservationStatus.PAID);
+            String bookingNo = generateBookingNo(reservation.getId());
+            reservation.setReservationNumber(bookingNo);
+
+            mailService.sendPaymentCompleteEmail(payment.getMember(),reservation,bookingNo);
 
             screeningSeatRepository.findByReservationId(reservation.getId())
-                    .forEach(s -> s.setStatus(SeatStatus.RESERVED));
+                    .forEach(s -> {
+                        s.setStatus(SeatStatus.RESERVED); // 결제 완료 상태
+                        s.setHoldExpiresAt(null);     // 결제가 끝났으니 스케줄러가 못 건드리게 타이머 파괴!
+                    });
 
             memberCouponRepository.findByReservation(reservation).ifPresent(mc -> {
                 if (mc.getStatus() == MemberCouponStatus.HELD) {
@@ -306,8 +320,10 @@ public class PaymentService {
                 }
             }
 
+            log.info(bookingNo);
             return PaymentDTO.ConfirmResponse.builder()
                     .paymentId(payment.getId())
+                    .reservationNumber(bookingNo)
                     .build();
 
         } catch (Exception dbEx) {
@@ -322,6 +338,11 @@ public class PaymentService {
             releaseHeldCouponIfAny(reservation);
             throw dbEx;
         }
+    }
+
+    public String generateBookingNo(Long id) {
+        String datePart = LocalDate.now().format(DateTimeFormatter.ofPattern("yyMMdd"));
+        return String.format("KINO-%s-%06d", datePart, id);
     }
 
     private void executeTossConfirmOrThrow(PaymentDTO.ConfirmRequest request) {

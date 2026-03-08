@@ -41,6 +41,7 @@ export interface ConfirmRequest {
 
 export interface ConfirmResponse {
   paymentId: number;
+  reservationNumber: string;
 }
 
 export interface ReservationDetailResponse {

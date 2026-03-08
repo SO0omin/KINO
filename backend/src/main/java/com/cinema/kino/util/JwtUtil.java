@@ -74,4 +74,19 @@ public class JwtUtil {
                 .getBody()
                 .getSubject();
     }
+    public Long getMemberId(String token) {
+        Claims claims = Jwts.parserBuilder()
+                .setSigningKey(key)
+                .build()
+                .parseClaimsJws(token)
+                .getBody();
+
+        Number memberId = claims.get("memberId", Number.class);
+
+        if (memberId == null) {
+            throw new IllegalArgumentException("토큰에 memberId 정보가 없습니다.");
+        }
+
+        return memberId.longValue();
+    }
 }

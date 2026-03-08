@@ -108,11 +108,11 @@ export function PointsSection({
       </div>
 
       <div className="mt-6 overflow-hidden rounded-sm border border-gray-200 bg-white">
-        <div className="grid grid-cols-5 bg-[#ffffff] px-4 py-3 text-center text-sm font-semibold">
+        <div className="grid grid-cols-4 bg-[#ffffff] px-4 py-3 text-center text-sm font-semibold">
           <span>일자</span>
           <span>구분</span>
           <span>내용</span>
-          <span>지점</span>
+          {/*<span>지점</span>*/}
           <span>포인트</span>
         </div>
         {pointLoading ? (
@@ -121,11 +121,11 @@ export function PointsSection({
           <div className="py-8 text-center text-gray-500">조회된 내역이 없습니다</div>
         ) : (
           pointRows.map((row) => (
-            <div key={row.pointId} className="grid grid-cols-5 border-t border-gray-200 px-4 py-3 text-center text-sm">
+            <div key={row.pointId} className="grid grid-cols-4 border-t border-gray-200 px-4 py-3 text-center text-sm">
               <span>{formatDateTime(row.createdAt)}</span>
               <span>{row.typeLabel}</span>
               <span>{row.content}</span>
-              <span>{row.branchName || "-"}</span>
+              {/*<span>{row.branchName || "-"}</span>*/}
               <span className={row.point >= 0 ? "text-[#eb4d32] font-semibold" : "font-semibold"}>
                 {row.point > 0 ? `+${row.point.toLocaleString()}` : row.point.toLocaleString()}
               </span>

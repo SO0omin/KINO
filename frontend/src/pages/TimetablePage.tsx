@@ -200,7 +200,7 @@ export default function TimetablePage() {
         </div>
 
         {/* 필터 카드 */}
-        <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100 mb-8">
+        <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100 mb-8 max-h-40.5 overflow-y-auto">
           {activeTab === 'movie' ? (
             <div className="flex gap-2 flex-wrap">
               {movieList.map(m => (

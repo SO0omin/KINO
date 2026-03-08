@@ -4,13 +4,13 @@ import { confirmPayment } from '../../api/paymentApi';
 import { CheckCircle2, XCircle, Ticket, Clock, CreditCard, ArrowRight } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 
-function formatDisplayBookingNo(id: number, date = new Date()) {
+/*function formatDisplayBookingNo(id: number, date = new Date()) {
   const yy = String(date.getFullYear()).slice(-2);
   const mm = String(date.getMonth() + 1).padStart(2, '0');
   const dd = String(date.getDate()).padStart(2, '0');
   const seq = String(id).padStart(6, '0');
   return `KINO-${yy}${mm}${dd}-${seq}`;
-}
+}*/
 
 export default function PaymentSuccessPage() {
   const [searchParams] = useSearchParams();
@@ -19,8 +19,8 @@ export default function PaymentSuccessPage() {
   const [isConfirming, setIsConfirming] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [paymentId, setPaymentId] = useState<number | null>(null);
+  const [reservationNumber, setReservationNumber] = useState<string | null>(null);
   const reservationId = searchParams.get('reservationId');
-  const displayBookingNo = paymentId ? formatDisplayBookingNo(paymentId) : null;
   
   // [추가된 안전장치] API 중복 호출 방지
   const isCalled = useRef(false);
@@ -40,6 +40,14 @@ export default function PaymentSuccessPage() {
         setIsConfirming(false);
         return;
       }
+      const cachedResult = sessionStorage.getItem(`payment_result_${orderId}`); //멱등성 보장
+      if (cachedResult) {
+        const { payId, resNum } = JSON.parse(cachedResult);
+        setPaymentId(payId);
+        setReservationNumber(resNum);
+        setIsConfirming(false);
+        return; // API 호출 없이 종료
+      }
 
       try {
         const result = await confirmPayment({
@@ -50,7 +58,14 @@ export default function PaymentSuccessPage() {
 
         // 2. 결과 처리 (paymentId 추출)
         // result가 { paymentId: 123 } 형태라고 가정
-        setPaymentId(result.paymentId); 
+        setPaymentId(result.paymentId);
+        setReservationNumber(result.reservationNumber);
+
+        sessionStorage.setItem(`payment_result_${orderId}`, JSON.stringify({
+          payId: result.paymentId,
+          resNum: result.reservationNumber
+        }));
+
         setIsConfirming(false);
       } catch (err) {
         console.error('결제 승인 오류:', err);
@@ -130,6 +145,7 @@ export default function PaymentSuccessPage() {
     );
   }
 
+
   // 성공 상태
   return (
     <div className="min-h-screen bg-[#fdf4e3]">
@@ -162,14 +178,14 @@ export default function PaymentSuccessPage() {
                   </div>
                   <div>
                     <p className="text-xs text-gray-500 mb-1">예매번호</p>
-                    <p className="text-2xl font-bold text-gray-900">{displayBookingNo ?? '-'}</p>
+                    <p className="text-2xl font-bold text-gray-900">{reservationNumber ?? '-'}</p>
                   </div>
                 </div>
                 {/* 복사 버튼 기능은 나중에 구현 (일단 UI만) */}
                 <button 
                   className="text-[#eb4d32] text-sm font-medium hover:underline"
                   onClick={() => {
-                    if (displayBookingNo) navigator.clipboard.writeText(displayBookingNo);
+                    if (reservationNumber) navigator.clipboard.writeText(reservationNumber);
                   }}
                 >
                   복사

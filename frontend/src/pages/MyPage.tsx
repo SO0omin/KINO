@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { ChevronRight } from "lucide-react";
 import { useAuth } from "../contexts/AuthContext";
+import { KAKAO_AUTH_URL, NAVER_AUTH_URL, GOOGLE_AUTH_URL } from "../constants/socialAuth";
 import {
     cancelReservation,
     redeemCoupon,
@@ -18,6 +19,8 @@ import {
     removeMovieLike,
     getMyReviews,
     type MyReviewItem,
+    linkSocialAccountApi, 
+    unlinkSocialAccountApi
 } from "../api/myPageApi";
 import { ticketingApi } from "../api/ticketingApi";
 import { useMyPageData } from "../hooks/useMyPageData";
@@ -64,8 +67,10 @@ type PreferenceSnapshot = {
     marketingSmsAgreed: boolean;
     marketingPushAgreed: boolean;
     preferredTheaterId: string;
+    hasPointPassword: boolean;
     socialNaverLinked: boolean;
     socialKakaoLinked: boolean;
+    socialGoogleLinked: boolean;
 };
 
 export default function MyPage() {
@@ -170,8 +175,10 @@ export default function MyPage() {
     const [availableMovieVoucherCount, setAvailableMovieVoucherCount] = useState(0);
     const [availableCouponCount, setAvailableCouponCount] = useState(0);
     const [savedPreferences, setSavedPreferences] = useState<PreferenceSnapshot | null>(null);
+    const [hasPointPassword,] = useState(false);
     const [socialNaverLinked, setSocialNaverLinked] = useState(false);
     const [socialKakaoLinked, setSocialKakaoLinked] = useState(false);
+    const [socialGoogleLinked, setSocialGoogleLinked] = useState(false);
     const [movieStoryTab, setMovieStoryTab] = useState<"timeline" | "review" | "watched" | "wish">("timeline");
     const [selectedTimelineYear, setSelectedTimelineYear] = useState<number>(new Date().getFullYear());
     const [showWatchedModal, setShowWatchedModal] = useState(false);
@@ -218,6 +225,9 @@ export default function MyPage() {
         setProfileTel(memberProfile.tel ?? "");
         setProfileEmail(memberProfile.email ?? "");
         setProfileBirthDate(memberProfile.birthDate ?? "");
+        setSocialKakaoLinked(memberProfile.socialKakaoLinked);
+        setSocialGoogleLinked(memberProfile.socialGoogleLinked);
+        setSocialNaverLinked(memberProfile.socialNaverLinked);
         if (memberProfile.profileImage) {
             setProfileImageUrl(memberProfile.profileImage);
         }
@@ -243,14 +253,17 @@ export default function MyPage() {
                 setPreferredTheaterId(String(savedPreferences.preferredTheaterId ?? firstLegacyTheater ?? ""));
                 setSocialNaverLinked(Boolean(savedPreferences.socialNaverLinked));
                 setSocialKakaoLinked(Boolean(savedPreferences.socialKakaoLinked));
+                setSocialGoogleLinked(Boolean(savedPreferences.socialGoogleLinked));
                 setSavedPreferences({
                     marketingPolicyAgreed: Boolean(savedPreferences.marketingPolicyAgreed),
                     marketingEmailAgreed: Boolean(savedPreferences.marketingEmailAgreed),
                     marketingSmsAgreed: Boolean(savedPreferences.marketingSmsAgreed),
                     marketingPushAgreed: Boolean(savedPreferences.marketingPushAgreed),
                     preferredTheaterId: String(savedPreferences.preferredTheaterId ?? firstLegacyTheater ?? ""),
+                    hasPointPassword:  Boolean(savedPreferences.hasPointPassword),
                     socialNaverLinked: Boolean(savedPreferences.socialNaverLinked),
                     socialKakaoLinked: Boolean(savedPreferences.socialKakaoLinked),
+                    socialGoogleLinked: Boolean(savedPreferences.socialGoogleLinked),
                 });
             } catch {
                 setSavedPreferences({
@@ -259,8 +272,10 @@ export default function MyPage() {
                     marketingSmsAgreed: false,
                     marketingPushAgreed: false,
                     preferredTheaterId: "",
+                    hasPointPassword: false,
                     socialNaverLinked: false,
                     socialKakaoLinked: false,
+                    socialGoogleLinked: false
                 });
             }
         } else {
@@ -270,8 +285,10 @@ export default function MyPage() {
                 marketingSmsAgreed: false,
                 marketingPushAgreed: false,
                 preferredTheaterId: "",
+                hasPointPassword: false,
                 socialNaverLinked: false,
                 socialKakaoLinked: false,
+                socialGoogleLinked: false
             });
         }
     }, [memberId]);
@@ -748,6 +765,7 @@ export default function MyPage() {
                 email: profileEmail.trim(),
                 birthDate: profileBirthDate || undefined,
                 profileImage: profileImageUrl,
+                pointPasswordUsing: false,
             });
             alert(response?.message ?? "개인정보가 수정되었습니다.");
             await loadMemberProfile();
@@ -801,16 +819,79 @@ export default function MyPage() {
         }
     };
 
-    const toggleSocialLink = (provider: "naver" | "kakao") => {
-        if (provider === "naver") {
-            const next = !socialNaverLinked;
-            setSocialNaverLinked(next);
-            alert(next ? "네이버 계정이 연동되었습니다." : "네이버 계정 연동이 해제되었습니다.");
-            return;
+    const toggleSocialLink = async (provider: "naver" | "kakao" | "google") => {
+        const isLinked = provider === "naver" ? socialNaverLinked : 
+                        provider === "kakao" ? socialKakaoLinked : socialGoogleLinked;
+        
+        const providerKoName = provider === "naver" ? "네이버" : provider === "kakao" ? "카카오" : "구글";
+
+        if (isLinked) {
+            if (!window.confirm(`${providerKoName} 계정 연동을 해제하시겠습니까?`)) return;
+            try {
+                await unlinkSocialAccountApi(provider.toUpperCase());
+                alert(`${providerKoName} 연동이 해제되었습니다.`);
+                await loadMemberProfile(); // 🔄 서버에서 최신 정보 다시 가져오기
+            } catch (error: any) {
+                alert(error.response?.data?.message || "해제 중 오류 발생");
+            }
+        } else {
+            try {
+                let authCode = "";
+                const authUrl = provider === "naver" ? NAVER_AUTH_URL : 
+                            provider === "kakao" ? KAKAO_AUTH_URL : GOOGLE_AUTH_URL;
+                
+                authCode = await openSocialPopup(provider.toUpperCase(), authUrl);
+                if (!authCode) return;
+
+                await linkSocialAccountApi(provider.toUpperCase(), authCode);
+                alert(`성공적으로 연동되었습니다!`);
+                await loadMemberProfile(); // 🔄 서버에서 최신 정보 다시 가져오기
+            } catch (error: any) {
+                alert(error.response?.data?.message || "연동 중 오류 발생");
+            }
         }
-        const next = !socialKakaoLinked;
-        setSocialKakaoLinked(next);
-        alert(next ? "카카오 계정이 연동되었습니다." : "카카오 계정 연동이 해제되었습니다.");
+    };
+
+    const openSocialPopup = (provider: string, authUrl: string): Promise<string> => {
+
+        
+        return new Promise((resolve, reject) => {
+            // 1. 로그인 버튼 눌렀을 때 이동하던 그 URL을 팝업으로 띄웁니다.
+            const popup = window.open(authUrl, 'socialLoginPopup', 'width=500,height=600');
+
+            // 2. 콜백 페이지가 postMessage로 쏴줄 데이터를 듣고 있는 리스너
+            const messageListener = (event: MessageEvent) => {
+                if (event.origin !== window.location.origin) return;
+
+                // 🚨 1번 CCTV: 일단 뭐가 날아오긴 하는지 무조건 찍어보기!
+                console.log("👀 팝업에서 날아온 데이터 전체:", event.data);
+
+                if (event.data?.type === 'SOCIAL_LINK' && event.data?.provider?.toUpperCase() === provider.toUpperCase()) {
+                    // 🚨 2번 CCTV: 코드를 제대로 낚아챘는지 확인!
+                    console.log("✅ 성공적으로 받은 코드(Code):", event.data.code);
+                    
+                    resolve(event.data.code); 
+                    window.removeEventListener('message', messageListener);
+                }
+            };
+
+            window.addEventListener('message', messageListener);
+
+            // 3. 사용자가 로그인 안 하고 팝업을 그냥 X 눌러서 닫았을 때 무한 대기 방지
+            const timer = setInterval(() => {
+            if (popup?.closed) {
+                clearInterval(timer);
+                window.removeEventListener('message', messageListener);
+                reject(new Error("팝업이 닫혔습니다."));
+            }
+            }, 1000);
+        });
+    };
+
+    
+
+    const handlePayAgain = (reservationId: number) => {
+        navigate(`/payment?reservationId=${reservationId}`);
     };
 
     const renderDashboard = () => {
@@ -829,15 +910,14 @@ export default function MyPage() {
                             <div className="flex items-center gap-5">
                                 <div className="flex h-24 w-24 items-center justify-center overflow-hidden rounded-3xl bg-[#eb4d32] text-2xl font-bold text-[#ffffff]">
                                     {/* 백엔드에서 내려주는 이름(profileImage)으로 정확히 매칭! */}
-                                    {summary?.profileImage ? (
+                                    {summary?.profileImage && summary.profileImage !== "default" ? (
                                         <img 
                                             src={summary.profileImage} 
                                             alt="profile" 
                                             className="h-full w-full object-cover" 
                                         />
                                     ) : (
-                                        // 프로필 이미지가 없을 때 이름의 첫 글자를 보여주는 센스
-                                        <span>{summary?.memberName ? summary.memberName.charAt(0) : "W"}</span>
+                                        <div className="flex h-full w-full items-center justify-center text-xs text-white-600">K</div>
                                     )}
                                 </div>
                                 <div>
@@ -1002,6 +1082,7 @@ export default function MyPage() {
             formatMoney={formatMoney}
             isCancelling={isCancelling}
             openCancelModal={openCancelModal}
+            onClickPay={handlePayAgain}
             purchaseSelectType={purchaseSelectType}
             setPurchaseSelectType={setPurchaseSelectType}
             purchaseStatusType={purchaseStatusType}
@@ -1206,8 +1287,10 @@ export default function MyPage() {
             setProfileEmail={setProfileEmail}
             setShowPasswordChangeModal={setShowPasswordChangeModal}
             openPointPhoneModal={openPointPhoneModal}
+            hasPointPassword={hasPointPassword}
             socialNaverLinked={socialNaverLinked}
             socialKakaoLinked={socialKakaoLinked}
+            socialGoogleLinked={socialGoogleLinked}
             toggleSocialLink={toggleSocialLink}
             loadMemberProfile={() => loadMemberProfile().then(() => {})}
         />
@@ -1234,6 +1317,7 @@ export default function MyPage() {
                     preferredTheaterId: "",
                     socialNaverLinked: false,
                     socialKakaoLinked: false,
+                    socialGoogleLinked: false
                 };
                 setMarketingPolicyAgreed(snapshot.marketingPolicyAgreed);
                 setMarketingEmailAgreed(snapshot.marketingEmailAgreed);
@@ -1250,8 +1334,10 @@ export default function MyPage() {
                     marketingSmsAgreed,
                     marketingPushAgreed,
                     preferredTheaterId,
+                    hasPointPassword,
                     socialNaverLinked,
                     socialKakaoLinked,
+                    socialGoogleLinked
                 };
                 setSavedPreferences(nextSnapshot);
                 localStorage.setItem(

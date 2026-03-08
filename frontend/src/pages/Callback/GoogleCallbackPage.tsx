@@ -13,6 +13,16 @@ const GoogleCallbackPage = () => {
     
     const code = new URLSearchParams(window.location.search).get("code");
 
+    if (window.opener) {
+        window.opener.postMessage({ 
+          type: 'SOCIAL_LINK', 
+          provider: 'GOOGLE', 
+          code: code 
+        }, window.location.origin);
+        window.close(); // 할 일 끝났으니 팝업 닫기
+        return; // 밑에 있는 axios(일반 로그인) 실행 안 되게 막기!
+      }
+
     if (code) {
       isProcessed.current = true;
       

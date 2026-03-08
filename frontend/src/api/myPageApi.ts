@@ -27,6 +27,10 @@ export interface MemberProfile {
   email?: string;
   birthDate?: string;
   profileImage?: string;
+  hasPointPassword: boolean;
+  socialKakaoLinked: boolean;
+  socialGoogleLinked: boolean;
+  socialNaverLinked: boolean;
 }
 
 export interface MemberProfileUpdateRequest {
@@ -36,6 +40,7 @@ export interface MemberProfileUpdateRequest {
   email?: string;
   birthDate?: string;
   profileImage?: string;
+  pointPasswordUsing: boolean;
 }
 
 export interface MemberPasswordUpdateRequest {
@@ -54,9 +59,12 @@ export interface MyReservationItem {
   startTime: string;
   finalAmount: number;
   reservationStatus: string;
-  paymentStatus: string;
+  paymentStatus: string; // "PENDING", "PAID", "CANCELED" 등
   seatNames: string[];
   cancellable: boolean;
+  paidAt?: string;
+  cancelledAt?: string;
+  holdExpiresAt?: string; // "2026-03-08T14:30:00" 형태의 ISO 문자열
 }
 
 export interface CancelReservationResponse {
@@ -359,3 +367,18 @@ export async function getMyReviews(memberId: number): Promise<MyReviewItem[]> {
     throw new Error(error.response?.data?.message || '리뷰 목록을 불러오지 못했습니다.');
   }
 }
+
+export const linkSocialAccountApi = async (provider: string, code: string) => {
+  const response = await api.post('/api/mypage/social/link', {
+    provider,
+    code,
+  });
+  return response.data;
+};
+
+// 소셜 해제 API
+export const unlinkSocialAccountApi = async (provider: string) => {
+  // provider를 쿼리 파라미터로 보냄
+  const response = await api.delete(`/api/mypage/social/unlink?provider=${provider}`);
+  return response.data;
+};

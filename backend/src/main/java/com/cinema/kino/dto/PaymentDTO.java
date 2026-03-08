@@ -102,8 +102,8 @@ public class PaymentDTO {
      */
     @Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder
     public static class ConfirmResponse {
-
         private Long paymentId;      // 최종 생성된 결제 PK
+        private String reservationNumber;
     }
 
     /**

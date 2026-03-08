@@ -49,6 +49,11 @@ public class MyPageDTO {
         private String email;
         private LocalDate birthDate;
         private String profileImage;
+        private boolean hasPointPassword;
+
+        private boolean socialKakaoLinked;
+        private boolean socialGoogleLinked;
+        private boolean socialNaverLinked;
     }
 
     @Getter
@@ -96,6 +101,7 @@ public class MyPageDTO {
         private String paymentStatus;
         private List<String> seatNames;
         private boolean cancellable;
+        private LocalDateTime holdExpiresAt;
     }
 
     @Getter

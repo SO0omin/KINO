@@ -57,7 +57,6 @@ public class GoogleAuthService {
                     .isRegistered(false)
                     .provider("GOOGLE")
                     .username(randomUsername)
-                    .name(googleUser.getName() != null ? googleUser.getName() : "")
                     .providerId(providerId)
                     .profileImage(googleUser.getPicture())
                     .email(googleUser.getEmail())
@@ -65,7 +64,7 @@ public class GoogleAuthService {
         }
     }
 
-    private String getGoogleAccessToken(String code) {
+    public String getGoogleAccessToken(String code) {
         RestTemplate rt = new RestTemplate();
         HttpHeaders headers = new HttpHeaders();
         headers.add("Content-type", "application/x-www-form-urlencoded;charset=utf-8");
