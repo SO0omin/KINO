@@ -4,6 +4,7 @@ import com.cinema.kino.dto.CouponDTO;
 import com.cinema.kino.dto.MovieDTO;
 import com.cinema.kino.dto.MainPageResponseDTO;
 import com.cinema.kino.dto.TheaterStatDTO;
+import com.cinema.kino.entity.Coupon;
 import com.cinema.kino.entity.Review;
 import com.cinema.kino.entity.enums.MovieStatus;
 import com.cinema.kino.repository.*;
@@ -11,6 +12,9 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -49,11 +53,9 @@ public class MainService {
                 })
                 .collect(Collectors.toList());
 
-        // 3. 혜택 섹션: 발급 가능한 쿠폰 목록 (최신 ID순 4개로 제한) ✨
-        List<CouponDTO> activeCoupons = couponRepository.findAll()
-                .stream()
-                .sorted((c1, c2) -> c2.getId().compareTo(c1.getId())) // 최신순(ID 큰 순) 정렬
-                .limit(4) // ✨ 딱 4개만 노출
+        // 3. 혜택 섹션: 실제 사용에 가까운 구성 (매표2 + 매점1 + 포인트1)
+        List<Coupon> downloadableCoupons = couponRepository.findDownloadableCoupons(null, LocalDateTime.now());
+        List<CouponDTO> activeCoupons = selectMainCoupons(downloadableCoupons).stream()
                 .map(CouponDTO::from)
                 .collect(Collectors.toList());
 
@@ -71,4 +73,71 @@ public class MainService {
                 .regionStats(regionStats)
                 .build();
     }
+
+    private List<Coupon> selectMainCoupons(List<Coupon> source) {
+        if (source == null || source.isEmpty()) {
+            return List.of();
+        }
+
+        List<Coupon> ticketsPool = source.stream()
+                .filter(this::isTicketCoupon)
+                .collect(Collectors.toCollection(ArrayList::new));
+        Collections.shuffle(ticketsPool);
+        List<Coupon> tickets = ticketsPool.stream()
+                .limit(2)
+                .collect(Collectors.toCollection(ArrayList::new));
+
+        List<Coupon> storesPool = source.stream()
+                .filter(this::isStoreCoupon)
+                .collect(Collectors.toCollection(ArrayList::new));
+        Collections.shuffle(storesPool);
+        List<Coupon> stores = storesPool.stream()
+                .limit(1)
+                .collect(Collectors.toCollection(ArrayList::new));
+
+        List<Coupon> pointsPool = source.stream()
+                .filter(this::isPointCoupon)
+                .collect(Collectors.toCollection(ArrayList::new));
+        Collections.shuffle(pointsPool);
+        List<Coupon> points = pointsPool.stream()
+                .limit(1)
+                .collect(Collectors.toCollection(ArrayList::new));
+
+        List<Coupon> selected = new ArrayList<>();
+        selected.addAll(tickets);
+        selected.addAll(stores);
+        selected.addAll(points);
+
+        if (selected.size() < 4) {
+            List<Long> selectedIds = selected.stream().map(Coupon::getId).toList();
+            List<Coupon> remain = source.stream()
+                    .filter(c -> !selectedIds.contains(c.getId()))
+                    .collect(Collectors.toCollection(ArrayList::new));
+            Collections.shuffle(remain);
+            remain.stream()
+                    .limit(4L - selected.size())
+                    .forEach(selected::add);
+        }
+
+        Collections.shuffle(selected);
+        return selected;
+    }
+
+    private boolean isTicketCoupon(Coupon coupon) {
+        return "매표".equals(normalizedKind(coupon));
+    }
+
+    private boolean isStoreCoupon(Coupon coupon) {
+        return "매점".equals(normalizedKind(coupon));
+    }
+
+    private boolean isPointCoupon(Coupon coupon) {
+        return "포인트".equals(normalizedKind(coupon));
+    }
+
+    private String normalizedKind(Coupon coupon) {
+        if (coupon == null || coupon.getCouponKind() == null) return "";
+        return coupon.getCouponKind().trim();
+    }
+
 }

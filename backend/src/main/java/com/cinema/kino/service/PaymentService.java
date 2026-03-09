@@ -180,6 +180,16 @@ public class PaymentService {
                 targetCoupon.setHoldExpiresAt(LocalDateTime.now().plusMinutes(10));
 
                 Coupon coupon = targetCoupon.getCoupon();
+                String couponKind = coupon.getCouponKind() != null ? coupon.getCouponKind().trim() : "";
+                if (!"매표".equals(couponKind)) {
+                    throw new IllegalArgumentException("매표 쿠폰만 결제 할인에 사용할 수 있습니다.");
+                }
+                int minPrice = coupon.getMinPrice() != null ? coupon.getMinPrice() : 0;
+                if (originalPrice < minPrice) {
+                    throw new IllegalArgumentException(
+                            String.format("해당 쿠폰은 %,d원 이상 결제 시 사용할 수 있습니다.", minPrice)
+                    );
+                }
                 discountAmount = (coupon.getDiscountType() == DiscountType.FIXED)
                         ? coupon.getDiscountValue()
                         : (int) (originalPrice * (coupon.getDiscountValue() / 100.0));

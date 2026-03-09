@@ -20,6 +20,8 @@ public class CouponDTO {
     private String discountType;
     private Integer discountValue;
     private Integer minPrice;
+    private String sourceType;
+    private String couponKind;
 
     public static CouponDTO from(Coupon coupon) {
         return CouponDTO.builder()
@@ -28,7 +30,66 @@ public class CouponDTO {
                 .discountType(coupon.getDiscountType().name())
                 .discountValue(coupon.getDiscountValue())
                 .minPrice(coupon.getMinPrice())
+                .sourceType(coupon.getSourceType() != null ? coupon.getSourceType().name() : "KINO")
+                .couponKind(coupon.getCouponKind())
                 .build();
+    }
+
+    @Getter
+    @Setter
+    @NoArgsConstructor
+    public static class DownloadAllRequest {
+        private Long memberId;
+        private String sourceType; // KINO | PARTNER | ALL
+    }
+
+    @Getter
+    @Builder
+    public static class DownloadAllResponse {
+        private int downloadedCount;
+        private int skippedCount;
+        private int totalRequestedCount;
+        private int pointAppliedCount;
+    }
+
+    @Getter
+    @Builder
+    public static class DownloadableCouponItem {
+        private Long couponId;
+        private String couponCode;
+        private String couponName;
+        private String discountType;
+        private Integer discountValue;
+        private Integer minPrice;
+        private String couponKind;
+        private String sourceType;
+        private Integer validDays;
+        private Boolean alreadyOwned;
+    }
+
+    @Getter
+    @Builder
+    public static class DownloadableCouponsResponse {
+        private int totalCount;
+        private java.util.List<DownloadableCouponItem> coupons;
+    }
+
+    @Getter
+    @Setter
+    @NoArgsConstructor
+    public static class DownloadSelectedRequest {
+        private Long memberId;
+        private String sourceType; // KINO | PARTNER | ALL
+        private java.util.List<Long> couponIds;
+    }
+
+    @Getter
+    @Builder
+    public static class DownloadSelectedResponse {
+        private int downloadedCount;
+        private int skippedCount;
+        private int totalRequestedCount;
+        private int pointAppliedCount;
     }
 
     // --------------------------------------------------------
@@ -72,11 +133,12 @@ public class CouponDTO {
         private String status;
         private String couponKind;
         private String sourceType;
+        private Boolean downloadable;
 
         public static MyCouponResponse from(MemberCoupon mc) {
-            String sourceType = (mc.getCoupon().getCode() != null && mc.getCoupon().getCode().startsWith("PARTNER"))
-                    ? "PARTNER"
-                    : "MEGABOX";
+            String sourceType = mc.getCoupon().getSourceType() != null
+                    ? mc.getCoupon().getSourceType().name()
+                    : "KINO";
             return MyCouponResponse.builder()
                     .memberCouponId(mc.getId())
                     .couponCode(mc.getCoupon().getCode())
@@ -87,8 +149,11 @@ public class CouponDTO {
                     .expiresAt(mc.getExpiresAt().toString())
                     .issuedAt(mc.getIssuedAt() != null ? mc.getIssuedAt().toString() : null)
                     .status(mc.getStatus().name())
-                    .couponKind(inferCouponKind(mc.getCoupon().getName()))
+                    .couponKind(mc.getCoupon().getCouponKind() != null && !mc.getCoupon().getCouponKind().isBlank()
+                            ? mc.getCoupon().getCouponKind()
+                            : inferCouponKind(mc.getCoupon().getName()))
                     .sourceType(sourceType)
+                    .downloadable(Boolean.TRUE.equals(mc.getCoupon().getDownloadable()))
                     .build();
         }
 

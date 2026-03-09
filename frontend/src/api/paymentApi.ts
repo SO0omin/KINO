@@ -49,11 +49,16 @@ export async function confirmPayment(
 
 export interface MyCouponResponse {
   memberCouponId: number;
+  couponCode: string;
   couponName: string;
   discountType: string;
   discountValue: number;
   minPrice: number;
   expiresAt: string;
+  couponKind?: string;
+  sourceType?: string;
+  downloadable?: boolean;
+  status?: string;
 }
 
 export async function redeemCoupon(
