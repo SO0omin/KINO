@@ -116,8 +116,8 @@ export default function PaymentPage() {
         const n = Number(p) || 0;
         setAvailablePoints(n);
 
-        // 현재 입력된 usedPoints가 보유 포인트보다 크면 자동 보정
-        setUsedPoints((prev) => Math.min(prev, n));
+        // 현재 입력 포인트를 보유 포인트/100단위에 맞게 자동 보정
+        setUsedPoints((prev) => Math.floor(Math.min(prev, n) / 100) * 100);
       } catch (e) {
         console.error('포인트 조회 실패:', e);
         setAvailablePoints(0);
@@ -286,7 +286,7 @@ export default function PaymentPage() {
               couponLoading={couponLoading}
               onRedeemCoupon={handleRedeemCoupon}
               availablePoints={availablePoints}
-              pointUnit={1000}
+              pointUnit={100}
             />
 
             <PaymentMethodSection

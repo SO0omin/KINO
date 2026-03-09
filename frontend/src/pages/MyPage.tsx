@@ -1392,7 +1392,10 @@ export default function MyPage() {
 
     return (
         <div className="min-h-screen bg-[#fdf4e3] text-[#000000]">
-            <BreadcrumbBar crumbs={isGuestReservationOnly ? ["나의 키노", "예매/구매내역", "예매내역"] : crumbs} />
+            <BreadcrumbBar
+                crumbs={isGuestReservationOnly ? ["나의 키노", "예매/구매내역", "예매내역"] : crumbs}
+                onMoveMenu={moveMenu}
+            />
 
             <div className="mx-auto flex w-full max-w-[1200px] gap-8 px-4 py-10">
                 {isGuestReservationOnly ? null : (
