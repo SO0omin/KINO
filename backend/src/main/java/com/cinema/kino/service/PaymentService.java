@@ -172,7 +172,7 @@ public class PaymentService {
 
             if (request.getMemberCouponId() != null) {
                 MemberCoupon targetCoupon = memberCouponRepository.findHoldableCouponForUpdate(
-                        request.getMemberCouponId(), reservation.getMember().getId()
+                        request.getMemberCouponId(), reservation.getMember().getId(), reservation.getId()
                 ).orElseThrow(() -> new IllegalArgumentException("사용 가능한 쿠폰이 아닙니다."));
 
                 targetCoupon.setStatus(MemberCouponStatus.HELD);
