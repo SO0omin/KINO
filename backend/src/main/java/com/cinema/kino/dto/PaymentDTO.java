@@ -144,6 +144,7 @@ public class PaymentDTO {
             private Long seatId;
             private String seatName;
             private PriceType priceType;
+            private int price;
         }
     }
 }

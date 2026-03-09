@@ -57,17 +57,13 @@ export function ProfileSection({
   const { logout } = useAuth();
 
   const handleWithdraw = async () => {
-  console.log("1. 탈퇴 버튼 클릭됨!"); // 💡 이게 찍히는지 먼저 확인!
 
   if (!window.confirm("정말로 탈퇴하시겠습니까?")) return;
 
   try {
-    console.log("2. API 호출 직전...");
     await deleteMember();
-    console.log("3. API 호출 성공!");
 
     logout();
-    alert("탈퇴 완료!");
     window.location.href = '/'; 
   } catch (error: any) {
     console.error("4. 에러 발생:", error);

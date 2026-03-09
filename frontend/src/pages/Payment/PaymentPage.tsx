@@ -28,7 +28,7 @@ function buildTicketsFromReservationDetail(detail: any): TicketRequest[] {
   }));
 }
 
-function buildTicketTypeText(seats: Array<{ priceType?: PriceType }>): string {
+/*function buildTicketTypeText(seats: Array<{ priceType?: PriceType }>): string {
   const counts: Record<PriceType, number> = { ADULT: 0, YOUTH: 0, SENIOR: 0, SPECIAL: 0 };
 
   for (const s of seats) {
@@ -43,7 +43,7 @@ function buildTicketTypeText(seats: Array<{ priceType?: PriceType }>): string {
   if (counts.SPECIAL) parts.push(`우대 ${counts.SPECIAL}명`);
 
   return parts.length ? parts.join(' / ') : '성인 0명';
-}
+}*/
 
 export default function PaymentPage() {
   const navigate = useNavigate();
@@ -220,7 +220,7 @@ export default function PaymentPage() {
   }
   if (!reservationDetail) return null;
 
-  const ticketTypeText = buildTicketTypeText(reservationDetail.seats);
+  //const ticketTypeText = buildTicketTypeText(reservationDetail.seats);
 
   const handlePayment = async () => {
     if (!agreeTerms) {
@@ -245,11 +245,15 @@ export default function PaymentPage() {
     );
   };
 
+  const seatNamesText = reservationDetail.seats
+  .map((seat) => seat.seatName)
+  .join(', ');
+
   const bookingData: BookingData = {
     movieTitle: reservationDetail.movieTitle,
     dateTime: reservationDetail.startTime,
     theater: `${reservationDetail.theaterName} / ${reservationDetail.screenName}`,
-    ticketType: ticketTypeText,
+    seatNamesText: seatNamesText,
     screeningId: reservationDetail.screeningId,
     posterUrl: reservationDetail.posterUrl,
   };
@@ -263,10 +267,10 @@ export default function PaymentPage() {
     youthCount: typeCounts.YOUTH,
     seniorCount: typeCounts.SENIOR,
     specialCount: typeCounts.SPECIAL,
-    adultPrice: reservationDetail.seats.length ? baseTotal / reservationDetail.seats.length : 0,
-    youthPrice: reservationDetail.seats.length ? baseTotal / reservationDetail.seats.length : 0,
-    seniorPrice: reservationDetail.seats.length ? baseTotal / reservationDetail.seats.length : 0,
-    speciaPrice: reservationDetail.seats.length ? baseTotal / reservationDetail.seats.length : 0,
+    adultPrice: reservationDetail.seats.find(s => normalizePriceType(s.priceType) === 'ADULT')?.price || 0,
+    youthPrice: reservationDetail.seats.find(s => normalizePriceType(s.priceType) === 'YOUTH')?.price || 0,
+    seniorPrice: reservationDetail.seats.find(s => normalizePriceType(s.priceType) === 'SENIOR')?.price || 0,
+    speciaPrice: reservationDetail.seats.find(s => normalizePriceType(s.priceType) === 'SPECIAL')?.price || 0,
     totalAmount: baseTotal,
     discountAmount: totalDiscount,
     finalAmount: currentFinalAmount,

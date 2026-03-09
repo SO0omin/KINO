@@ -468,7 +468,17 @@ export function ReservationsSection({
                             </button>
                           )}
 
-                          {item.cancellable ? (
+                          {/* 결제가 안 된 상태면 교환권 출력 숨김 처리 */}
+                          {!canPay && (
+                            <button
+                              className="rounded border border-[#eb4d32] bg-white px-5 py-2 text-sm font-semibold text-[#eb4d32]"
+                              onClick={() => openPrintVoucher(item)}
+                            >
+                              교환권출력
+                            </button>
+                          )}
+
+                          {!canPay && item.cancellable ? (
                             <button
                               className="rounded border border-[#eb4d32] px-4 py-2 text-sm text-[#eb4d32] hover:bg-red-50"
                               disabled={isCancelling === item.reservationId}

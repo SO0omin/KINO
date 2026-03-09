@@ -67,5 +67,6 @@ export interface ReservationDetailResponse {
     seatId: number;
     seatName: string;
     priceType?: PriceType; 
+    price: number;
   }>;
 }
