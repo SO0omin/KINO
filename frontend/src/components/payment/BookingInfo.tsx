@@ -20,7 +20,7 @@ export function BookingInfo({ bookingData }: BookingInfoProps) {
           <h3 className="text-xl mb-3">{bookingData.movieTitle}</h3>
           <p className="text-gray-700 mb-1">{bookingData.dateTime}</p>
           <p className="text-gray-700 mb-1">{bookingData.theater}</p>
-          <p className="text-gray-700">{bookingData.ticketType}</p>
+          <p className="text-gray-700">{bookingData.seatNamesText}</p>
         </div>
       </div>
     </section>
