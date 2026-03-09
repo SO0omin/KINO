@@ -658,6 +658,18 @@ export default function MyPage() {
         [reservations, appliedPurchaseSelectType, appliedPurchaseStatusType, appliedPurchaseFrom, appliedPurchaseTo]
     );
 
+    const recentPaidPurchases = useMemo(
+        () =>
+            reservations
+                .filter((item) => String(item.paymentStatus).toUpperCase() === "PAID")
+                .sort(
+                    (a, b) =>
+                        new Date(b.paidAt ?? b.startTime).getTime() - new Date(a.paidAt ?? a.startTime).getTime()
+                )
+                .slice(0, 2),
+        [reservations]
+    );
+
     const applyPurchaseRange = (range: "week" | "month1" | "month3" | "month6") => {
         setPurchaseRange(range);
         const to = new Date();
@@ -979,33 +991,18 @@ export default function MyPage() {
                                 </>
                             )}
                         </button>
-                        <div className="p-5 text-left">
+                        <button
+                            type="button"
+                            className="p-5 text-left transition-colors hover:bg-gray-50"
+                            onClick={() => moveMenu("/mypage/vouchers/movie")}
+                        >
                             <div className="mb-3 flex items-center justify-between text-base font-semibold text-[#eb4d32]">
                                 <span>관람권/쿠폰</span>
-                                <button
-                                    type="button"
-                                    className="rounded p-1 transition-colors hover:bg-gray-100"
-                                    onClick={() => moveMenu("/mypage/vouchers/movie")}
-                                    aria-label="관람권/쿠폰 이동"
-                                >
-                                    <ChevronRight className="h-5 w-5 text-gray-400" />
-                                </button>
+                                <ChevronRight className="h-5 w-5 text-gray-400" />
                             </div>
-                            <button
-                                type="button"
-                                className="block w-full rounded px-2 py-1 text-left text-sm transition-colors hover:bg-gray-50"
-                                onClick={() => moveMenu("/mypage/vouchers/movie")}
-                            >
-                                영화관람권 <span className="float-right font-semibold">{availableMovieVoucherCount} 매</span>
-                            </button>
-                            <button
-                                type="button"
-                                className="mt-2 block w-full rounded px-2 py-1 text-left text-sm transition-colors hover:bg-gray-50"
-                                onClick={() => moveMenu("/mypage/coupons")}
-                            >
-                                할인/제휴쿠폰 <span className="float-right font-semibold">{availableCouponCount} 매</span>
-                            </button>
-                        </div>
+                            <p className="text-sm">영화관람권 <span className="float-right font-semibold">{availableMovieVoucherCount} 매</span></p>
+                            <p className="mt-2 text-sm">할인/제휴쿠폰 <span className="float-right font-semibold">{availableCouponCount} 매</span></p>
+                        </button>
                     </div>
                 </section>
 
@@ -1071,7 +1068,19 @@ export default function MyPage() {
                             더보기 <ChevronRight className="h-5 w-5" />
                         </button>
                     </div>
-                    <EmptyLine message="구매내역이 없습니다." />
+                    {recentPaidPurchases.length === 0 ? <EmptyLine message="구매내역이 없습니다." /> : (
+                        <div className="divide-y">
+                            {recentPaidPurchases.map((item) => (
+                                <div key={item.reservationId} className="flex flex-col gap-3 py-4 lg:flex-row lg:items-center lg:justify-between">
+                                    <div>
+                                        <p className="text-lg font-semibold">{item.movieTitle}</p>
+                                        <p className="text-sm text-gray-600">{item.theaterName} · 결제일시 {formatDateTime(item.paidAt ?? item.startTime)}</p>
+                                    </div>
+                                    <p className="font-semibold">{formatMoney(item.finalAmount)}</p>
+                                </div>
+                            ))}
+                        </div>
+                    )}
                 </section>
 
             </>
