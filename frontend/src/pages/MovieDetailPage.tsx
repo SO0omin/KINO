@@ -5,8 +5,8 @@ import { useAuth } from '../contexts/AuthContext';
 import InfoTab from '../components/detail/InfoTab';
 import ReviewTab from '../components/detail/ReviewTab';
 import MediaTab from '../components/detail/MediaTab';
-import ReviewWriteModal from '../components/detail/ReviewWriteModal';
-import ReviewVerifyModal from '../components/detail/ReviewVerifyModal';
+import ReviewWriteModal from '../components/common/review/ReviewWriteModal';
+import ReviewVerifyModal from '../components/common/review/ReviewVerifyModal';
 
 const MovieDetail = () => {
   const { id } = useParams();
@@ -25,6 +25,23 @@ const MovieDetail = () => {
   const [isVerifyModalOpen, setIsVerifyModalOpen] = useState(false);
   const [isWriteModalOpen, setIsWriteModalOpen] = useState(false);
   const [verifiedResNum, setVerifiedResNum] = useState("");
+  const [reviewContent, setReviewContent] = useState("");
+  const [scores, setScores] = useState({
+    scoreDirection: 10,
+    scoreStory: 10,
+    scoreVisual: 10,
+    scoreActor: 10,
+    scoreOst: 10,
+  });
+
+  // 모달 리셋 로직 (두 모달이 다 닫혔을 때 초기화)
+  useEffect(() => {
+    if (!isVerifyModalOpen && !isWriteModalOpen) {
+      setVerifiedResNum("");
+      setReviewContent("");
+      setScores({ scoreDirection: 10, scoreStory: 10, scoreVisual: 10, scoreActor: 10, scoreOst: 10 });
+    }
+  }, [isVerifyModalOpen, isWriteModalOpen]);
 
   // --- 1. 데이터 연동 (백엔드) ---
   const fetchMovieData = useCallback(() => {
@@ -136,8 +153,8 @@ useEffect(() => {
       return;
     }
 
-    // 2. 💡 중복 리뷰 체크 (추가된 API 호출)
-    // 이미 리뷰가 있다면 서버에서 던지는 "이미 관람평을 작성한 예매 번호입니다." 메시지를 catch문으로 보냅니다.
+    // 2. 중복 리뷰 체크 (추가된 API 호출)
+    // 이미 리뷰가 있다면 서버에서 던지는 "이미 관람평을 작성한 예매 번호입니다." 메시지를 catch문으로 보냄
     await axios.get(`http://localhost:8080/api/reviews/check-availability/${resNum}`);
 
     // 3. 모든 검사 통과 시
@@ -146,7 +163,7 @@ useEffect(() => {
     setIsWriteModalOpen(true); 
 
   } catch (error: any) {
-    // 💡 4. 에러 처리 (중복 리뷰 혹은 유효하지 않은 번호)
+    // 4. 에러 처리 (중복 리뷰 혹은 유효하지 않은 번호)
     const errorMessage = error.response?.data?.error || "유효하지 않은 예매 번호입니다.";
     
     alert(errorMessage);         // 경고 알림창 띄우기
@@ -154,29 +171,31 @@ useEffect(() => {
   }
 };
 
-// 2. 최종 제출 (중복된 함수를 하나로 합침)
-const handleReviewSubmit = async (reviewPayload: any) => {
+const handleReviewSubmit = async () => {
+  if (!reviewContent.trim()) {
+      alert("관람평 내용을 입력해 주세요.");
+      return;
+  }
+
   try {
+    // 서버에 보낼 데이터(finalData)를 현재 부모가 가진 상태값들로 채움
     const finalData = {
-      ...reviewPayload,
+      movieId: Number(id),
+      reservationNumber: verifiedResNum,
+      content: reviewContent,   // 부모의 State
+      ...scores,               // 부모의 State (5가지 점수)
       memberId: memberId 
     };
 
     await axios.post('http://localhost:8080/api/reviews', finalData);
-    alert("리뷰가 성공적으로 등록되었습니다! 🍿");
-    setIsWriteModalOpen(false); // 모달 닫기
-    fetchMovieData(); // 목록 새로고침
-  } catch (err: any) { // 💡 에러 객체를 세밀하게 분석하기 위해 any나 AxiosError 타입을 사용합니다.
+    
+    alert("리뷰가 성공적으로 등록되었습니다!");
+    setIsWriteModalOpen(false); // 작성 모달 닫기
+    fetchMovieData();           // 목록 새로고침
+    
+  } catch (err: any) {
     console.error('리뷰 등록 실패:', err);
-
-    // 💡 2. 백엔드에서 보낸 에러 메시지(400 에러 등) 추출
-    if (err.response && err.response.data && err.response.data.error) {
-      // 서비스에서 throw한 "이미 해당 예매 번호로 작성된 리뷰가 존재합니다."가 출력됩니다.
-      alert(err.response.data.error);
-    } else {
-      // 서버 연결 실패나 기타 알 수 없는 오류일 때
-      alert("리뷰 등록 중 예기치 못한 오류가 발생했습니다. 잠시 후 다시 시도해 주세요.");
-    }
+    alert(err.response?.data?.error || "리뷰 등록 중 오류가 발생했습니다.");
   }
 };
 
@@ -188,7 +207,7 @@ const handleWriteReviewClick = () => {
     }
     return;
   }
-  setIsVerifyModalOpen(true); // 💡 바로 리뷰창이 아니라 검증창을 엽니다!
+  setIsVerifyModalOpen(true); // 바로 리뷰창이 아니라 검증창
 };
 
 
@@ -353,18 +372,26 @@ const handleWriteReviewClick = () => {
         </div>
       </div>
 
+      {/* 검증 모달 호출  */}
       <ReviewVerifyModal 
         isOpen={isVerifyModalOpen}
         onClose={() => setIsVerifyModalOpen(false)}
         onVerifySuccess={handleVerifyReservation}
+        reservationNumber={verifiedResNum}
+        setReservationNumber={setVerifiedResNum}
       />
 
+      {/* 작성 모달 호출 */}
       <ReviewWriteModal 
         isOpen={isWriteModalOpen}
         onClose={() => setIsWriteModalOpen(false)}
         movieTitle={movie.title}
         movieId={Number(id)}
         reservationNumber={verifiedResNum}
+        content={reviewContent}
+        setContent={setReviewContent}
+        scores={scores}
+        setScores={setScores}
         onSubmit={handleReviewSubmit}
       />
     </div>

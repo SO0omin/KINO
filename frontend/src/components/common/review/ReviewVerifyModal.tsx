@@ -4,16 +4,14 @@ interface ReviewVerifyModalProps {
   isOpen: boolean;
   onClose: () => void;
   onVerifySuccess: (resNum: string) => void;
+  reservationNumber: string;
+  setReservationNumber: (val: string) => void;
 }
 
-const ReviewVerifyModal = ({ isOpen, onClose, onVerifySuccess }: ReviewVerifyModalProps) => {
-  const [resNum, setResNum] = useState("");
-
-  useEffect(() => {
-    if (!isOpen) {
-      setResNum(""); // 모달이 닫히면 입력했던 예매 번호를 리셋!
-    }
-  }, [isOpen]);
+const ReviewVerifyModal = ({ 
+    isOpen, onClose, onVerifySuccess, 
+    reservationNumber, setReservationNumber
+}: ReviewVerifyModalProps) => {
 
   if (!isOpen) return null;
 
@@ -29,8 +27,8 @@ const ReviewVerifyModal = ({ isOpen, onClose, onVerifySuccess }: ReviewVerifyMod
             id="modal-res-num"
             title="Reservation Number Input"
             placeholder="KINO-XXXXXX-XXXXXX"
-            value={resNum}
-            onChange={(e) => setResNum(e.target.value.toUpperCase())}
+            value={reservationNumber}
+            onChange={(e) => setReservationNumber(e.target.value.toUpperCase())}
             className="w-full border-4 border-black p-4 font-mono text-lg outline-none focus:bg-yellow-50 transition-colors"
           />
           <p className="font-mono text-[9px] text-black/40 text-center">* Hyphens are required.</p>
@@ -39,7 +37,7 @@ const ReviewVerifyModal = ({ isOpen, onClose, onVerifySuccess }: ReviewVerifyMod
         <div className="flex gap-4 mt-10">
           <button onClick={onClose} className="flex-1 py-4 border-2 border-black font-mono text-xs font-bold hover:bg-black hover:text-white transition-all">CANCEL</button>
           <button 
-            onClick={() => onVerifySuccess(resNum)}
+            onClick={() => onVerifySuccess(reservationNumber)}
             className="flex-1 py-4 bg-black text-white font-serif italic text-lg shadow-[6px_6px_0_0_#eb4d32] active:shadow-none active:translate-x-1"
           >
             VERIFY
