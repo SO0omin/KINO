@@ -24,6 +24,34 @@ public class CouponController {
         return ResponseEntity.ok(couponService.redeem(request.getCode(), request.getMemberId()));
     }
 
+    @PostMapping("/download-all")
+    public ResponseEntity<CouponDTO.DownloadAllResponse> downloadAll(@RequestBody CouponDTO.DownloadAllRequest request) {
+        if (request.getMemberId() == null) {
+            throw new IllegalArgumentException("memberId가 필요합니다.");
+        }
+        return ResponseEntity.ok(couponService.downloadAll(request.getMemberId(), request.getSourceType()));
+    }
+
+    @GetMapping("/downloadables")
+    public ResponseEntity<CouponDTO.DownloadableCouponsResponse> downloadables(
+            @RequestParam Long memberId,
+            @RequestParam(required = false) String sourceType
+    ) {
+        return ResponseEntity.ok(couponService.getDownloadables(memberId, sourceType));
+    }
+
+    @PostMapping("/download-selected")
+    public ResponseEntity<CouponDTO.DownloadSelectedResponse> downloadSelected(
+            @RequestBody CouponDTO.DownloadSelectedRequest request
+    ) {
+        if (request.getMemberId() == null) {
+            throw new IllegalArgumentException("memberId가 필요합니다.");
+        }
+        return ResponseEntity.ok(
+                couponService.downloadSelected(request.getMemberId(), request.getSourceType(), request.getCouponIds())
+        );
+    }
+
     @GetMapping("/my")
     public ResponseEntity<List<CouponDTO.MyCouponResponse>> myCoupons(
             @RequestParam Long memberId,

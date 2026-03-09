@@ -216,7 +216,7 @@ export function MyPageModals(
               <div className="rounded-sm bg-[#fdf4e3] p-4">
                 <div className="flex flex-wrap items-center gap-3">
                   <label className="min-w-[140px] text-right text-base font-semibold text-[#000000]">할인쿠폰 번호</label>
-                  <input value={couponRegisterCode} onChange={(e) => { setCouponRegisterCode(e.target.value.toUpperCase()); if (couponRegisterError) setCouponRegisterError(""); }} className="h-12 flex-1 border border-gray-200 bg-[#ffffff] px-3 text-base text-[#000000] outline-none" placeholder="숫자만 입력해 주세요" />
+                  <input value={couponRegisterCode} onChange={(e) => { setCouponRegisterCode(e.target.value.toUpperCase()); if (couponRegisterError) setCouponRegisterError(""); }} className="h-12 flex-1 border border-gray-200 bg-[#ffffff] px-3 text-base text-[#000000] outline-none" />
                   <button className="h-12 rounded-sm bg-[#eb4d32] px-6 text-base font-semibold text-[#ffffff] disabled:opacity-60" onClick={handleCouponRegister} disabled={couponRegistering}>{couponRegistering ? "등록 중..." : "등록"}</button>
                 </div>
                 {couponRegisterError ? <p className="mt-2 text-sm text-[#eb4d32]">{couponRegisterError}</p> : null}

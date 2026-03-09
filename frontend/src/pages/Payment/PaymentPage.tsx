@@ -45,6 +45,14 @@ function buildTicketsFromReservationDetail(detail: any): TicketRequest[] {
   return parts.length ? parts.join(' / ') : '성인 0명';
 }*/
 
+function filterAvailableTicketCoupons(list: MyCouponResponse[], totalAmount: number): MyCouponResponse[] {
+  return list.filter((coupon) => {
+    if (coupon.couponKind !== '매표') return false;
+    const minPrice = Number(coupon.minPrice ?? 0);
+    return totalAmount >= minPrice;
+  });
+}
+
 export default function PaymentPage() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
@@ -84,6 +92,13 @@ export default function PaymentPage() {
   }, [reservationDetail]);
 
   useEffect(() => {
+    if (selectedCouponId == null) return;
+    if (!coupons.some((coupon) => coupon.memberCouponId === selectedCouponId)) {
+      setSelectedCouponId(null);
+    }
+  }, [coupons, selectedCouponId]);
+
+  useEffect(() => {
     if (reservationId) fetchReservationDetail(reservationId);
   }, [reservationId, fetchReservationDetail]);
 
@@ -101,7 +116,9 @@ export default function PaymentPage() {
       setCouponLoading(true);
       try {
         const list = await getMyCoupons(memberId);
-        setCoupons(list);
+        const totalAmount = Number(reservationDetail?.totalAmount ?? 0);
+        const ticketCoupons = filterAvailableTicketCoupons(list, totalAmount);
+        setCoupons(ticketCoupons);
       } catch (e) {
         console.error('쿠폰 목록 조회 실패:', e);
         setCoupons([]);
@@ -109,7 +126,7 @@ export default function PaymentPage() {
         setCouponLoading(false);
       }
     })();
-  }, [reservationDetail?.memberId]);
+  }, [reservationDetail?.memberId, reservationDetail?.totalAmount]);
 
   // 추가: 보유 포인트 조회
   useEffect(() => {
@@ -149,7 +166,9 @@ export default function PaymentPage() {
     try {
       await redeemCoupon(code, memberId);
       const list = await getMyCoupons(memberId);
-      setCoupons(list);
+      const totalAmount = Number(reservationDetail?.totalAmount ?? 0);
+      const ticketCoupons = filterAvailableTicketCoupons(list, totalAmount);
+      setCoupons(ticketCoupons);
     } catch (e: any) {
       alert(e?.message ?? '쿠폰 등록에 실패했습니다.');
     } finally {
