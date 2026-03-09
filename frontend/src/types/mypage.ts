@@ -57,7 +57,6 @@ export const MENU_CONFIG: MenuItem[] = [
     ],
   },
   { label: "나의 무비스토리", key: "movie-story", path: "/mypage/movie-story" },
-  { label: "자주쓰는 카드 관리", key: "cards", path: "/mypage/cards" },
 ];
 
 export function breadcrumbLabels(pageKey: PageKey): string[] {

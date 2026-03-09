@@ -185,7 +185,6 @@ export function ProfileSection({
             <button className="rounded border border-gray-300 px-3 py-2" onClick={() => setShowPasswordChangeModal(true)}>
               비밀번호 변경
             </button>
-            <span>마지막 비밀번호 변경: 57일전에 함</span>
           </div>
         </div>
       </div>
@@ -280,15 +279,6 @@ export function ProfileSection({
             </div>
           );
         })}
-      </div>
-
-      <h2 className="mt-8 text-4xl font-semibold text-[#eb4d32]">스페셜 멤버십 가입내역</h2>
-      <div className="mt-3 overflow-hidden rounded-sm border border-gray-200 bg-[#ffffff]">
-        <div className="grid grid-cols-[170px_1fr_auto] items-center px-4 py-3 text-sm">
-          <span className="font-semibold">가입정보</span>
-          <span className="text-gray-500">가입된 스페셜 멤버십이 없습니다.</span>
-          <button className="rounded bg-[#000000] px-4 py-2 text-xs text-[#ffffff]">스페셜 멤버십 가입 안내</button>
-        </div>
       </div>
 
       <div className="mt-10 flex justify-center gap-3">

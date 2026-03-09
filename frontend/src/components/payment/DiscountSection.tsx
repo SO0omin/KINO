@@ -19,7 +19,7 @@ interface DiscountSectionProps {
   // 추가: 서버에서 조회한 보유 포인트
   availablePoints?: number;
 
-  // 옵션: 포인트 사용 단위(기본 1000)
+  // 옵션: 포인트 사용 단위(기본 100)
   pointUnit?: number;
 }
 
@@ -33,7 +33,7 @@ export function DiscountSection({
   onCouponSelect,
   onPointChange,
   availablePoints = 0,
-  pointUnit = 1000,
+  pointUnit = 100,
 }: DiscountSectionProps) {
   const [pointInput, setPointInput] = useState<string>('');
   const [activeMemberCouponId, setActiveMemberCouponId] = useState<number | null>(null);
@@ -47,16 +47,22 @@ export function DiscountSection({
     // 보유 포인트 초과 방지
     const clamped = Math.min(num, availablePoints);
 
-    // 단위 강제(예: 1000P 단위)
-    const unitApplied = pointUnit > 1 ? Math.floor(clamped / pointUnit) * pointUnit : clamped;
-
-    return unitApplied;
+    return clamped;
   };
 
   const handlePointInput = (val: string) => {
-    const points = normalizePoint(val);
-    setPointInput(points > 0 ? points.toLocaleString() : '');
-    onPointChange?.(points);
+    const entered = normalizePoint(val);
+    const applied = pointUnit > 1 ? Math.floor(entered / pointUnit) * pointUnit : entered;
+
+    // 타이핑 중에는 사용자가 입력한 값을 보여주고, 실제 적용값만 단위 보정
+    setPointInput(entered > 0 ? entered.toLocaleString() : '');
+    onPointChange?.(applied);
+  };
+
+  const syncPointInputToAppliedUnit = () => {
+    const entered = normalizePoint(pointInput);
+    const applied = pointUnit > 1 ? Math.floor(entered / pointUnit) * pointUnit : entered;
+    setPointInput(applied > 0 ? applied.toLocaleString() : '');
   };
 
   const handleCouponClick = (memberCouponId: number) => {
@@ -194,6 +200,7 @@ export function DiscountSection({
                   type="text"
                   value={pointInput}
                   onChange={(e) => handlePointInput(e.target.value)}
+                  onBlur={syncPointInputToAppliedUnit}
                   placeholder="0"
                   className="flex-1 py-3 px-4 border border-gray-300 rounded focus:ring-1 focus:ring-[#eb4d32] outline-none text-right font-mono"
                 />

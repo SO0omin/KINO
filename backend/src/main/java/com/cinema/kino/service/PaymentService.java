@@ -155,6 +155,12 @@ public class PaymentService {
         // 💡 [방어 로직] 회원일 때만 포인트 및 쿠폰 적용
         if (reservation.getMember() != null) {
             usedPoints = (request.getUsedPoints() != null) ? request.getUsedPoints() : 0;
+            if (usedPoints < 0) {
+                throw new IllegalArgumentException("포인트는 0 이상만 사용할 수 있습니다.");
+            }
+            if (usedPoints % 100 != 0) {
+                throw new IllegalArgumentException("포인트는 100원 단위로만 사용할 수 있습니다.");
+            }
 
             memberCouponRepository.findByReservation(reservation).ifPresent(old -> {
                 if (old.getStatus() != MemberCouponStatus.USED) {
