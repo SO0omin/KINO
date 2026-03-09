@@ -116,7 +116,7 @@ useEffect(() => {
       });
       setIsLiked(res.data);
     } catch (err) {
-      console.error('좋아요 실패 🕵️‍♂️', err);
+      console.error('좋아요 실패', err);
     }
   };
 
@@ -127,19 +127,30 @@ useEffect(() => {
 
   const handleVerifyReservation = async (resNum: string) => {
   try {
+    // 1. 예매 번호 유효성 및 해당 영화 티켓 여부 확인
     const response = await axios.get(`http://localhost:8080/api/reservations/verify/${resNum}`);
     
-    // 💡 여기서 'movieId'가 아니라 상단의 'id'와 비교해야 합니다!
     if (Number(response.data.movieId) !== Number(id)) { 
       alert("해당 영화의 예매 내역이 아닙니다. 영화를 다시 확인해주세요.");
+      setIsVerifyModalOpen(false); // 💡 잘못된 번호 입력 시 창 닫기
       return;
     }
 
+    // 2. 💡 중복 리뷰 체크 (추가된 API 호출)
+    // 이미 리뷰가 있다면 서버에서 던지는 "이미 관람평을 작성한 예매 번호입니다." 메시지를 catch문으로 보냅니다.
+    await axios.get(`http://localhost:8080/api/reviews/check-availability/${resNum}`);
+
+    // 3. 모든 검사 통과 시
     setVerifiedResNum(resNum); 
     setIsVerifyModalOpen(false); 
     setIsWriteModalOpen(true); 
-  } catch (error) {
-    alert("유효하지 않은 예매 번호입니다.");
+
+  } catch (error: any) {
+    // 💡 4. 에러 처리 (중복 리뷰 혹은 유효하지 않은 번호)
+    const errorMessage = error.response?.data?.error || "유효하지 않은 예매 번호입니다.";
+    
+    alert(errorMessage);         // 경고 알림창 띄우기
+    setIsVerifyModalOpen(false); // 알림창 확인 누르면 모달 닫기
   }
 };
 
@@ -155,9 +166,17 @@ const handleReviewSubmit = async (reviewPayload: any) => {
     alert("리뷰가 성공적으로 등록되었습니다! 🍿");
     setIsWriteModalOpen(false); // 모달 닫기
     fetchMovieData(); // 목록 새로고침
-  } catch (err) {
+  } catch (err: any) { // 💡 에러 객체를 세밀하게 분석하기 위해 any나 AxiosError 타입을 사용합니다.
     console.error('리뷰 등록 실패:', err);
-    alert("리뷰 등록에 실패했습니다.");
+
+    // 💡 2. 백엔드에서 보낸 에러 메시지(400 에러 등) 추출
+    if (err.response && err.response.data && err.response.data.error) {
+      // 서비스에서 throw한 "이미 해당 예매 번호로 작성된 리뷰가 존재합니다."가 출력됩니다.
+      alert(err.response.data.error);
+    } else {
+      // 서버 연결 실패나 기타 알 수 없는 오류일 때
+      alert("리뷰 등록 중 예기치 못한 오류가 발생했습니다. 잠시 후 다시 시도해 주세요.");
+    }
   }
 };
 

@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import type { MyCouponItem, MyReservationItem } from "../../../api/myPageApi";
 import type { PageKey } from "../../../types/mypage";
 
@@ -258,7 +259,7 @@ export function MyPageModals(
         </div>
       ) : null}
 
-      {/* 💡 STEP 1: 예매 번호 확인 모달 */}
+      {/* STEP 1: 예매 번호 확인 모달 */}
       {showVerifyModal ? (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 px-4">
           <div className="w-full max-w-md rounded-sm border border-black bg-white p-8 shadow-[12px_12px_0_0_#000]">
@@ -273,7 +274,6 @@ export function MyPageModals(
                 id="verify-res-num"
                 placeholder="KINO-260308-000007 형식으로 입력" 
                 value={reviewReservationNumberInput}
-                // 💡 아래처럼 작성하면 하이픈이 자동으로 대문자로 깔끔하게 써집니다!
                 onChange={(e) => setReviewReservationNumberInput(e.target.value.replace(/[^A-Za-z0-9-]/g, "").toUpperCase())}
                 className="w-full border-2 border-black p-3 font-mono text-sm mb-2 outline-none focus:bg-yellow-50"
               />
@@ -290,7 +290,7 @@ export function MyPageModals(
         </div>
       ) : null}
 
-      {/* 💡 STEP 2: 리뷰 작성 모달 */}
+      {/* STEP 2: 리뷰 작성 모달 */}
       {showReviewModal ? (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 px-4">
             <div className="w-full max-w-lg rounded-sm border border-black bg-white p-8 shadow-[12px_12px_0_0_#000]">
@@ -303,7 +303,7 @@ export function MyPageModals(
                         <input value={reviewMovieTitleInput} readOnly className="w-full border-2 border-black/10 p-3 bg-gray-50 text-sm font-bold" />
                     </div>
 
-                    {/* 💡 신규: 5가지 항목 점수 선택 영역 */}
+                    {/* 5가지 항목 점수 선택 영역 */}
                     <div className="grid grid-cols-5 gap-3 p-4 bg-[#f4f1ea]/50 border border-black/5 rounded-sm">
                         <ScoreSelector label="Direction" value={scoreDirection} onChange={setScoreDirection} />
                         <ScoreSelector label="Story" value={scoreStory} onChange={setScoreStory} />

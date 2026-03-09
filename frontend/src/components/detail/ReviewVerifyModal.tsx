@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 
 interface ReviewVerifyModalProps {
   isOpen: boolean;
@@ -8,6 +8,12 @@ interface ReviewVerifyModalProps {
 
 const ReviewVerifyModal = ({ isOpen, onClose, onVerifySuccess }: ReviewVerifyModalProps) => {
   const [resNum, setResNum] = useState("");
+
+  useEffect(() => {
+    if (!isOpen) {
+      setResNum(""); // 모달이 닫히면 입력했던 예매 번호를 리셋!
+    }
+  }, [isOpen]);
 
   if (!isOpen) return null;
 

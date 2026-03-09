@@ -306,7 +306,7 @@ export default function MyPage() {
         if (isLoggedIn && memberId) {
             getMyReviews(memberId)
                 .then((data) => {
-                    // 백엔드에서 가져온 진짜 리뷰 리스트를 상태에 저장!
+                    // 백엔드에서 가져온 진짜 리뷰 리스트를 상태에 저장
                     setReviews(data);
                 })
                 .catch((err) => {
@@ -425,6 +425,23 @@ export default function MyPage() {
         }
     }, [guestId, isGuestReservationOnly, location.pathname, navigate]);
 
+    useEffect(() => {
+        // 1단계 검증창이 닫혔고('AND'), 2단계 리뷰창도 닫혀있을 때만 리셋
+        // 이렇게 하면 1단계 -> 2단계로 넘어가는 "사이"에는 데이터가 유지
+        if (!showVerifyModal && !showReviewModal) {
+            setReviewReservationNumberInput("");
+            setReviewMovieId(null);
+            setReviewMovieTitleInput("");
+            
+            // 점수 초기화
+            setScoreDirection(10); 
+            setScoreStory(10); 
+            setScoreVisual(10); 
+            setScoreActor(10); 
+            setScoreOst(10);
+        }
+    }, [showVerifyModal, showReviewModal]);
+
     const openCancelModal = (reservationId: number) => {
         setCancelTargetId(reservationId);
         setCancelReason("");
@@ -444,24 +461,35 @@ export default function MyPage() {
     };
 
     const handleVerifyAndOpenReview = async () => {
-        if (!reviewReservationNumberInput.trim()) {
-        alert("예매 번호를 입력해주세요.");
-        return;
+        const resNum = reviewReservationNumberInput.trim();
+        
+        if (!resNum) {
+            alert("예매 번호를 입력해주세요.");
+            return;
         }
 
         try {
-        // 위에서 만든 백엔드 API 호출
-        const response = await axios.get(`/api/reservations/verify/${reviewReservationNumberInput}`);
-        
-        // 영화 정보 세팅
-        setReviewMovieId(response.data.movieId);
-        setReviewMovieTitleInput(response.data.movieTitle);
-        
-        // 모달 전환: 1단계 닫고 2단계 열기
-        setShowVerifyModal(false);
-        setShowReviewModal(true);
-        } catch (error) {
-        alert("유효하지 않은 예매 번호입니다. 번호를 확인해주세요.");
+            // 1단계: 예매 번호 자체가 유효한지 확인 (기존 API)
+            const response = await axios.get(`http://localhost:8080/api/reservations/verify/${resNum}`);
+            
+            // 2단계: 해당 번호로 이미 리뷰를 썼는지 확인 (새로 만든 중복 체크 API)
+            // 이 API는 이미 리뷰가 있으면 400 에러와 함께 "이미 작성된 리뷰입니다"를 던집니다.
+            await axios.get(`http://localhost:8080/api/reviews/check-availability/${resNum}`);
+            
+           //  데이터 세팅을 먼저 하고
+            setReviewMovieId(response.data.movieId);
+            setReviewMovieTitleInput(response.data.movieTitle);
+            
+            // 그 다음에 모달을 전환
+            setShowVerifyModal(false);
+            setShowReviewModal(true);
+
+        } catch (error: any) {
+            // 에러 처리 (이미 썼거나, 번호가 틀렸을 때)
+            const errorMessage = error.response?.data?.error || "유효하지 않은 예매 번호입니다. 번호를 확인해주세요.";
+            
+            alert(errorMessage);      // 1. 에러 알림창 띄우기
+            setShowVerifyModal(false); // 2. 확인 누르면 검증 모달 닫기
         }
     };
 
@@ -483,7 +511,7 @@ export default function MyPage() {
                 movieId: reviewMovieId,
                 reservationNumber: reviewReservationNumberInput,
                 content: reviewContentInput.trim(),
-                // 💡 하드코딩된 10 대신 State 값을 실어 보냅니다!
+                // 하드코딩된 10 대신 State 값을 실어 보냄
                 scoreDirection,
                 scoreStory,
                 scoreVisual,
@@ -493,7 +521,7 @@ export default function MyPage() {
 
             await axios.post('/api/reviews', reviewData);
 
-            alert("관람평이 성공적으로 등록되었습니다! 🍿");
+            alert("관람평이 성공적으로 등록되었습니다!");
             
             setShowReviewModal(false);
             // 초기화

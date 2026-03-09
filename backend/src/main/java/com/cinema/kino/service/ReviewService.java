@@ -44,6 +44,10 @@ public class ReviewService {
             throw new IllegalArgumentException("해당 영화의 예매 내역이 아닙니다.");
         }
 
+        if (reviewRepository.existsByReservationId(reservation.getId())) {
+            throw new IllegalArgumentException("이미 해당 예매 번호로 작성된 리뷰가 존재합니다.");
+        }
+
         // 3. (선택사항) 이미 이 예매 번호로 리뷰를 작성했는지 체크하면 더 좋습니다.
 
         Review review = Review.builder()
@@ -55,8 +59,22 @@ public class ReviewService {
                 .scoreOst(dto.getScoreOst())
                 .movie(movie)
                 .member(member)
+                .reservation(reservation)
                 .build();
 
         reviewRepository.save(review);
+    }
+
+    @Transactional(readOnly = true)
+    public void validateReservationForReview(String reservationNumber) {
+        // 1. 예매 번호로 예매 내역이 존재하는지 확인
+        Reservation reservation = reservationRepository.findByReservationNumber(reservationNumber)
+                .orElseThrow(() -> new IllegalArgumentException("유효하지 않은 예매 번호입니다."));
+
+        // 2. 해당 예매 ID로 이미 작성된 리뷰가 있는지 확인
+        // 💡 류진님이 아까 만든 existsByReservationId를 여기서 사용합니다!
+        if (reviewRepository.existsByReservationId(reservation.getId())) {
+            throw new IllegalArgumentException("이미 관람평을 작성한 예매 번호입니다.");
+        }
     }
 }

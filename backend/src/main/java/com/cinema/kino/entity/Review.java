@@ -25,6 +25,10 @@ public class Review {
     @JoinColumn(name = "movie_id", nullable = false)
     private Movie movie;
 
+    @OneToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "reservation_id", unique = true, nullable = false)
+    private Reservation reservation;
+
     @Builder.Default
     @Column(name = "score_direction")
     private Integer scoreDirection = 0; // 연출 (1~10)
