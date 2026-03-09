@@ -47,6 +47,7 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         // 🟢 1. 누구나 구경할 수 있는 API (팔찌 검사 안 함 - Free Pass)
                         .requestMatchers(
+                                "/api/reservations/verify/**",
                                 "/swagger-ui/**",
                                 "/swagger-ui.html",
                                 "/v3/api-docs/**",

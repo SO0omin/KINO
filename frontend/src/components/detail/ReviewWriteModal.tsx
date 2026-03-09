@@ -6,10 +6,11 @@ interface ReviewWriteModalProps {
   onClose: () => void;
   movieTitle: string;
   movieId: number;
+  reservationNumber: string;
   onSubmit: (reviewData: any) => void;
 }
 
-const ReviewWriteModal = ({ isOpen, onClose, movieTitle, movieId, onSubmit }: ReviewWriteModalProps) => {
+const ReviewWriteModal = ({ isOpen, onClose, movieTitle, movieId, reservationNumber, onSubmit }: ReviewWriteModalProps) => {
   const [scores, setScores] = useState({
     scoreDirection: 10,
     scoreStory: 10,
@@ -53,6 +54,7 @@ const ReviewWriteModal = ({ isOpen, onClose, movieTitle, movieId, onSubmit }: Re
     }
     const reviewPayload = {
       movieId: movieId,
+      reservationNumber: reservationNumber,
       content: content,
       scoreDirection: scores.scoreDirection,
       scoreStory: scores.scoreStory,

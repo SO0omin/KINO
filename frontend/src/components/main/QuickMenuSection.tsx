@@ -51,7 +51,7 @@ const QuickMenuSection = () => {
               </div>
             </Link>
 
-            <Link to="/boxoffice" className="group flex flex-col items-center text-center gap-4 p-4 hover:bg-black hover:text-white transition-all border-2 border-transparent hover:border-black">
+            <Link to="/movie-list" className="group flex flex-col items-center text-center gap-4 p-4 hover:bg-black hover:text-white transition-all border-2 border-transparent hover:border-black">
               <div className="p-3 border-2 border-black group-hover:border-white transition-colors">
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="20" height="15" x="2" y="3" rx="2"/><line x1="7" y1="3" x2="7" y2="18"/><line x1="17" y1="3" x2="17" y2="18"/><line x1="2" y1="12" x2="7" y2="12"/><line x1="2" y1="7" x2="7" y2="7"/><line x1="17" y1="12" x2="22" y2="12"/><line x1="17" y1="7" x2="22" y2="7"/></svg>
               </div>

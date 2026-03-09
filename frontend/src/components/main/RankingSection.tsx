@@ -54,7 +54,7 @@ const RankingSection = ({ movies }: RankingSectionProps) => {
                         Book Ticket
                       </button>
                       <button 
-                        onClick={() => navigate(`/movie-detail/${movie.id}`)}
+                        onClick={() => navigate(`/movies/${movie.id}`)}
                         className="w-full py-2 md:py-3 border border-white/30 text-white font-mono text-[9px] md:text-[10px] uppercase tracking-widest hover:bg-white/10 transition-colors"
                       >
                         View Details

@@ -67,13 +67,19 @@ export function MyPageModals(
     reservations,
     setWatchedMovies,
 
-    showReviewModal,
-    setShowReviewModal,
-    reviewMovieTitleInput,
-    setReviewMovieTitleInput,
-    reviewContentInput,
-    setReviewContentInput,
-    setReviews,
+    showVerifyModal, setShowVerifyModal, // 1단계 모달 제어용
+    showReviewModal, setShowReviewModal, // 2단계 모달 제어용
+    reviewReservationNumberInput, setReviewReservationNumberInput,
+    reviewMovieTitleInput, setReviewMovieTitleInput,
+    reviewContentInput, setReviewContentInput,
+    handleVerifyAndOpenReview, // 위에서 만든 검증 함수
+    handleReviewSubmit,         // 최종 제출 함수
+
+    scoreDirection, setScoreDirection,
+    scoreStory, setScoreStory,
+    scoreVisual, setScoreVisual,
+    scoreActor, setScoreActor,
+    scoreOst, setScoreOst,
 
     showCardRegisterModal,
     closeCardRegisterModal,
@@ -92,6 +98,22 @@ export function MyPageModals(
     mapCouponStatusLabel,
     formatDateTime,
   } = props;
+
+  const ScoreSelector = ({ label, value, onChange }: { label: string, value: number, onChange: (v: number) => void }) => (
+      <div className="flex flex-col items-center gap-1">
+          <span className="font-mono text-[9px] uppercase text-black/40 tracking-tighter">{label}</span>
+          <select 
+              title={`${label} 점수 선택`}
+              value={value} 
+              onChange={(e) => onChange(Number(e.target.value))}
+              className="w-full border border-black/20 bg-[#f4f1ea] text-xs font-mono p-1 outline-none focus:border-black"
+          >
+              {[10, 9, 8, 7, 6, 5, 4, 3, 2, 1].map(n => (
+                  <option key={n} value={n}>{n}</option>
+              ))}
+          </select>
+      </div>
+  );
 
   return (
     <>
@@ -236,25 +258,80 @@ export function MyPageModals(
         </div>
       ) : null}
 
-      {showReviewModal ? (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#000000]/70 px-4">
-          <div className="w-full max-w-lg rounded-sm border border-[#000000] bg-[#ffffff] p-6">
-            <h3 className="text-2xl font-semibold">관람평 작성</h3>
-            <div className="mt-4 space-y-3">
-              <input value={reviewMovieTitleInput} onChange={(e) => setReviewMovieTitleInput(e.target.value)} className="h-11 w-full border border-gray-300 px-3" placeholder="영화 제목" />
-              <textarea value={reviewContentInput} onChange={(e) => setReviewContentInput(e.target.value)} className="h-24 w-full resize-none border border-gray-300 px-3 py-2" placeholder="관람평을 입력해 주세요." />
+      {/* 💡 STEP 1: 예매 번호 확인 모달 */}
+      {showVerifyModal ? (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 px-4">
+          <div className="w-full max-w-md rounded-sm border border-black bg-white p-8 shadow-[12px_12px_0_0_#000]">
+            <h3 className="font-serif italic text-2xl mb-4 uppercase">Verification</h3>
+            <p className="font-mono text-[11px] text-black/50 mb-6 uppercase tracking-widest">
+              Enter your reservation number to record your archive.
+            </p>
+            
+            <div className="space-y-2">
+              <label htmlFor="verify-res-num" className="sr-only">예매 번호 입력</label> 
+              <input 
+                id="verify-res-num"
+                placeholder="KINO-260308-000007 형식으로 입력" 
+                value={reviewReservationNumberInput}
+                // 💡 아래처럼 작성하면 하이픈이 자동으로 대문자로 깔끔하게 써집니다!
+                onChange={(e) => setReviewReservationNumberInput(e.target.value.replace(/[^A-Za-z0-9-]/g, "").toUpperCase())}
+                className="w-full border-2 border-black p-3 font-mono text-sm mb-2 outline-none focus:bg-yellow-50"
+              />
+              <p className="font-mono text-[9px] text-black/40 uppercase tracking-tight">
+                * Hyphens are required. (ex: KINO-XXXXXX-XXXXXX)
+              </p>
             </div>
-            <div className="mt-5 flex justify-end gap-2">
-              <button className="rounded border border-gray-300 px-4 py-2" onClick={() => setShowReviewModal(false)}>취소</button>
-              <button className="rounded bg-[#eb4d32] px-4 py-2 text-[#ffffff]" onClick={() => {
-                if (!reviewMovieTitleInput.trim() || !reviewContentInput.trim()) { alert("영화 제목과 관람평을 입력해 주세요."); return; }
-                setReviews((prev: any[]) => [{ id: `rv-${Date.now()}`, movieTitle: reviewMovieTitleInput.trim(), content: reviewContentInput.trim(), createdAt: new Date().toISOString() }, ...prev]);
-                setShowReviewModal(false); setReviewMovieTitleInput(""); setReviewContentInput("");
-              }}>등록</button>
+
+            <div className="flex gap-3">
+              <button className="flex-1 py-3 border-2 border-black font-bold text-xs" onClick={() => setShowVerifyModal(false)}>CANCEL</button>
+              <button className="flex-1 py-3 bg-black text-white font-bold text-xs shadow-[4px_4px_0_0_#eb4d32]" onClick={handleVerifyAndOpenReview}>VERIFY</button>
             </div>
           </div>
         </div>
       ) : null}
+
+      {/* 💡 STEP 2: 리뷰 작성 모달 */}
+      {showReviewModal ? (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 px-4">
+            <div className="w-full max-w-lg rounded-sm border border-black bg-white p-8 shadow-[12px_12px_0_0_#000]">
+                <h3 className="font-serif italic text-3xl mb-6 uppercase">Review Ledger</h3>
+                
+                <div className="space-y-6">
+                    {/* 영화 제목 정보 */}
+                    <div className="space-y-2">
+                        <label className="font-mono text-[10px] uppercase tracking-widest text-black/40">Verified Movie</label>
+                        <input value={reviewMovieTitleInput} readOnly className="w-full border-2 border-black/10 p-3 bg-gray-50 text-sm font-bold" />
+                    </div>
+
+                    {/* 💡 신규: 5가지 항목 점수 선택 영역 */}
+                    <div className="grid grid-cols-5 gap-3 p-4 bg-[#f4f1ea]/50 border border-black/5 rounded-sm">
+                        <ScoreSelector label="Direction" value={scoreDirection} onChange={setScoreDirection} />
+                        <ScoreSelector label="Story" value={scoreStory} onChange={setScoreStory} />
+                        <ScoreSelector label="Visual" value={scoreVisual} onChange={setScoreVisual} />
+                        <ScoreSelector label="Actor" value={scoreActor} onChange={setScoreActor} />
+                        <ScoreSelector label="OST" value={scoreOst} onChange={setScoreOst} />
+                    </div>
+
+                    {/* 관람평 텍스트 */}
+                    <div className="space-y-2">
+                        <label className="font-mono text-[10px] uppercase tracking-widest text-black/40">Commentary</label>
+                        <textarea 
+                            value={reviewContentInput}
+                            onChange={(e) => setReviewContentInput(e.target.value)}
+                            className="w-full border-2 border-black p-3 h-28 resize-none text-sm outline-none focus:bg-yellow-50" 
+                            placeholder="영화를 보며 느낀 감정을 기록하세요." 
+                        />
+                    </div>
+                </div>
+
+                <div className="mt-8 flex gap-4">
+                    <button className="flex-1 py-3 border-2 border-black font-bold" onClick={() => setShowReviewModal(false)}>BACK</button>
+                    <button className="flex-1 py-3 bg-black text-white font-bold shadow-[4px_4px_0_0_#eb4d32]" onClick={handleReviewSubmit}>SUBMIT REVIEW</button>
+                </div>
+            </div>
+        </div>
+    ) : null}
+
 
       {showCardRegisterModal ? (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#000000]/70 px-4">

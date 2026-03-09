@@ -157,7 +157,6 @@ export function ProfileSection({
             <button className="rounded border border-gray-300 px-3 py-2" onClick={() => setShowPasswordChangeModal(true)}>
               비밀번호 변경
             </button>
-            <span>마지막 비밀번호 변경: 57일전에 함</span>
           </div>
         </div>
       </div>
