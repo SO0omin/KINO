@@ -59,17 +59,6 @@ const SignupPage: React.FC = () => {
     }
   }, [socialData]);
 
-  const handleMemberChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    setMemberData(prev => ({ ...prev, [name]: value }));
-    if (name === 'username') setIsUsernameChecked(false); 
-  };
-
-  const handleGuestChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    setGuestData(prev => ({ ...prev, [name]: value }));
-  };
-
   const closeAlert = () => setIsAlertOpen(false);
   const closeDuplicateModal = () => setIsDuplicateModalOpen(false);
 
@@ -77,6 +66,82 @@ const SignupPage: React.FC = () => {
     setAlertMessage(message);
     setIsAlertOpen(true);
   };
+
+  // 1. 전화번호 포맷팅 함수 (3자리-4자리-4자리)
+  const formatTel = (value: string) => {
+    const target = value.replace(/[^0-9]/g, '').slice(0, 11);
+    if (target.length <= 3) return target;
+    if (target.length <= 7) return `${target.slice(0, 3)}-${target.slice(3)}`;
+    return `${target.slice(0, 3)}-${target.slice(3, 7)}-${target.slice(7)}`;
+  };
+
+  const handleMemberChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    let finalValue = value;
+
+    // 전화번호는 자동 하이픈 적용
+    if (name === 'tel') {
+      finalValue = formatTel(value);
+    }
+
+    setMemberData(prev => ({ ...prev, [name]: finalValue }));
+    
+    // 비밀번호 입력 시 검증 로직 실행
+    if (name === 'password') {
+      validatePassword(finalValue);
+    }
+    // 아이디 변경 시 중복체크 초기화
+    if (name === 'username') {
+      setIsUsernameChecked(false);
+    }
+  };
+
+  // --- 💡 통합 핸들러: 비회원용 (전화번호 하이픈) ---
+  const handleGuestChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    let finalValue = value;
+
+    if (name === 'guestTel') {
+      finalValue = formatTel(value);
+    }
+
+    setGuestData(prev => ({ ...prev, [name]: finalValue }));
+  };
+
+  // 1. 비밀번호 조건 체크를 위한 상태 추가 (SignupPage 컴포넌트 내부)
+  const [pwValidation, setPwValidation] = useState({
+    length: false,
+    english: false,
+    number: false,
+    special: false,
+    noPersonal: true, // 개인정보 포함 여부
+  });
+
+  // 2. 실시간 검증 함수
+  const validatePassword = (password: string) => {
+    const specChars = /[`~!@#$%^&*|'";:\₩\\?]/;
+    const isLength = password.length >= 8 && password.length <= 20;
+    const hasEnglish = /[a-zA-Z]/.test(password);
+    const hasNumber = /[0-9]/.test(password);
+    const hasSpecial = specChars.test(password);
+
+    // 개인정보 포함 여부 체크 (아이디, 전화번호, 생년월일 일부 포함 금지)
+    const cleanTel = memberData.tel.replace(/[^0-9]/g, "");
+    const isPersonalSafe = 
+      !password.includes(memberData.username) && // 아이디 포함 금지
+      (cleanTel.length < 4 || !password.includes(cleanTel.slice(-4))) && // 뒷자리 금지
+      (cleanTel.length < 8 || !password.includes(cleanTel.slice(3, 7))) && // 중간자리(010-'1234'-5678) 금지
+      !password.includes(memberData.birth_date.replace(/-/g, "")); // 생년월일 금지
+
+    setPwValidation({
+      length: isLength,
+      english: hasEnglish,
+      number: hasNumber,
+      special: hasSpecial,
+      noPersonal: isPersonalSafe
+    });
+  };
+
 
   const handleUsernameCheck = async () => {
     if (!memberData.username) {
@@ -107,6 +172,13 @@ const SignupPage: React.FC = () => {
         showAlert("아이디 중복 체크를 진행해주세요.");
         return;
       }
+
+      const { length, english, number, special, noPersonal } = pwValidation;
+      if (!length || !english || !number || !special || !noPersonal) {
+        showAlert("비밀번호 설정 조건을 모두 만족해야 합니다.");
+        return;
+      }
+
       if (memberData.password !== memberData.confirmPassword) {
         showAlert("비밀번호가 일치하지 않습니다.");
         return;
@@ -227,10 +299,40 @@ const SignupPage: React.FC = () => {
                 <label className={labelClass}>비밀번호</label>
                 <input type="password" name="password" value={memberData.password} onChange={handleMemberChange} required className={inputClass} placeholder="비밀번호를 입력해주세요" />
               </div>
+              <div className="mt-1 px-1">
+                <p className="text-[10px] text-gray-400 font-mono leading-tight">
+                  사용 가능 특수문자: <span className="text-gray-600 bg-gray-100 px-1 rounded">` ~ ! @ # $ % ^ & * | ' " ; : ₩ \ ?</span>
+                </p>
+              </div>
+
+              <div className="mt-2 space-y-1 text-xs font-medium">
+                <p className={pwValidation.length ? "text-green-600" : "text-red-500"}>
+                  {pwValidation.length ? "✓" : "○"} 8 ~ 20자 사이 입력
+                </p>
+                <p className={(pwValidation.english && pwValidation.number && pwValidation.special) ? "text-green-600" : "text-red-500"}>
+                  { (pwValidation.english && pwValidation.number && pwValidation.special) ? "✓" : "○"} 영문 대소문자, 숫자, 특수문자 조합
+                </p>
+                <p className={pwValidation.noPersonal ? "text-green-600" : "text-red-500"}>
+                  {pwValidation.noPersonal ? "✓" : "○"} 아이디/전화번호/생년월일 포함 금지
+                </p>
+              </div>
 
               <div>
                 <label className={labelClass}>비밀번호 확인</label>
                 <input type="password" name="confirmPassword" value={memberData.confirmPassword} onChange={handleMemberChange} required className={inputClass} placeholder="비밀번호를 다시 한 번 입력해주세요" />
+                {memberData.confirmPassword.length > 0 && (
+                  <div className="mt-1 px-1 transition-all animate-[fadeIn_0.2s_ease-in-out]">
+                    {memberData.password === memberData.confirmPassword ? (
+                      <p className="text-green-600 text-[11px] font-bold flex items-center gap-1">
+                        ✓ 비밀번호 일치해요!
+                      </p>
+                    ) : (
+                      <p className="text-red-500 text-[11px] font-bold flex items-center gap-1">
+                        ✘ 비밀번호가 서로 달라요. 다시 확인해 주세요!
+                      </p>
+                    )}
+                  </div>
+                )}
               </div>
 
               <div className="border-t border-gray-100 my-2"></div>
@@ -282,7 +384,15 @@ const SignupPage: React.FC = () => {
           )}
 
           <div className="mt-4">
-            <button type="submit" className="w-full bg-[#eb4d32] text-white font-bold py-3 rounded hover:bg-[#d4452d] transition-colors">
+            <button 
+              type="submit" 
+              disabled={activeTab === 'MEMBER' && Object.values(pwValidation).includes(false)}
+              className={`w-full font-bold py-3 rounded transition-colors ${
+                activeTab === 'MEMBER' && Object.values(pwValidation).includes(false)
+                  ? "bg-gray-300 cursor-not-allowed" 
+                  : "bg-[#eb4d32] text-white hover:bg-[#d4452d]"
+              }`}
+            >
               {activeTab === 'MEMBER' ? '가입 완료하기' : '비회원 등록하기'}
             </button>
           </div>
