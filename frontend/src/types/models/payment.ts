@@ -81,11 +81,18 @@ export interface PaymentData {
    * 성인 인원 수
    */
   adultCount: number;
+  youthCount: number;
+  seniorCount: number;
+  specialCount: number;
+  
 
   /**
    * 성인 1인 가격 (UI 표시용)
    */
   adultPrice: number;
+  youthPrice: number;
+  seniorPrice: number;
+  speciaPrice: number;
 
   /**
    * 할인 전 총 금액 (UI 계산값)

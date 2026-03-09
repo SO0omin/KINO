@@ -39,6 +39,20 @@ public class MyPageController {
         return ResponseEntity.ok(myPageService.updateMemberProfile(request));
     }
 
+    @DeleteMapping("/profile/delete")
+    public ResponseEntity<?> deleteProfile(@AuthenticationPrincipal Long memberId) {
+        // 💡 이 로그를 서버 콘솔에서 확인하세요!
+        System.out.println("🚨 [DEBUG] 컨트롤러에 도착한 memberId: " + memberId);
+
+        if (memberId == null) {
+            // ID가 없으면 서비스로 넘기지 말고 여기서 바로 에러를 뱉게 하세요.
+            return ResponseEntity.status(401).body("인증 정보(ID)를 찾을 수 없습니다.");
+        }
+
+        myPageService.deleteMember(memberId);
+        return ResponseEntity.ok("탈퇴 완료");
+    }
+
     @PostMapping("/profile/password")
     public ResponseEntity<MyPageDTO.MessageResponse> updateProfilePassword(
             @RequestBody MyPageDTO.MemberPasswordUpdateRequest request

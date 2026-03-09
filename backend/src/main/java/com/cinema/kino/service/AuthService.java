@@ -31,7 +31,6 @@ public class AuthService {
     private final PasswordResetTokenRepository passwordResetTokenRepository;
     private final MailService mailService;
     private final PasswordEncoder passwordEncoder;
-    private final JavaMailSender mailSender;
     private final JwtUtil jwtUtil;
 
     // 회원가입
