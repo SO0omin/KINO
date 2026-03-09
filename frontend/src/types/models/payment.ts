@@ -21,7 +21,7 @@ export interface BookingData {
   dateTime: string;
   theater: string;
   screenName?: string; // 예: "1관"
-  ticketType: string;
+  seatNamesText: string;
   posterUrl?: string;
 
   /**

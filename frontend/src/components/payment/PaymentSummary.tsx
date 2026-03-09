@@ -33,23 +33,53 @@ export function PaymentSummary({
   return (
     <div className="w-[340px]">
       <div className="bg-white border-2 border-gray-300 rounded-lg p-6 sticky top-4">
-        <h2 className="text-xl mb-6">결제금액</h2>
+      <h2 className="text-xl mb-6">결제금액</h2>
 
-        <div className="bg-[#f5e6d3] rounded-lg p-4 mb-3">
-          <div className="space-y-3">
-            <div className="flex justify-between">
-              <span>인원</span>
-              <span>{paymentData.adultCount}</span>
+      <div className="bg-[#f5e6d3] rounded-lg p-4 mb-3">
+        <div className="space-y-3">
+          
+          {/* 💡 1. 성인 내역 */}
+          {paymentData.adultCount > 0 && (
+            <div className="flex justify-between text-gray-700">
+              <span>성인 {paymentData.adultCount}명</span>
+              <span>{(paymentData.adultCount * paymentData.adultPrice).toLocaleString()}원</span>
             </div>
+          )}
 
-            <div className="h-px bg-gray-300"></div>
-
-            <div className="flex justify-between">
-              <span>금액</span>
-              <span>{paymentData.totalAmount.toLocaleString()}원</span>
+          {/* 💡 2. 청소년 내역 */}
+          {paymentData.youthCount > 0 && (
+            <div className="flex justify-between text-gray-700">
+              <span>청소년 {paymentData.youthCount}명</span>
+              <span>{(paymentData.youthCount * paymentData.youthPrice).toLocaleString()}원</span>
             </div>
+          )}
+
+          {/* 💡 3. 경로 내역 */}
+          {paymentData.seniorCount > 0 && (
+            <div className="flex justify-between text-gray-700">
+              <span>경로 {paymentData.seniorCount}명</span>
+              <span>{(paymentData.seniorCount * paymentData.seniorPrice).toLocaleString()}원</span>
+            </div>
+          )}
+
+          {/* 💡 4. 우대 내역 */}
+          {paymentData.specialCount > 0 && (
+            <div className="flex justify-between text-gray-700">
+              <span>우대 {paymentData.specialCount}명</span>
+              <span>{(paymentData.specialCount * paymentData.speciaPrice).toLocaleString()}원</span>
+            </div>
+          )}
+
+          <div className="h-px bg-gray-400"></div>
+
+          {/* 💡 5. 총 합계 금액 */}
+          <div className="flex justify-between font-bold text-lg text-gray-900">
+            <span>총 금액</span>
+            <span>{paymentData.totalAmount.toLocaleString()}원</span>
           </div>
+          
         </div>
+      </div>
 
         <div className="flex justify-center -my-3 relative z-10">
           <div className="w-8 h-8 rounded-full bg-[#eb4d32] flex items-center justify-center">
