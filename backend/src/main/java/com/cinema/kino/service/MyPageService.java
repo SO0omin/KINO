@@ -142,6 +142,21 @@ public class MyPageService {
     }
 
     @Transactional
+    public void deleteMember(Long memberId) {
+        Member member = memberRepository.findById(memberId)
+                .orElseThrow(() -> new IllegalArgumentException("회원을 찾을 수 없습니다."));
+
+        // 1. 소셜 연동 정보는 즉시 삭제 (개인정보 보호)
+        socialAccountRepository.deleteByMemberId(memberId);
+
+        // 2. 민감한 개인정보는 싹 다 밀어버리기 (비식별화)
+        member.withdrawMember(); // 엔티티 내부에 만든 메서드 호출
+
+        // 3. 상태값만 '탈퇴'로 변경하여 보관
+        memberRepository.save(member);
+    }
+
+    @Transactional
     public MyPageDTO.MessageResponse updateMemberProfile(MyPageDTO.MemberProfileUpdateRequest request) {
         if (request == null || request.getMemberId() == null) {
             throw new IllegalArgumentException("memberId는 필수입니다.");

@@ -35,6 +35,7 @@ public class JwtFilter extends OncePerRequestFilter {
 
             // 3. 진짜 팔찌라면, 팔찌에 적힌 이름(username)을 읽어옵니다.
             String username = jwtUtil.getUsername(token);
+            Long memberId = jwtUtil.getMemberId(token);
 
             // 4. 스프링 보안요원이 알아먹을 수 있는 형태(Authentication)로 포장합니다.
             UserDetails userDetails = User.builder()
@@ -44,11 +45,11 @@ public class JwtFilter extends OncePerRequestFilter {
                     .build();
 
             UsernamePasswordAuthenticationToken authentication =
-                    new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
+                    new UsernamePasswordAuthenticationToken(memberId, null, userDetails.getAuthorities());
 
-            // 5. "이 손님은 검사 통과했어!" 하고 스프링 시큐리티 상황판(Context)에 등록합니다.
+           // 5. 상황판에 등록
             SecurityContextHolder.getContext().setAuthentication(authentication);
-            log.info("✅ 토큰 검사 통과! 접속한 유저: {}", username);
+            log.info("✅ 토큰 검사 통과! 접속한 유저 ID: {}", memberId);
         }
 
         // 6. 다음 목적지(Controller)나 다음 필터로 손님을 들여보냅니다. (이 줄이 없으면 멈춰버림!)

@@ -72,6 +72,17 @@ export default function PaymentPage() {
   // 추가: 보유 포인트
   const [availablePoints, setAvailablePoints] = useState<number>(0);
 
+  const typeCounts = useMemo(() => {
+    const counts = { ADULT: 0, YOUTH: 0, SENIOR: 0, SPECIAL: 0 };
+    if (!reservationDetail) return counts;
+
+    reservationDetail.seats.forEach((seat) => {
+      const type = normalizePriceType(seat.priceType);
+      counts[type]++;
+    });
+    return counts;
+  }, [reservationDetail]);
+
   useEffect(() => {
     if (reservationId) fetchReservationDetail(reservationId);
   }, [reservationId, fetchReservationDetail]);
@@ -248,8 +259,14 @@ export default function PaymentPage() {
 
   const paymentData: PaymentData = {
     reservationId: reservationId,
-    adultCount: reservationDetail.seats.length,
+    adultCount: typeCounts.ADULT,
+    youthCount: typeCounts.YOUTH,
+    seniorCount: typeCounts.SENIOR,
+    specialCount: typeCounts.SPECIAL,
     adultPrice: reservationDetail.seats.length ? baseTotal / reservationDetail.seats.length : 0,
+    youthPrice: reservationDetail.seats.length ? baseTotal / reservationDetail.seats.length : 0,
+    seniorPrice: reservationDetail.seats.length ? baseTotal / reservationDetail.seats.length : 0,
+    speciaPrice: reservationDetail.seats.length ? baseTotal / reservationDetail.seats.length : 0,
     totalAmount: baseTotal,
     discountAmount: totalDiscount,
     finalAmount: currentFinalAmount,
@@ -257,6 +274,7 @@ export default function PaymentPage() {
     memberId: reservationDetail.memberId || null,
     guestId: reservationDetail.guestId || null,
   };
+  
 
   // console.log("🚨 서버에서 온 예약 상세 데이터:", reservationDetail); 디버깅용
   const handleBack = () => {
