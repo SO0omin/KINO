@@ -35,7 +35,7 @@ const NaverCallbackPage = () => {
       axios.post('/api/auth/naver', { code, state })
         .then(res => {
           const data = res.data;
-          console.log("네이버 서버 응답 데이터:", data);
+          //console.log("네이버 서버 응답 데이터:", data);
 
           if (data.isRegistered) {
             // 기존 회원: 토큰 저장하고 메인으로 이동

@@ -197,6 +197,16 @@ export async function updateMemberProfile(payload: MemberProfileUpdateRequest) {
   }
 }
 
+export async function deleteMember() { // 💡 ID를 인자로 받을 필요 없음 (토큰 사용)
+  try {
+    // 💡 .delete 메서드 사용 & 경로 오타 수정
+    const response = await api.delete(`/api/mypage/profile/delete`); 
+    return response.data;
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || '회원 탈퇴에 실패했습니다.');
+  }
+}
+
 export async function updateMemberPassword(payload: MemberPasswordUpdateRequest) {
   try {
     const response = await api.post(`/api/mypage/profile/password`, payload);

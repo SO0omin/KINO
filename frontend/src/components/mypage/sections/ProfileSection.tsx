@@ -1,4 +1,5 @@
-import type { MemberProfile } from "../../../api/myPageApi";
+import { type MemberProfile, deleteMember} from "../../../api/myPageApi";
+import { useAuth } from "../../../contexts/AuthContext";
 
 type ProfileSectionProps = {
   profileImageUrl: string;
@@ -26,6 +27,7 @@ type ProfileSectionProps = {
   loadMemberProfile: () => Promise<void>;
 };
 
+
 export function ProfileSection({
   profileImageUrl,
   setProfileImageUrl,
@@ -51,6 +53,27 @@ export function ProfileSection({
   toggleSocialLink,
   loadMemberProfile,
 }: ProfileSectionProps) {
+
+  const { logout } = useAuth();
+
+  const handleWithdraw = async () => {
+  console.log("1. 탈퇴 버튼 클릭됨!"); // 💡 이게 찍히는지 먼저 확인!
+
+  if (!window.confirm("정말로 탈퇴하시겠습니까?")) return;
+
+  try {
+    console.log("2. API 호출 직전...");
+    await deleteMember();
+    console.log("3. API 호출 성공!");
+
+    logout();
+    alert("탈퇴 완료!");
+    window.location.href = '/'; 
+  } catch (error: any) {
+    console.error("4. 에러 발생:", error);
+    alert(error.message);
+  }
+};
   return (
     <section>
       <h1 className="text-4xl font-semibold text-[#000000]">개인정보 수정</h1>
@@ -85,7 +108,12 @@ export function ProfileSection({
             <span className="text-xs text-gray-400">개인정보가 포함된 이미지는 등록하지 마시기 바랍니다.</span>
           </div>
           <div className="px-4 text-right">
-            <button className="rounded border border-[#eb4d32] px-4 py-2 text-sm text-[#eb4d32]">회원탈퇴</button>
+            <button 
+              onClick={handleWithdraw} // 💡 클릭 이벤트 연결
+              className="rounded border border-[#eb4d32] px-4 py-2 text-sm text-[#eb4d32] hover:bg-[#eb4d32] hover:text-white transition-colors"
+            >
+              회원탈퇴
+            </button>
           </div>
         </div>
 
@@ -251,15 +279,6 @@ export function ProfileSection({
             </div>
           );
         })}
-      </div>
-
-      <h2 className="mt-8 text-4xl font-semibold text-[#eb4d32]">스페셜 멤버십 가입내역</h2>
-      <div className="mt-3 overflow-hidden rounded-sm border border-gray-200 bg-[#ffffff]">
-        <div className="grid grid-cols-[170px_1fr_auto] items-center px-4 py-3 text-sm">
-          <span className="font-semibold">가입정보</span>
-          <span className="text-gray-500">가입된 스페셜 멤버십이 없습니다.</span>
-          <button className="rounded bg-[#000000] px-4 py-2 text-xs text-[#ffffff]">스페셜 멤버십 가입 안내</button>
-        </div>
       </div>
 
       <div className="mt-10 flex justify-center gap-3">

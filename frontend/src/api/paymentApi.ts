@@ -81,9 +81,9 @@ export async function getMyCoupons(
 
 export async function getMyPoints(memberId: number) {
   try {
-    const response = await api.get(`/api/points?memberId=${memberId}`);
-    return response.data;
-  } catch (error) {
-    return 0; 
+    const response = await api.get(`/api/mypage/summary?memberId=${memberId}`);
+    return Number(response.data?.availablePoints ?? 0);
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || '포인트 조회 실패');
   }
 }
