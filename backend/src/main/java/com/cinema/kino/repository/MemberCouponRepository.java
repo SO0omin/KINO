@@ -67,20 +67,37 @@ public interface MemberCouponRepository extends JpaRepository<MemberCoupon, Long
     SELECT mc FROM MemberCoupon mc
     WHERE mc.id = :id
       AND mc.member.id = :memberId
-      AND mc.status = com.cinema.kino.entity.enums.MemberCouponStatus.AVAILABLE
       AND mc.isUsed = false
       AND mc.expiresAt > CURRENT_TIMESTAMP
+      AND (
+        mc.status = com.cinema.kino.entity.enums.MemberCouponStatus.AVAILABLE
+        OR (
+          mc.status = com.cinema.kino.entity.enums.MemberCouponStatus.HELD
+          AND mc.reservation.id = :reservationId
+        )
+        OR (
+          mc.status = com.cinema.kino.entity.enums.MemberCouponStatus.HELD
+          AND (mc.holdExpiresAt IS NULL OR mc.holdExpiresAt < CURRENT_TIMESTAMP)
+        )
+      )
 """)
     Optional<MemberCoupon> findHoldableCouponForUpdate(@Param("id") Long id,
-                                                       @Param("memberId") Long memberId);
+                                                       @Param("memberId") Long memberId,
+                                                       @Param("reservationId") Long reservationId);
 
     @Query("""
     SELECT mc FROM MemberCoupon mc
     JOIN FETCH mc.coupon c
     WHERE mc.member.id = :memberId
-      AND mc.status = com.cinema.kino.entity.enums.MemberCouponStatus.AVAILABLE
       AND mc.isUsed = false
       AND mc.expiresAt > CURRENT_TIMESTAMP
+      AND (
+        mc.status = com.cinema.kino.entity.enums.MemberCouponStatus.AVAILABLE
+        OR (
+          mc.status = com.cinema.kino.entity.enums.MemberCouponStatus.HELD
+          AND (mc.holdExpiresAt IS NULL OR mc.holdExpiresAt < CURRENT_TIMESTAMP)
+        )
+      )
     ORDER BY mc.expiresAt ASC
 """)
     List<MemberCoupon> findAvailableCouponsByMemberId(@Param("memberId") Long memberId);
