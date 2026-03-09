@@ -16,6 +16,8 @@ export interface CouponDTO {
   discountType: string;
   discountValue: number;
   minPrice: number;
+  sourceType?: string;
+  couponKind?: string;
 }
 
 export interface ReviewSummary {

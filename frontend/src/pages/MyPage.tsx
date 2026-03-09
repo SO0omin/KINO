@@ -6,6 +6,8 @@ import axios from 'axios';
 import { KAKAO_AUTH_URL, NAVER_AUTH_URL, GOOGLE_AUTH_URL } from "../constants/socialAuth";
 import {
     cancelReservation,
+    downloadSelectedCoupons,
+    getDownloadableCoupons,
     redeemCoupon,
     registerMembershipCard,
     sendPointPasswordSms,
@@ -146,6 +148,10 @@ export default function MyPage() {
     const [couponSourceFilter, setCouponSourceFilter] = useState<CouponSourceFilter>("전체");
     const [couponStatusFilter, setCouponStatusFilter] = useState<CouponStatusFilter>("available");
     const [couponHiddenOnly, setCouponHiddenOnly] = useState(false);
+    const [appliedCouponKindFilter, setAppliedCouponKindFilter] = useState<CouponKindFilter>("전체");
+    const [appliedCouponSourceFilter, setAppliedCouponSourceFilter] = useState<CouponSourceFilter>("전체");
+    const [appliedCouponStatusFilter, setAppliedCouponStatusFilter] = useState<CouponStatusFilter>("available");
+    const [appliedCouponHiddenOnly, setAppliedCouponHiddenOnly] = useState(false);
     const [showCouponRegisterModal, setShowCouponRegisterModal] = useState(false);
     const [couponRegisterCode, setCouponRegisterCode] = useState("");
     const [couponRegistering, setCouponRegistering] = useState(false);
@@ -567,12 +573,19 @@ export default function MyPage() {
     const filteredCoupons = useMemo(() => {
         return filterCoupons(couponItems, {
             tab: couponTab,
-            kind: couponKindFilter,
-            source: couponSourceFilter,
-            status: couponStatusFilter,
-            hiddenOnly: couponHiddenOnly,
+            kind: appliedCouponKindFilter,
+            source: appliedCouponSourceFilter,
+            status: appliedCouponStatusFilter,
+            hiddenOnly: appliedCouponHiddenOnly,
         });
-    }, [couponItems, couponTab, couponKindFilter, couponStatusFilter, couponSourceFilter, couponHiddenOnly]);
+    }, [couponItems, couponTab, appliedCouponKindFilter, appliedCouponStatusFilter, appliedCouponSourceFilter, appliedCouponHiddenOnly]);
+
+    const applyCouponFilters = () => {
+        setAppliedCouponKindFilter(couponKindFilter);
+        setAppliedCouponSourceFilter(couponSourceFilter);
+        setAppliedCouponStatusFilter(couponStatusFilter);
+        setAppliedCouponHiddenOnly(couponHiddenOnly);
+    };
 
     const openCouponRegisterModal = () => {
         setCouponRegisterCode("");
@@ -603,7 +616,7 @@ export default function MyPage() {
         setCouponRegisterError("");
         try {
             await redeemCoupon(memberId, couponRegisterCode);
-            await loadCoupons();
+            await Promise.all([loadCoupons(), load()]);
             closeCouponRegisterModal();
             alert("할인쿠폰 등록이 완료되었습니다.");
         } catch (error: any) {
@@ -611,6 +624,25 @@ export default function MyPage() {
         } finally {
             setCouponRegistering(false);
         }
+    };
+
+    const fetchDownloadableCouponsForCurrentTab = async () => {
+        if (memberId <= 0) {
+            throw new Error("회원 로그인 후 이용해 주세요.");
+        }
+        const sourceType = couponTab === "partner" ? "PARTNER" : "KINO";
+        const result = await getDownloadableCoupons(memberId, sourceType);
+        return result.coupons ?? [];
+    };
+
+    const downloadSelectedCouponsForCurrentTab = async (couponIds: number[]) => {
+        if (memberId <= 0) {
+            throw new Error("회원 로그인 후 이용해 주세요.");
+        }
+        const sourceType = couponTab === "partner" ? "PARTNER" : "KINO";
+        const result = await downloadSelectedCoupons(memberId, sourceType, couponIds);
+        await Promise.all([loadCoupons(), load()]);
+        return result;
     };
 
     const openCardRegisterModal = () => {
@@ -659,9 +691,8 @@ export default function MyPage() {
     };
 
     const formatCouponCodeForModal = (code: string) => {
-        const cleaned = (code ?? "").replace(/[^0-9A-Za-z]/g, "");
-        if (cleaned.length < 8) return code || "-";
-        return cleaned.match(/.{1,4}/g)?.join("-") ?? cleaned;
+        const normalized = (code ?? "").trim();
+        return normalized || "-";
     };
 
     const { active: activeReservations, cancelled: cancelledReservations } = splitReservations(reservations);
@@ -1260,6 +1291,9 @@ export default function MyPage() {
             filteredCoupons={filteredCoupons}
             mapCouponStatusLabel={mapCouponStatusLabel}
             openCouponInfoModal={openCouponInfoModal}
+            fetchDownloadableCouponsForCurrentTab={fetchDownloadableCouponsForCurrentTab}
+            downloadSelectedCouponsForCurrentTab={downloadSelectedCouponsForCurrentTab}
+            applyCouponFilters={applyCouponFilters}
         />
     );
 

@@ -1,3 +1,5 @@
+import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../../contexts/AuthContext';
 import type { CouponDTO } from '../../types/main';
 
 interface BenefitSectionProps {
@@ -5,14 +7,68 @@ interface BenefitSectionProps {
 }
 
 const BenefitSection = ({ coupons }: BenefitSectionProps) => {
+  const navigate = useNavigate();
+  const { isLoggedIn } = useAuth();
   if (!coupons || coupons.length === 0) return null;
+
+  const isPointCoupon = (coupon: CouponDTO) => {
+    const kind = (coupon.couponKind || '').trim();
+    const name = (coupon.name || '').trim();
+    return kind === '포인트' || name.includes('포인트');
+  };
+
+  const inferCouponKind = (coupon: CouponDTO) => {
+    const rawKind = (coupon.couponKind || '').trim();
+    if (rawKind) return rawKind;
+    const name = (coupon.name || '').trim();
+    if (name.includes('포인트')) return '포인트';
+    if (name.includes('포토')) return '포토카드';
+    if (name.includes('매점') || name.includes('스토어')) return '매점';
+    if (name.includes('매표') || name.includes('영화')) return '매표';
+    return '기타';
+  };
+
+  const displaySourceLabel = (coupon: CouponDTO) => {
+    const source = (coupon.sourceType || '').toUpperCase();
+    if (source === 'PARTNER') return '제휴';
+    return '키노';
+  };
+
+  const displayCouponName = (coupon: CouponDTO) => {
+    const rawName = (coupon.name || '').trim();
+    const baseName = rawName.replace(/^(키노|제휴)\s*/, '');
+    if ((coupon.sourceType || '').toUpperCase() === 'PARTNER') {
+      return `제휴 ${baseName}`;
+    }
+    return baseName || rawName;
+  };
+
+  const formatDiscount = (coupon: CouponDTO) => {
+    if (isPointCoupon(coupon)) {
+      return `${coupon.discountValue.toLocaleString()}P`;
+    }
+    const discountType = coupon.discountType;
+    const discountValue = coupon.discountValue;
+    if (discountType === 'RATE') {
+      return `${discountValue.toLocaleString()}%`;
+    }
+    return `₩${discountValue.toLocaleString()}`;
+  };
+
+  const handleCollectNow = () => {
+    if (isLoggedIn) {
+      navigate('/mypage/coupons');
+      return;
+    }
+    navigate('/login');
+  };
 
   return (
     <section className="py-24 relative overflow-hidden">
       <div className="max-w-7xl mx-auto px-10 relative z-10">
         {/* Header */}
         <div className="mb-16 flex flex-col items-center text-center">
-          <span className="font-typewriter text-[10px] text-black/40 tracking-[0.6em] uppercase mb-4">Patron Privileges</span>
+          <span className="font-typewriter text-[10px] text-black/40 tracking-[0.6em] uppercase mb-4">쿠폰 혜택</span>
           <h2 className="font-serif text-5xl italic tracking-tighter text-black uppercase">
             Exclusive <span className="text-white bg-black px-4 py-1">Vouchers</span>
           </h2>
@@ -35,18 +91,19 @@ const BenefitSection = ({ coupons }: BenefitSectionProps) => {
 
                     <div className="space-y-2">
                       <h3 className="font-serif text-2xl italic text-white uppercase leading-tight">
-                        {coupon.name}
+                        {displayCouponName(coupon)}
                       </h3>
+                      <p className="font-mono text-[9px] text-white/50 tracking-widest uppercase">
+                        {displaySourceLabel(coupon)} • {inferCouponKind(coupon)}
+                      </p>
                       <div className="h-px w-12 bg-white/20"></div>
                     </div>
 
                     <div className="flex items-baseline gap-1">
                       <span className="font-mono text-4xl font-black italic text-white">
-                        {coupon.discountType === 'AMOUNT' ? '₩' : ''}
-                        {coupon.discountValue.toLocaleString()}
-                        {coupon.discountType === 'PERCENT' ? '%' : ''}
+                        {formatDiscount(coupon)}
                       </span>
-                      <span className="font-typewriter text-[10px] text-white/40 uppercase ml-1">Off</span>
+                      <span className="font-typewriter text-[10px] text-white/40 uppercase ml-1">혜택</span>
                     </div>
                   </div>
                 </div>
@@ -57,25 +114,30 @@ const BenefitSection = ({ coupons }: BenefitSectionProps) => {
 
                     <div className="space-y-4">
                       <div className="pb-3 border-b border-black/10 flex justify-between items-center">
-                        <span className="text-black/40 text-[8px] font-mono tracking-widest uppercase">Terms of Use</span>
-                        <span className="text-black/40 text-[8px] font-mono uppercase tracking-widest">KINO VIP</span>
+                        <span className="text-black/40 text-[8px] font-mono tracking-widest uppercase">이용 안내</span>
+                        <span className="text-black/40 text-[8px] font-mono uppercase tracking-widest">KINO 쿠폰</span>
                       </div>
 
                       <div className="space-y-3">
                         <p className="font-typewriter text-[11px] text-black/80 leading-relaxed">
-                          Valid for single use only. <br/>
-                          Requires minimum purchase of <span className="text-black font-bold font-mono">₩{coupon.minPrice.toLocaleString()}</span>.
+                          {coupon.minPrice > 0 ? (
+                            <>
+                              최소 결제금액 <span className="text-black font-bold font-mono">₩{coupon.minPrice.toLocaleString()}</span> 이상에서 사용 가능합니다.
+                            </>
+                          ) : (
+                            <>최소 결제금액 제한 없이 사용할 수 있습니다.</>
+                          )}
                         </p>
-                        <div className="flex items-center gap-2">
-                          <div className="w-1.5 h-1.5 rounded-full bg-red-600 animate-pulse"></div>
-                          <span className="font-mono text-[9px] text-black/40 uppercase tracking-widest">Limited Access</span>
-                        </div>
                       </div>
                     </div>
 
                     {/* Action Button: Black Style */}
-                    <button className="w-full py-4 bg-transparent border-2 border-black text-black font-serif italic text-lg hover:bg-black hover:text-white transition-all active:scale-95">
-                      Collect Now
+                    <button
+                      type="button"
+                      onClick={handleCollectNow}
+                      className="w-full py-4 bg-transparent border-2 border-black text-black font-serif italic text-lg hover:bg-black hover:text-white transition-all active:scale-95"
+                    >
+                      쿠폰함 가기
                     </button>
                   </div>
                 </div>
