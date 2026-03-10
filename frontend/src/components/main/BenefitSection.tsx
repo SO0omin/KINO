@@ -1,5 +1,7 @@
 import { motion } from 'framer-motion';
 import { Gift, Zap, Crown, ShieldCheck } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../../contexts/AuthContext';
 import type { CouponDTO } from '../../types/main';
 
 interface BenefitSectionProps {
@@ -7,9 +9,25 @@ interface BenefitSectionProps {
 }
 
 const BenefitSection = ({ coupons }: BenefitSectionProps) => {
+    const navigate = useNavigate();
+    const { isLoggedIn } = useAuth();
+
     if (!coupons || coupons.length === 0) return null;
 
     const icons = [Gift, Zap, Crown, ShieldCheck];
+
+    const handleCollectNow = () => {
+        if (isLoggedIn) {
+            navigate('/mypage/coupons');
+            return;
+        }
+
+        navigate('/login', {
+            state: {
+                returnTo: '/mypage/coupons',
+            },
+        });
+    };
 
     return (
         <section className="py-32 relative bg-white overflow-hidden">
@@ -75,7 +93,11 @@ const BenefitSection = ({ coupons }: BenefitSectionProps) => {
                                             <span className="font-bold text-xs text-black/20 uppercase tracking-widest ml-2">Off</span>
                                         </div>
 
-                                        <button className="w-full py-4 bg-black/5 hover:bg-[#B91C1C] text-[#1A1A1A] hover:text-white font-bold uppercase tracking-widest text-xs transition-all duration-300 rounded-sm border border-black/10 hover:border-[#B91C1C] shadow-lg">
+                                        <button
+                                            type="button"
+                                            onClick={handleCollectNow}
+                                            className="w-full py-4 bg-black/5 hover:bg-[#B91C1C] text-[#1A1A1A] hover:text-white font-bold uppercase tracking-widest text-xs transition-all duration-300 rounded-sm border border-black/10 hover:border-[#B91C1C] shadow-lg"
+                                        >
                                             Collect Now
                                         </button>
                                     </div>
