@@ -1,10 +1,6 @@
 package com.cinema.kino.dto;
 
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.*;
 
 import java.time.LocalDateTime;
 import java.time.LocalDate;
@@ -104,6 +100,14 @@ public class MyPageDTO {
         private List<String> seatNames;
         private boolean cancellable;
         private LocalDateTime holdExpiresAt;
+        private List<TicketInfo> tickets;
+
+        @Data
+        @AllArgsConstructor
+        public static class TicketInfo {
+            private String seatName;
+            private String ticketCode;
+        }
     }
 
     @Getter

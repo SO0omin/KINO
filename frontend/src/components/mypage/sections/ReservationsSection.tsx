@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState } from "react"; // ✨ 필수 추가!
 import { Search } from "lucide-react";
 import type { MyReservationItem } from "../../../api/myPageApi";
 import { ReservationTimer } from "../modals/ReservationTimer";
@@ -15,6 +15,7 @@ type PurchaseRow = {
 };
 
 type ReservationsSectionProps = {
+  // ... (기존과 동일하므로 생략 없이 풀버전으로 드립니다)
   guestView?: boolean;
   reservationTab: "reservation" | "purchase";
   setReservationTab: (value: "reservation" | "purchase") => void;
@@ -32,7 +33,7 @@ type ReservationsSectionProps = {
   formatMoney: (value: number) => string;
   isCancelling: number | null;
   openCancelModal: (reservationId: number) => void;
-  onClickPay: (reservationId: number) => void;
+  onClickPay: (reservationId: number) => void; 
   purchaseSelectType: "all" | "movie";
   setPurchaseSelectType: (value: "all" | "movie") => void;
   purchaseStatusType: "all" | "purchase" | "cancel";
@@ -50,6 +51,29 @@ type ReservationsSectionProps = {
   purchaseRows: PurchaseRow[];
   cancelledReservations: MyReservationItem[];
 };
+
+function mapCancelReasonLabel(reason?: string | null) {
+  if (reason === "TIMEOUT") return "시간만료";
+  if (reason === "USER") return "사용자취소";
+  return "취소";
+}
+
+function formatCompactDateTime(value?: string) {
+  if (!value) return ["-", ""];
+  const normalized = value.includes(" ") ? value.replace(" ", "T") : value;
+  const date = new Date(normalized);
+  if (Number.isNaN(date.getTime())) return ["-", ""];
+
+  const dateText = `${date.getFullYear()}.${String(date.getMonth() + 1).padStart(2, "0")}.${String(
+    date.getDate()
+  ).padStart(2, "0")}`;
+  const hour = date.getHours();
+  const period = hour >= 12 ? "PM" : "AM";
+  const hour12 = hour % 12 === 0 ? 12 : hour % 12;
+  const timeText = `${period} ${String(hour12).padStart(2, "0")}:${String(date.getMinutes()).padStart(2, "0")}`;
+
+  return [dateText, timeText];
+}
 
 export function ReservationsSection({
   guestView = false,
@@ -88,13 +112,19 @@ export function ReservationsSection({
   cancelledReservations,
 }: ReservationsSectionProps) {
   
-  // ✨ 핵심 추가: 만료된 예약 번호들을 기억하는 상태값 (화면 새로고침 없이 버튼을 숨기기 위함)
+  // ✨ [핵심 로직 1] 만료된 예약 ID들을 담아두는 바구니
   const [expiredList, setExpiredList] = useState<number[]>([]);
 
+  // ✨ [핵심 로직 2] 타이머가 0초가 되면 호출될 함수
   const handleExpire = (reservationId: number) => {
-    // 타이머에서 시간이 다 됐다고 알려주면, 만료 목록에 추가하여 컴포넌트를 다시 렌더링시킴
-    setExpiredList((prev) => [...prev, reservationId]);
+    setExpiredList((prev) => {
+      if (!prev.includes(reservationId)) {
+        return [...prev, reservationId];
+      }
+      return prev;
+    });
   };
+
   const parseDateTime = (value?: string) => {
     if (!value) return new Date();
     const normalized = value.includes(" ") ? value.replace(" ", "T") : value;
@@ -111,12 +141,10 @@ export function ReservationsSection({
     return `KINO-${yy}${mm}${dd}-${seq}`;
   };
   
+  // ✨ [핵심 로직 3] 만료된 리스트에 있으면 무조건 결제 불가(false) 처리
   const isPayable = (paymentStatus?: string, holdExpiresAt?: string, reservationId?: number) => {
     if (paymentStatus !== "READY" || !holdExpiresAt) return false;
-    
-    // ✨ 이미 로컬에서 만료되었다고 체크된 예약이면 무조건 false 반환
-    if (reservationId && expiredList.includes(reservationId)) return false;
-
+    if (reservationId && expiredList.includes(reservationId)) return false; // 0초 된 녀석 컷!
     return new Date(holdExpiresAt).getTime() > Date.now();
   };
 
@@ -131,74 +159,136 @@ export function ReservationsSection({
     const amountText = formatMoney(item.finalAmount);
     const issueAtText = formatDateTime(new Date().toISOString());
 
+    // ✨ [추가된 핵심 로직] 내 사이트 기본 주소
+    const baseUrl = window.location.origin;
+
+    // ✨ [추가된 핵심 로직] 티켓 개수만큼 QR 코드 이미지 HTML 블록 만들기
+    const qrCodesHtml = item.tickets && item.tickets.length > 0 
+      ? item.tickets.map((ticket) => {
+          // 스마트폰으로 찍었을 때 접속될 관리자 페이지 URL
+          const verifyUrl = `${baseUrl}/admin/verify-ticket?code=${ticket.ticketCode}`;
+          // 외부 API를 이용해 URL을 QR코드 이미지 주소로 변환
+          const qrImageUrl = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(verifyUrl)}&color=1a1a1a&bgcolor=ffffff`;
+
+          return `
+            <div class="qr-box">
+              <p class="qr-seat">${ticket.seatName} 좌석</p>
+              <img src="${qrImageUrl}" alt="QR Code for ${ticket.seatName}" class="qr-img" />
+              <p class="qr-code-text">${ticket.ticketCode.substring(0, 8)}...</p>
+            </div>
+          `;
+        }).join("") 
+      : `<p class="qr-empty">QR 코드를 불러올 수 없습니다. (백엔드 데이터 확인 필요)</p>`;
+
     const printWindow = window.open("", "_blank", "width=860,height=900");
     if (!printWindow) {
       alert("팝업이 차단되어 교환권을 열 수 없습니다. 팝업을 허용해 주세요.");
       return;
     }
 
-    // 티켓 영수증 디자인도 Kino 테마로 변경
     const html = `
 <!doctype html>
 <html lang="ko">
   <head>
     <meta charset="utf-8" />
-    <title>${bookingNo} 교환권</title>
+    <title>${bookingNo} 입장권</title>
     <style>
       * { box-sizing: border-box; }
-      body { margin: 0; padding: 28px; background: #f3f4f6; font-family: "Apple SD Gothic Neo", "Noto Sans KR", sans-serif; color: #111827; }
-      .ticket { max-width: 760px; margin: 0 auto; background: #ffffff; border: 1px solid #1A1A1A; border-radius: 4px; overflow: hidden; box-shadow: 0 10px 25px rgba(0,0,0,0.1); }
-      .head { padding: 24px; background: #1A1A1A; color: #fff; text-align: center; }
-      .head h1 { margin: 0; font-size: 24px; letter-spacing: 0.3em; text-transform: uppercase; }
-      .head p { margin: 8px 0 0 0; font-size: 11px; opacity: 0.6; letter-spacing: 0.1em; }
-      .body { padding: 30px; }
-      .booking { margin-bottom: 24px; text-align: center; border-bottom: 1px dashed #e5e7eb; padding-bottom: 24px; }
-      .booking .label { font-size: 10px; color: #B91C1C; letter-spacing: 0.2em; font-weight: bold; text-transform: uppercase; }
-      .booking .no { margin-top: 8px; font-size: 32px; font-weight: 800; color: #1A1A1A; letter-spacing: 0.05em; font-family: monospace; }
-      .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-top: 14px; }
-      .item { font-size: 14px; line-height: 1.5; }
-      .item b { display: block; font-size: 10px; color: #9ca3af; letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 4px; }
-      .price { margin-top: 30px; padding: 20px; background: #fafafa; border: 1px solid #f3f4f6; font-size: 20px; font-weight: 800; color: #B91C1C; text-align: right; }
-      .foot { margin-top: 24px; font-size: 11px; color: #9ca3af; line-height: 1.6; text-align: center; }
-      .actions { margin: 24px auto 0; max-width: 760px; display: flex; gap: 12px; justify-content: center; }
-      .btn { border: 1px solid #e5e7eb; background: #fff; color: #111827; padding: 12px 24px; font-size: 12px; font-weight: bold; letter-spacing: 0.1em; text-transform: uppercase; cursor: pointer; transition: all 0.2s; }
-      .btn.primary { border-color: #B91C1C; background: #B91C1C; color: #fff; }
+      body { margin: 0; padding: 32px; background: linear-gradient(180deg, #f7f7f7 0%, #efefef 100%); font-family: "Inter", "Apple SD Gothic Neo", "Noto Sans KR", sans-serif; color: #1a1a1a; }
+      .frame { max-width: 860px; margin: 0 auto; }
+      .ticket { position: relative; overflow: hidden; border: 1px solid rgba(26, 26, 26, 0.08); border-radius: 22px; background: #fdfdfd; box-shadow: 0 28px 80px rgba(0, 0, 0, 0.12); }
+      .ticket::before { content: ""; position: absolute; inset: 0; background:
+        radial-gradient(circle at top right, rgba(185, 28, 28, 0.12), transparent 32%),
+        radial-gradient(circle at bottom left, rgba(185, 28, 28, 0.08), transparent 28%);
+        pointer-events: none; }
+      .head { position: relative; padding: 26px 30px 24px; background: #1a1a1a; color: #fff; border-bottom: 1px solid rgba(255,255,255,0.08); }
+      .eyebrow { display: inline-flex; align-items: center; gap: 10px; color: #b91c1c; font-size: 10px; font-weight: 800; letter-spacing: 0.38em; text-transform: uppercase; }
+      .eyebrow::before, .eyebrow::after { content: ""; width: 34px; height: 1px; background: rgba(185, 28, 28, 0.9); }
+      .head h1 { margin: 14px 0 0; font-size: 44px; line-height: 0.95; letter-spacing: -0.04em; font-weight: 800; text-transform: uppercase; }
+      .head p { margin: 10px 0 0; font-size: 14px; color: rgba(255,255,255,0.72); }
+      .body { position: relative; padding: 30px; }
+      .booking-row { display: flex; align-items: flex-end; justify-content: space-between; gap: 20px; padding-bottom: 24px; border-bottom: 1px dashed rgba(26, 26, 26, 0.15); }
+      .booking .label { font-size: 11px; font-weight: 800; letter-spacing: 0.24em; text-transform: uppercase; color: rgba(26,26,26,0.38); }
+      .booking .no { margin-top: 10px; font-size: 42px; font-weight: 800; letter-spacing: -0.04em; color: #b91c1c; }
+      
+      /* ✨ 추가된 QR 코드 섹션 스타일 */
+      .qr-section { padding: 30px 0; border-bottom: 1px dashed rgba(26, 26, 26, 0.15); text-align: center; }
+      .qr-title { font-size: 12px; font-weight: 800; letter-spacing: 0.2em; text-transform: uppercase; color: #1a1a1a; margin-bottom: 20px; }
+      .qr-container { display: flex; flex-wrap: wrap; justify-content: center; gap: 24px; }
+      .qr-box { padding: 16px; border: 1px solid rgba(26, 26, 26, 0.1); border-radius: 12px; background: #fff; display: flex; flex-direction: column; items-center; width: 140px; }
+      .qr-seat { font-size: 13px; font-weight: 800; color: #b91c1c; margin: 0 0 12px 0; text-align: center; }
+      .qr-img { width: 100px; height: 100px; margin: 0 auto; display: block; }
+      .qr-code-text { font-family: monospace; font-size: 10px; color: rgba(26,26,26,0.4); margin: 10px 0 0 0; text-align: center; }
+      .qr-empty { font-size: 12px; color: rgba(26,26,26,0.4); }
+
+      .grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px 26px; margin-top: 24px; }
+      .item { padding: 14px 16px; border-radius: 14px; background: #ffffff; border: 1px solid rgba(26, 26, 26, 0.06); }
+      .item .k { display: block; margin-bottom: 6px; font-size: 11px; font-weight: 800; letter-spacing: 0.22em; text-transform: uppercase; color: rgba(26,26,26,0.38); }
+      .item .v { display: block; font-size: 16px; font-weight: 700; line-height: 1.45; color: #1a1a1a; }
+      .price { margin-top: 24px; padding: 18px 20px; border-radius: 18px; background: #1a1a1a; color: #fff; display: flex; align-items: center; justify-content: space-between; gap: 18px; }
+      .price .label { font-size: 11px; font-weight: 800; letter-spacing: 0.26em; text-transform: uppercase; color: rgba(255,255,255,0.5); }
+      .price .value { font-size: 34px; font-weight: 800; letter-spacing: -0.04em; color: #b91c1c; }
+      .foot { margin-top: 20px; padding-top: 18px; border-top: 1px solid rgba(26,26,26,0.08); font-size: 12px; line-height: 1.7; color: rgba(26,26,26,0.56); text-align: center; }
+      .actions { margin: 20px auto 0; max-width: 860px; display: flex; gap: 10px; justify-content: flex-end; }
+      .btn { border: 1px solid rgba(26, 26, 26, 0.12); background: #fff; color: #1a1a1a; padding: 13px 18px; border-radius: 14px; font-size: 12px; font-weight: 800; letter-spacing: 0.16em; text-transform: uppercase; cursor: pointer; }
+      .btn.primary { border-color: #b91c1c; background: #b91c1c; color: #fff; }
+      .mono { font-family: "JetBrains Mono", monospace; }
       @media print {
         body { background: #fff; padding: 0; }
         .actions { display: none; }
-        .ticket { border-color: #111827; box-shadow: none; }
+        .ticket { box-shadow: none; border-color: rgba(26, 26, 26, 0.2); }
+        .frame { max-width: none; }
       }
     </style>
   </head>
   <body>
-    <section class="ticket">
-      <header class="head">
-        <h1>Kino Cinema</h1>
-        <p>MOVIE VOUCHER</p>
-      </header>
-      <div class="body">
-        <div class="booking">
-          <div class="label">Booking Number</div>
-          <div class="no">${bookingNo}</div>
+    <div class="frame">
+      <section class="ticket">
+        <header class="head">
+          <div class="eyebrow">Kino Cinema</div>
+          <h1>E-Ticket</h1>
+          <p>입장 시 직원에게 아래의 QR 코드를 스캔해 주세요.</p>
+        </header>
+        <div class="body">
+          <div class="booking-row">
+            <div class="booking">
+              <div class="label">예매번호</div>
+              <div class="no mono">${bookingNo}</div>
+            </div>
+          </div>
+          
+          <div class="qr-section">
+            <div class="qr-title">Scan to Enter</div>
+            <div class="qr-container">
+              ${qrCodesHtml}
+            </div>
+          </div>
+
+          <div class="grid">
+            <div class="item"><span class="k">영화명</span><span class="v">${movieTitle}</span></div>
+            <div class="item"><span class="k">관람인원</span><span class="v">${peopleText}</span></div>
+            <div class="item"><span class="k">극장 / 상영관</span><span class="v">${theaterText}</span></div>
+            <div class="item"><span class="k">관람좌석</span><span class="v">${seatsText}</span></div>
+            <div class="item"><span class="k">관람일시</span><span class="v">${startTimeText}</span></div>
+            <div class="item"><span class="k">결제일시</span><span class="v">${paidAtText}</span></div>
+          </div>
+          <div class="price">
+            <div>
+              <div class="label">결제금액</div>
+              <div class="value">${amountText}</div>
+            </div>
+          </div>
+          <div class="foot">
+            <div>발행시각: ${issueAtText}</div>
+            <div>본 E-Ticket(교환권)은 입장 확인 용도로 사용되며, 캡처된 이미지는 사용이 제한될 수 있습니다.</div>
+          </div>
         </div>
-        <div class="grid">
-          <div class="item"><b>Movie</b>${movieTitle}</div>
-          <div class="item"><b>Audience</b>${peopleText}</div>
-          <div class="item"><b>Venue</b>${theaterText}</div>
-          <div class="item"><b>Seats</b>${seatsText}</div>
-          <div class="item"><b>Date / Time</b>${startTimeText}</div>
-          <div class="item"><b>Paid At</b>${paidAtText}</div>
-        </div>
-        <div class="price">TOTAL ${amountText}</div>
-        <div class="foot">
-          <div>Issued: ${issueAtText}</div>
-          <div>본 교환권은 재출력이 가능하며, 유효 여부는 매표소 시스템 기준으로 판단됩니다.</div>
-        </div>
-      </div>
-    </section>
+      </section>
+    </div>
+
     <div class="actions">
-      <button class="btn" onclick="window.close()">Close</button>
-      <button class="btn primary" onclick="window.print()">Print Voucher</button>
+      <button class="btn" onclick="window.close()">닫기</button>
+      <button class="btn primary" onclick="window.print()">인쇄하기</button>
     </div>
   </body>
 </html>`;
@@ -208,37 +298,34 @@ export function ReservationsSection({
     printWindow.document.close();
     printWindow.focus();
   };
-
-  // ==========================================
-  // [1] 비회원 (Guest) 뷰
-  // ==========================================
+  
+  // ====================== [비회원 뷰] ======================
   if (guestView) {
     return (
-      <section className="py-8">
-        <div className="flex items-center gap-3 text-[#B91C1C] font-bold tracking-[0.4em] uppercase text-xs mb-4">
-            <div className="w-8 h-px bg-[#B91C1C]"></div>
-            <span>Guest Booking History</span>
-        </div>
-        <h1 className="font-display text-4xl md:text-5xl uppercase tracking-tighter text-[#1A1A1A] mb-8">
-            예매/취소내역
-        </h1>
+      <section>
+        <h1 className="text-5xl font-semibold tracking-tight text-[#1A1A1A]">예매/취소내역</h1>
 
-        {/* 필터 영역 */}
-        <div className="bg-[#FDFDFD] border border-black/5 rounded-sm p-6 shadow-xl mb-10">
-          <div className="flex flex-wrap items-center gap-6">
-            <span className="text-[10px] font-bold uppercase tracking-widest text-black/40">Category</span>
-            <div className="flex items-center gap-4">
-                <label className="flex items-center gap-2 text-xs font-bold text-[#1A1A1A] cursor-pointer">
-                <input type="radio" className="accent-[#B91C1C]" checked={historyType === "current"} onChange={() => setHistoryType("current")} />
-                예매내역
-                </label>
-                <label className="flex items-center gap-2 text-xs font-bold text-[#1A1A1A] cursor-pointer">
-                <input type="radio" className="accent-[#B91C1C]" checked={historyType === "past"} onChange={() => setHistoryType("past")} />
-                지난내역
-                </label>
-            </div>
+        <div className="mt-8 rounded-sm border border-black/5 bg-[#FDFDFD] p-5 shadow-xl">
+          <div className="flex flex-wrap items-center gap-4 text-sm">
+            <span className="font-semibold text-[#1A1A1A]">구분</span>
+            <label className="flex items-center gap-2 text-[#1A1A1A]">
+              <input
+                type="radio"
+                checked={historyType === "current"}
+                onChange={() => setHistoryType("current")}
+              />
+              예매내역
+            </label>
+            <label className="flex items-center gap-2 text-[#1A1A1A]">
+              <input
+                type="radio"
+                checked={historyType === "past"}
+                onChange={() => setHistoryType("past")}
+              />
+              지난내역
+            </label>
             <select
-              className="border border-black/10 bg-white px-4 py-2 text-xs font-bold rounded-sm outline-none focus:border-[#B91C1C] disabled:bg-black/5 disabled:text-black/20"
+              className="rounded-sm border border-black/10 bg-white px-3 py-2 text-sm text-[#1A1A1A] disabled:bg-black/5 disabled:text-black/25"
               value={selectedMonth}
               onChange={(e) => setSelectedMonth(e.target.value)}
               disabled={historyType === "current"}
@@ -247,122 +334,101 @@ export function ReservationsSection({
                 <option value="">월 데이터 없음</option>
               ) : (
                 monthOptions.map((month) => (
-                  <option key={month} value={month}>{monthLabel(month)}</option>
+                  <option key={month} value={month}>
+                    {monthLabel(month)}
+                  </option>
                 ))
               )}
             </select>
             <button
-              className="flex items-center gap-2 bg-[#1A1A1A] text-white px-6 py-2 text-[10px] font-bold uppercase tracking-widest rounded-sm hover:bg-[#B91C1C] transition-colors"
+              className="flex items-center gap-1 rounded-sm border border-black/10 bg-white px-4 py-2 text-sm font-semibold text-[#1A1A1A] transition-colors hover:border-[#B91C1C] hover:text-[#B91C1C]"
               onClick={() => {
                 setAppliedHistoryType(historyType);
                 setAppliedMonth(historyType === "current" ? "" : selectedMonth);
               }}
             >
-              <Search size={14} /> Search
+              <Search className="h-4 w-4" /> 조회
             </button>
           </div>
         </div>
-
-        {/* 리스트 영역 */}
-        <div>
-          <div className="flex items-center justify-between mb-4 border-b border-black/5 pb-2">
-            <p className="text-[10px] font-bold uppercase tracking-widest text-black/40">Total <span className="text-[#1A1A1A]">{visibleReservations.length}</span></p>
-          </div>
-          
+          <div className="mt-8">
+          <p className="text-2xl font-semibold tracking-tight text-[#1A1A1A]">총 {visibleReservations.length}건</p>
           {loading ? (
-            <div className="py-20 flex justify-center border border-dashed border-black/10 rounded-sm bg-[#FDFDFD]">
-                <span className="text-[10px] font-bold uppercase tracking-[0.3em] text-[#B91C1C] animate-pulse">Loading...</span>
-            </div>
+            <div className="mt-4 rounded-sm border border-black/5 bg-[#FDFDFD] py-12 text-center text-black/45 shadow-xl">불러오는 중...</div>
           ) : visibleReservations.length === 0 ? (
-            <div className="py-20 flex justify-center border border-dashed border-black/10 rounded-sm bg-[#FDFDFD]">
-                <span className="text-xs font-bold uppercase tracking-widest text-black/20">예매 내역이 없습니다.</span>
-            </div>
+            <div className="mt-4 rounded-sm border border-black/5 bg-[#FDFDFD] py-12 text-center text-black/45 shadow-xl">예매 내역이 없습니다.</div>
           ) : (
-            <div className="space-y-6">
+            <div className="mt-4 space-y-4">
               {visibleReservations.map((item) => {
-                const canPay = isPayable(item.paymentStatus, item.holdExpiresAt, item.reservationId); // ✨ 만료 로직 적용
+                // ✨ reservationId 추가 전달!
+                const canPay = isPayable(item.paymentStatus, item.holdExpiresAt, item.reservationId); 
 
                 return (
-                  <div key={item.reservationId} className="bg-white border border-black/5 rounded-sm p-6 shadow-xl hover:border-black/10 transition-colors group">
-                    <div className="flex flex-col gap-6 lg:flex-row">
-                      
-                      {/* 포스터 */}
-                      <div className="h-[210px] w-[140px] shrink-0 overflow-hidden rounded-sm border border-black/5 bg-black/5">
+                  <div key={item.reservationId} className="rounded-sm border border-black/5 bg-[#FDFDFD] p-6 shadow-xl">
+                    <div className="flex flex-col gap-5 lg:flex-row">
+                      <div className="h-[210px] w-[140px] shrink-0 overflow-hidden rounded-sm border border-black/10 bg-black/5">
                         {item.posterUrl ? <img src={item.posterUrl} alt={item.movieTitle} className="h-full w-full object-cover" /> : null}
                       </div>
-                      
-                      {/* 상세 정보 */}
-                      <div className="flex-1 flex flex-col justify-between">
-                        <div>
-                            <div className="flex items-center justify-between mb-4">
-                                <p className="text-[10px] font-bold uppercase tracking-widest text-black/40">
-                                Booking No. <span className="font-mono text-sm tracking-normal text-[#B91C1C] ml-2">{formatGuestBookingNo(item.reservationId, item.paidAt)}</span>
-                                </p>
-                                {canPay && <span className="px-2 py-1 bg-[#B91C1C]/10 text-[#B91C1C] text-[9px] font-bold uppercase tracking-widest rounded-sm border border-[#B91C1C]/20">Payment Pending</span>}
-                                {!canPay && item.paymentStatus === "PAID" && <span className="px-2 py-1 bg-black/5 text-[#1A1A1A] text-[9px] font-bold uppercase tracking-widest rounded-sm border border-black/10">Confirmed</span>}
-                                {!canPay && item.paymentStatus === "PENDING" && <span className="px-2 py-1 bg-black/5 text-black/40 text-[9px] font-bold uppercase tracking-widest rounded-sm border border-black/10">Expired</span>}
-                            </div>
-                            
-                            <h3 className="font-display text-2xl uppercase tracking-tight text-[#1A1A1A] mb-4 group-hover:text-[#B91C1C] transition-colors">{item.movieTitle}</h3>
-                            
-                            <div className="grid grid-cols-1 gap-y-3 text-xs md:grid-cols-2">
-                                <p><span className="inline-block w-16 text-[10px] font-bold uppercase tracking-widest text-black/40">Audience</span> 성인 {item.seatNames.length}명</p>
-                                <p><span className="inline-block w-16 text-[10px] font-bold uppercase tracking-widest text-black/40">Venue</span> {item.theaterName} / {item.screenName}</p>
-                                <p><span className="inline-block w-16 text-[10px] font-bold uppercase tracking-widest text-black/40">Seats</span> <span className="font-bold text-[#B91C1C]">{item.seatNames.join(", ") || "-"}</span></p>
-                                <p><span className="inline-block w-16 text-[10px] font-bold uppercase tracking-widest text-black/40">Date</span> {formatDateTime(item.startTime)}</p>
-                            </div>
+                      <div className="flex-1">
+                        <p className="text-sm text-black/45">
+                          예매번호 <span className="text-2xl font-semibold tracking-tight text-[#B91C1C]">{formatGuestBookingNo(item.reservationId, item.paidAt)}</span>
+                        </p>
+                        <div className="mt-4 grid grid-cols-1 gap-y-2 text-sm text-[#1A1A1A] lg:grid-cols-2">
+                          <p><span className="font-semibold">영화명</span> {item.movieTitle}</p>
+                          <p><span className="font-semibold">관람인원</span> 성인 {item.seatNames.length}명</p>
+                          <p><span className="font-semibold">극장/상영관</span> {item.theaterName} / {item.screenName}</p>
+                          <p><span className="font-semibold">관람좌석</span> {item.seatNames.join(", ") || "-"}</p>
+                          <p><span className="font-semibold">관람일시</span> {formatDateTime(item.startTime)}</p>
+                          <p><span className="font-semibold">결제일시</span> {canPay ? "-" : formatDateTime(item.paidAt ?? item.startTime)}</p>
                         </div>
-
-                        <div className="mt-6 flex flex-col sm:flex-row sm:items-center justify-between bg-black/[0.02] border border-black/5 rounded-sm p-4 gap-4">
-                          <div className="flex items-center gap-4">
-                            <span className="text-[10px] font-bold uppercase tracking-widest text-black/40">Total Amount</span>
-                            <span className="font-display text-xl">{formatMoney(item.finalAmount)}</span>
-                          </div>
+                        <div className="mt-4 flex items-center justify-between rounded-sm bg-white px-4 py-3 text-sm font-semibold text-[#1A1A1A]">
+                          <span>결제금액 {formatMoney(item.finalAmount)}</span>
                           
-                          {/* 타이머 영역 */}
+                          {/* ✨ 타이머 영역에 onExpire 붙이기 */}
                           {canPay && item.holdExpiresAt && (
-                            <div className="flex items-center gap-3">
-                              <span className="text-[10px] font-bold uppercase tracking-widest text-black/40">Time Left</span>
-                              {/* ✨ onExpire 콜백 연결! */}
-                              <ReservationTimer expiresAt={item.holdExpiresAt} onExpire={() => handleExpire(item.reservationId)} />
+                            <div className="flex items-center gap-2">
+                              <span className="text-xs font-normal text-black/40">남은 결제 시간</span>
+                              <ReservationTimer 
+                                expiresAt={item.holdExpiresAt} 
+                                onExpire={() => handleExpire(item.reservationId)} 
+                              />
                             </div>
                           )}
+                          {/* 만료 표시 배지 추가 */}
+                          {!canPay && item.paymentStatus === "READY" && <span className="text-black/40">(시간 만료)</span>}
+                          {canPay && <span className="text-[#B91C1C]">(결제 대기 중)</span>}
                         </div>
                       </div>
                     </div>
-
-                    {/* 액션 버튼 영역 */}
-                    <div className="mt-6 pt-6 border-t border-black/5 flex justify-end gap-3">
+                    <div className="mt-4 flex justify-end gap-2">
                       {canPay && (
                         <button
-                          className="px-6 py-3 bg-[#1A1A1A] text-white text-[10px] font-bold uppercase tracking-[0.2em] rounded-sm hover:bg-[#B91C1C] transition-colors shadow-md"
+                          className="rounded-sm bg-[#1A1A1A] px-5 py-2 text-sm font-semibold text-white transition-colors hover:bg-[#B91C1C]"
                           onClick={() => onClickPay(item.reservationId)}
                         >
-                          Proceed to Payment
+                          결제하러 가기
                         </button>
                       )}
                       
                       {!canPay && item.paymentStatus === "PAID" && (
                         <button
-                          className="px-6 py-3 bg-white border border-[#B91C1C] text-[#B91C1C] text-[10px] font-bold uppercase tracking-[0.2em] rounded-sm hover:bg-[#B91C1C]/5 transition-colors"
+                          className="rounded-sm border border-[#B91C1C] bg-white px-5 py-2 text-sm font-semibold text-[#B91C1C] transition-colors hover:bg-[#B91C1C] hover:text-white"
                           onClick={() => openPrintVoucher(item)}
                         >
-                          Print Voucher
+                          교환권출력
                         </button>
                       )}
 
                       {item.cancellable ? (
                         <button
-                          className="px-6 py-3 bg-white border border-black/10 text-[#1A1A1A] text-[10px] font-bold uppercase tracking-[0.2em] rounded-sm hover:border-black/30 transition-colors"
+                          className="rounded-sm bg-[#B91C1C] px-5 py-2 text-sm font-semibold text-white transition-colors hover:bg-[#9f1919]"
                           disabled={isCancelling === item.reservationId}
                           onClick={() => openCancelModal(item.reservationId)}
                         >
-                          {isCancelling === item.reservationId ? "Processing..." : "Cancel Booking"}
+                          {isCancelling === item.reservationId ? "처리 중..." : "예매취소"}
                         </button>
                       ) : (
-                        <button className="px-6 py-3 bg-black/5 text-black/20 text-[10px] font-bold uppercase tracking-[0.2em] rounded-sm cursor-not-allowed" disabled>
-                            Cannot Cancel
-                        </button>
+                        <button className="cursor-not-allowed rounded-sm bg-black/15 px-5 py-2 text-sm font-semibold text-white" disabled>취소불가</button>
                       )}
                     </div>
                   </div>
@@ -372,35 +438,50 @@ export function ReservationsSection({
           )}
         </div>
 
-        {/* 취소 내역 */}
-        <div className="mt-16">
-          <div className="flex items-center gap-3 text-[#B91C1C] font-bold tracking-[0.4em] uppercase text-xs mb-4">
-              <div className="w-8 h-px bg-[#B91C1C]"></div>
-              <span>Cancellation History</span>
-          </div>
-          <h2 className="font-display text-3xl uppercase tracking-tight text-[#1A1A1A] mb-2">예매취소내역</h2>
-          <p className="text-[10px] font-bold uppercase tracking-widest text-black/40 mb-6">상영일 기준 7일간 취소내역을 확인하실 수 있습니다.</p>
-          
-          <div className="bg-[#FDFDFD] border border-black/5 rounded-sm shadow-xl overflow-hidden">
-            <div className="grid grid-cols-5 bg-black/[0.02] px-4 py-4 text-center text-[10px] font-bold uppercase tracking-widest text-black/40 border-b border-black/5">
+        {/* ... (비회원 취소내역 생략 없이 그대로 둠) ... */}
+        <div className="mt-10">
+          <h2 className="text-3xl font-semibold tracking-tight text-[#B91C1C]">예매취소내역</h2>
+          <p className="mt-2 text-sm text-black/55">· 상영일 기준 7일간 취소내역을 확인하실 수 있습니다.</p>
+          <div className="mt-4 overflow-hidden rounded-sm border border-black/5 bg-white shadow-xl">
+            <div className="grid grid-cols-[1.2fr_1fr_1fr_1.2fr_1fr_0.9fr] border-b border-black/5 bg-[#FDFDFD] px-4 py-4 text-center text-[11px] font-bold uppercase tracking-[0.18em] text-black/35">
               <span>취소일시</span>
               <span>영화명</span>
               <span>극장</span>
               <span>상영일시</span>
               <span>취소금액</span>
+              <span>취소사유</span>
             </div>
             {cancelledReservations.length === 0 ? (
-              <div className="py-12 text-center text-[10px] font-bold uppercase tracking-widest text-black/20">취소내역이 없습니다.</div>
+              <div className="py-6 text-center text-black/45">취소내역이 없습니다.</div>
             ) : (
-              cancelledReservations.map((item) => (
-                <div key={item.reservationId} className="grid grid-cols-5 border-b border-black/5 last:border-0 px-4 py-4 text-center text-xs text-[#1A1A1A] items-center">
-                  <span className="text-black/60">{formatDateTime(item.cancelledAt ?? "")}</span>
-                  <span className="font-bold">{item.movieTitle}</span>
-                  <span>{item.theaterName}</span>
-                  <span className="text-black/60">{formatDateTime(item.startTime)}</span>
-                  <span className="font-display text-lg text-[#B91C1C]">{formatMoney(item.finalAmount)}</span>
-                </div>
-              ))
+              cancelledReservations.map((item) => {
+                const [cancelDate, cancelTime] = formatCompactDateTime(item.cancelledAt);
+                const [screenDate, screenTime] = formatCompactDateTime(item.startTime);
+
+                return (
+                  <div
+                    key={item.reservationId}
+                    className="grid grid-cols-[1.2fr_1fr_1fr_1.2fr_1fr_0.9fr] items-center border-t border-black/5 px-4 py-4 text-center text-sm text-[#1A1A1A]"
+                  >
+                    <span className="leading-relaxed">
+                      <span className="block">{cancelDate}</span>
+                      <span className="block">{cancelTime}</span>
+                    </span>
+                    <span className="truncate px-2">{item.movieTitle}</span>
+                    <span className="truncate px-2">{item.theaterName}</span>
+                    <span className="leading-relaxed">
+                      <span className="block">{screenDate}</span>
+                      <span className="block">{screenTime}</span>
+                    </span>
+                    <span className="whitespace-nowrap font-medium">{formatMoney(item.finalAmount)}</span>
+                    <span className="flex justify-center">
+                      <span className="rounded-full bg-black/5 px-3 py-1 text-xs font-medium text-black/55">
+                        {mapCancelReasonLabel(item.cancelReason)}
+                      </span>
+                    </span>
+                  </div>
+                );
+              })
             )}
           </div>
         </div>
@@ -408,55 +489,49 @@ export function ReservationsSection({
     );
   }
 
-  // ==========================================
-  // [2] 회원 (Member) 뷰
-  // ==========================================
+  // ====================== [회원 뷰] ======================
   return (
-    <section className="py-8">
-      <div className="flex items-center gap-3 text-[#B91C1C] font-bold tracking-[0.4em] uppercase text-xs mb-4">
-          <div className="w-8 h-px bg-[#B91C1C]"></div>
-          <span>My History</span>
-      </div>
-      <h1 className="font-display text-4xl md:text-5xl uppercase tracking-tighter text-[#1A1A1A] mb-8">
-          예매/구매 내역
-      </h1>
+    <section>
+      <h1 className="text-5xl font-semibold tracking-tight text-[#1A1A1A]">예매/구매 내역</h1>
 
-      {/* 탭 네비게이션 */}
-      <div className="flex mb-8 border-b border-black/10">
+      <div className="mt-5 flex border-b border-black/10">
         <button
-          className={`flex-1 py-4 text-[10px] font-bold uppercase tracking-widest transition-all relative ${reservationTab === "reservation" ? "text-[#B91C1C]" : "text-black/40 hover:text-black"}`}
+          className={`w-40 border border-b-0 px-4 py-3 text-sm font-semibold tracking-tight transition-colors ${reservationTab === "reservation" ? "border-[#1A1A1A] bg-[#1A1A1A] text-white" : "border-black/10 bg-white text-black/40 hover:text-[#B91C1C]"}`}
           onClick={() => setReservationTab("reservation")}
         >
-          예매 내역
-          {reservationTab === "reservation" && <div className="absolute bottom-[-1px] left-0 w-full h-[2px] bg-[#B91C1C]"></div>}
+          예매
         </button>
         <button
-          className={`flex-1 py-4 text-[10px] font-bold uppercase tracking-widest transition-all relative ${reservationTab === "purchase" ? "text-[#B91C1C]" : "text-black/40 hover:text-black"}`}
+          className={`w-40 border border-b-0 px-4 py-3 text-sm font-semibold tracking-tight transition-colors ${reservationTab === "purchase" ? "border-[#1A1A1A] bg-[#1A1A1A] text-white" : "border-black/10 bg-white text-black/40 hover:text-[#B91C1C]"}`}
           onClick={() => setReservationTab("purchase")}
         >
-          구매 내역
-          {reservationTab === "purchase" && <div className="absolute bottom-[-1px] left-0 w-full h-[2px] bg-[#B91C1C]"></div>}
+          구매
         </button>
       </div>
 
       {reservationTab === "reservation" ? (
         <>
-          {/* 예매내역 필터 */}
-          <div className="bg-[#FDFDFD] border border-black/5 rounded-sm p-6 shadow-xl mb-10">
-            <div className="flex flex-wrap items-center gap-6">
-              <span className="text-[10px] font-bold uppercase tracking-widest text-black/40">Category</span>
-              <div className="flex items-center gap-4">
-                <label className="flex items-center gap-2 text-xs font-bold text-[#1A1A1A] cursor-pointer">
-                  <input type="radio" className="accent-[#B91C1C]" checked={historyType === "current"} onChange={() => setHistoryType("current")} />
-                  예매내역
-                </label>
-                <label className="flex items-center gap-2 text-xs font-bold text-[#1A1A1A] cursor-pointer">
-                  <input type="radio" className="accent-[#B91C1C]" checked={historyType === "past"} onChange={() => setHistoryType("past")} />
-                  지난내역
-                </label>
-              </div>
-              <select
-                className="border border-black/10 bg-white px-4 py-2 text-xs font-bold rounded-sm outline-none focus:border-[#B91C1C] disabled:bg-black/5 disabled:text-black/20"
+          <div className="mt-5 rounded-sm border border-black/5 bg-[#FDFDFD] p-5 shadow-xl">
+            <div className="flex flex-wrap items-center gap-4 text-sm">
+              <span className="font-semibold text-[#1A1A1A]">구분</span>
+              <label className="flex items-center gap-2 text-[#1A1A1A]">
+                <input
+                  type="radio"
+                  checked={historyType === "current"}
+                  onChange={() => setHistoryType("current")}
+                />
+                예매내역
+              </label>
+              <label className="flex items-center gap-2 text-[#1A1A1A]">
+                <input
+                  type="radio"
+                  checked={historyType === "past"}
+                  onChange={() => setHistoryType("past")}
+                />
+                지난내역
+            </label>
+            <select
+                className="rounded-sm border border-black/10 bg-white px-3 py-2 text-sm text-[#1A1A1A] disabled:bg-black/5 disabled:text-black/25"
                 value={selectedMonth}
                 onChange={(e) => setSelectedMonth(e.target.value)}
                 disabled={historyType === "current"}
@@ -465,99 +540,93 @@ export function ReservationsSection({
                   <option value="">월 데이터 없음</option>
                 ) : (
                   monthOptions.map((month) => (
-                    <option key={month} value={month}>{monthLabel(month)}</option>
+                    <option key={month} value={month}>
+                      {monthLabel(month)}
+                    </option>
                   ))
                 )}
               </select>
               <button
-                className="flex items-center gap-2 bg-[#1A1A1A] text-white px-6 py-2 text-[10px] font-bold uppercase tracking-widest rounded-sm hover:bg-[#B91C1C] transition-colors"
+                className="flex items-center gap-1 rounded-sm border border-black/10 bg-white px-4 py-2 text-sm font-semibold text-[#1A1A1A] transition-colors hover:border-[#B91C1C] hover:text-[#B91C1C]"
                 onClick={() => {
                   setAppliedHistoryType(historyType);
                   setAppliedMonth(historyType === "current" ? "" : selectedMonth);
                 }}
               >
-                <Search size={14} /> Search
+                <Search className="h-4 w-4" /> 조회
               </button>
             </div>
           </div>
 
-          {/* 예매내역 리스트 */}
-          <div className="bg-[#FDFDFD] border border-black/5 rounded-sm shadow-xl p-8 mb-16">
-            <div className="flex items-center justify-between mb-4 border-b border-black/5 pb-2">
-                <p className="text-[10px] font-bold uppercase tracking-widest text-black/40">Total <span className="text-[#1A1A1A]">{visibleReservations.length}</span></p>
-            </div>
-
+          <div className="mt-6 rounded-sm border border-black/5 bg-white shadow-xl">
             {loading ? (
-              <div className="py-20 flex justify-center border border-dashed border-black/10 rounded-sm bg-white">
-                  <span className="text-[10px] font-bold uppercase tracking-[0.3em] text-[#B91C1C] animate-pulse">Loading...</span>
-              </div>
+              <div className="py-12 text-center text-black/45">불러오는 중...</div>
             ) : visibleReservations.length === 0 ? (
-              <div className="py-20 flex justify-center border border-dashed border-black/10 rounded-sm bg-white">
-                  <span className="text-xs font-bold uppercase tracking-widest text-black/20">예매 내역이 없습니다.</span>
-              </div>
+              <div className="py-12 text-center text-black/45">예매 내역이 없습니다.</div>
             ) : (
-              <div className="flex flex-col">
+              <div className="divide-y divide-black/5">
                 {visibleReservations.map((item) => {
-                  const canPay = isPayable(item.paymentStatus, item.holdExpiresAt, item.reservationId); // ✨ 만료 로직 적용
+                  // ✨ reservationId 추가 전달!
+                  const canPay = isPayable(item.paymentStatus, item.holdExpiresAt, item.reservationId);
 
                   return (
-                    <div key={item.reservationId} className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between py-6 border-b border-black/5 last:border-0 hover:bg-black/[0.02] transition-colors group">
-                      <div className="flex-1">
-                        <div className="flex items-center gap-3 mb-2">
-                          <p className="font-display text-2xl uppercase tracking-tight text-[#1A1A1A] group-hover:text-[#B91C1C] transition-colors">{item.movieTitle}</p>
-                          {canPay && <span className="px-2 py-0.5 bg-[#B91C1C]/10 text-[#B91C1C] text-[9px] font-bold uppercase tracking-widest rounded-sm border border-[#B91C1C]/20">결제 대기</span>}
-                          {!canPay && item.paymentStatus === "PAID" && <span className="px-2 py-0.5 bg-black/5 text-[#1A1A1A] text-[9px] font-bold uppercase tracking-widest rounded-sm border border-black/10">결제 완료</span>}
-                          {!canPay && item.paymentStatus === "PENDING" && <span className="px-2 py-0.5 bg-black/5 text-black/40 text-[9px] font-bold uppercase tracking-widest rounded-sm border border-black/10">시간 만료</span>}
+                    <div key={item.reservationId} className="flex flex-col gap-4 p-5 lg:flex-row lg:items-center lg:justify-between">
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <p className="text-xl font-semibold tracking-tight text-[#1A1A1A]">{item.movieTitle}</p>
+                          {canPay && <span className="rounded-sm bg-[#B91C1C]/10 px-2 py-0.5 text-xs font-bold text-[#B91C1C]">결제 대기</span>}
+                          {!canPay && item.paymentStatus == "PAID" && <span className="rounded bg-green-100 px-2 py-0.5 text-xs font-bold text-green-600">결제 완료</span>}
+                          
+                          {/* 만료 표시 배지 추가 */}
+                          {!canPay && item.paymentStatus === "READY" && <span className="rounded-sm bg-black/5 px-2 py-0.5 text-xs font-bold text-black/40">시간 만료</span>}
                         </div>
-                        <div className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest text-black/40 mb-1">
-                            <span>{item.theaterName} / {item.screenName}</span>
-                            <span className="text-black/20">|</span>
-                            <span>{formatDateTime(item.startTime)}</span>
-                        </div>
-                        <p className="text-[10px] font-bold uppercase tracking-widest text-black/40">좌석: <span className="text-[#1A1A1A]">{item.seatNames.join(", ") || "-"}</span></p>
+                        <p className="mt-1 text-sm text-black/55">{item.theaterName} / {item.screenName}</p>
+                        <p className="text-sm text-black/55">{formatDateTime(item.startTime)}</p>
+                        <p className="text-sm text-black/55">좌석: {item.seatNames.join(", ") || "-"}</p>
                       </div>
-                      
-                      <div className="flex flex-col items-start lg:items-end gap-3 mt-4 lg:mt-0">
-                        <div className="flex items-center gap-4">
-                            {canPay && item.holdExpiresAt && (
-                                <div className="flex items-center gap-2 bg-white px-3 py-1.5 border border-black/10 rounded-sm">
-                                <span className="text-[9px] font-bold uppercase tracking-widest text-black/40">Time Left</span>
-                                {/* ✨ onExpire 콜백 연결! */}
-                                <ReservationTimer expiresAt={item.holdExpiresAt} onExpire={() => handleExpire(item.reservationId)} />
-                                </div>
-                            )}
-                            <p className="font-display text-2xl text-[#1A1A1A]">{formatMoney(item.finalAmount)}</p>
-                        </div>
+                      <div className="flex flex-col items-end gap-2 text-right">
                         
-                        <div className="flex flex-wrap gap-2">
+                        {/* ✨ 타이머 영역에 onExpire 붙이기 */}
+                        {canPay && item.holdExpiresAt && (
+                            <div className="flex items-center gap-2">
+                              <span className="text-xs font-normal text-black/40">남은 결제 시간</span>
+                              <ReservationTimer 
+                                expiresAt={item.holdExpiresAt} 
+                                onExpire={() => handleExpire(item.reservationId)} 
+                              />
+                            </div>
+                        )}
+                        <p className="text-lg font-semibold text-[#1A1A1A]">{formatMoney(item.finalAmount)}</p>
+                        
+                        <div className="flex gap-2">
                           {canPay && (
                             <button
-                              className="px-6 py-2 bg-[#1A1A1A] text-white text-[10px] font-bold uppercase tracking-[0.2em] rounded-sm hover:bg-[#B91C1C] transition-colors shadow-sm"
+                              className="rounded-sm border border-[#1A1A1A] bg-[#1A1A1A] px-4 py-2 text-sm text-white transition-colors hover:border-[#B91C1C] hover:bg-[#B91C1C]"
                               onClick={() => onClickPay(item.reservationId)}
                             >
-                              결제 하러가기
+                              결제하러 가기
                             </button>
                           )}
 
                           {!canPay && item.paymentStatus === "PAID" && (
                             <button
-                              className="px-6 py-2 bg-white border border-[#B91C1C] text-[#B91C1C] text-[10px] font-bold uppercase tracking-[0.2em] rounded-sm hover:bg-[#B91C1C]/5 transition-colors"
+                              className="rounded-sm border border-[#B91C1C] bg-white px-5 py-2 text-sm font-semibold text-[#B91C1C] transition-colors hover:bg-[#B91C1C] hover:text-white"
                               onClick={() => openPrintVoucher(item)}
                             >
-                              교환권 발급
+                              교환권출력
                             </button>
                           )}
 
                           {!canPay && item.cancellable ? (
                             <button
-                              className="px-6 py-2 bg-white border border-black/10 text-[#1A1A1A] text-[10px] font-bold uppercase tracking-[0.2em] rounded-sm hover:border-black/30 transition-colors"
+                              className="rounded-sm border border-[#B91C1C] px-4 py-2 text-sm text-[#B91C1C] transition-colors hover:bg-[#B91C1C]/5"
                               disabled={isCancelling === item.reservationId}
                               onClick={() => openCancelModal(item.reservationId)}
                             >
-                              {isCancelling === item.reservationId ? "처리중..." : "환불하기"}
+                              {isCancelling === item.reservationId ? "처리 중..." : "환불하기"}
                             </button>
                           ) : (
-                            <span className="px-4 py-2 bg-black/5 text-black/20 text-[10px] font-bold uppercase tracking-[0.2em] rounded-sm">환불 불가</span>
+                            <span className="inline-block rounded-sm bg-black/5 px-4 py-2 text-sm text-black/35">환불 불가</span>
                           )}
                         </div>
                       </div>
@@ -570,46 +639,42 @@ export function ReservationsSection({
         </>
       ) : (
         <>
-          {/* 스토어 구매내역 필터 */}
-          <div className="bg-[#FDFDFD] border border-black/5 rounded-sm p-6 shadow-xl mb-10">
-            <div className="flex flex-wrap items-center gap-6 mb-4">
-              <span className="text-[10px] font-bold uppercase tracking-widest text-black/40">Category</span>
+          <div className="mt-5 rounded-sm border border-black/5 bg-[#FDFDFD] p-5 shadow-xl">
+            <div className="flex flex-wrap items-center gap-3 text-sm">
+              <span className="mr-2 font-semibold text-[#1A1A1A]">구분</span>
               <select
-                className="border border-black/10 bg-white px-4 py-2 text-xs font-bold rounded-sm outline-none focus:border-[#B91C1C]"
+                className="rounded-sm border border-black/10 bg-white px-3 py-1.5 text-sm text-[#1A1A1A]"
                 value={purchaseSelectType}
                 onChange={(e) => setPurchaseSelectType(e.target.value as "all" | "movie")}
               >
-                <option value="all">전체보기</option>
-                <option value="movie">영화예매권</option>
+                <option value="all">전체</option>
+                <option value="movie">영화예매</option>
               </select>
-              <div className="flex items-center gap-4">
-                <label className="flex items-center gap-2 text-xs font-bold text-[#1A1A1A] cursor-pointer">
-                  <input type="radio" className="accent-[#B91C1C]" checked={purchaseStatusType === "all"} onChange={() => setPurchaseStatusType("all")} /> 전체
-                </label>
-                <label className="flex items-center gap-2 text-xs font-bold text-[#1A1A1A] cursor-pointer">
-                  <input type="radio" className="accent-[#B91C1C]" checked={purchaseStatusType === "purchase"} onChange={() => setPurchaseStatusType("purchase")} /> 구매내역
-                </label>
-                <label className="flex items-center gap-2 text-xs font-bold text-[#1A1A1A] cursor-pointer">
-                  <input type="radio" className="accent-[#B91C1C]" checked={purchaseStatusType === "cancel"} onChange={() => setPurchaseStatusType("cancel")} /> 취소내역
-                </label>
-              </div>
+              <label className="flex items-center gap-1.5 text-[#1A1A1A]">
+                <input type="radio" checked={purchaseStatusType === "all"} onChange={() => setPurchaseStatusType("all")} />
+                전체
+              </label>
+              <label className="flex items-center gap-1.5 text-[#1A1A1A]">
+                <input type="radio" checked={purchaseStatusType === "purchase"} onChange={() => setPurchaseStatusType("purchase")} />
+                구매내역
+              </label>
+              <label className="flex items-center gap-1.5 text-[#1A1A1A]">
+                <input type="radio" checked={purchaseStatusType === "cancel"} onChange={() => setPurchaseStatusType("cancel")} />
+                취소내역
+              </label>
             </div>
 
-            <div className="flex flex-wrap items-center gap-3">
-              <span className="text-[10px] font-bold uppercase tracking-widest text-black/40 mr-3">Period</span>
-              <button className={`px-4 py-1.5 border rounded-sm text-xs font-bold transition-colors ${purchaseRange === "week" ? "bg-[#1A1A1A] text-white border-[#1A1A1A]" : "bg-white border-black/10 text-black/60 hover:border-black/30"}`} onClick={() => applyPurchaseRange("week")}>1주일</button>
-              <button className={`px-4 py-1.5 border rounded-sm text-xs font-bold transition-colors ${purchaseRange === "month1" ? "bg-[#1A1A1A] text-white border-[#1A1A1A]" : "bg-white border-black/10 text-black/60 hover:border-black/30"}`} onClick={() => applyPurchaseRange("month1")}>1개월</button>
-              <button className={`px-4 py-1.5 border rounded-sm text-xs font-bold transition-colors ${purchaseRange === "month3" ? "bg-[#1A1A1A] text-white border-[#1A1A1A]" : "bg-white border-black/10 text-black/60 hover:border-black/30"}`} onClick={() => applyPurchaseRange("month3")}>3개월</button>
-              <button className={`px-4 py-1.5 border rounded-sm text-xs font-bold transition-colors ${purchaseRange === "month6" ? "bg-[#1A1A1A] text-white border-[#1A1A1A]" : "bg-white border-black/10 text-black/60 hover:border-black/30"}`} onClick={() => applyPurchaseRange("month6")}>6개월</button>
-              
-              <div className="flex items-center gap-2 ml-4">
-                  <input type="date" className="border border-black/10 bg-white px-3 py-1.5 text-xs rounded-sm outline-none focus:border-[#B91C1C]" value={purchaseFrom} onChange={(e) => setPurchaseFrom(e.target.value)} />
-                  <span className="text-black/40">~</span>
-                  <input type="date" className="border border-black/10 bg-white px-3 py-1.5 text-xs rounded-sm outline-none focus:border-[#B91C1C]" value={purchaseTo} onChange={(e) => setPurchaseTo(e.target.value)} />
-              </div>
-              
+            <div className="mt-3 flex flex-wrap items-center gap-2 text-sm">
+              <span className="mr-2 font-semibold text-[#1A1A1A]">조회기간</span>
+              <button className={`rounded-sm border border-black/10 px-3 py-1 transition-colors ${purchaseRange === "week" ? "text-[#B91C1C]" : "text-[#1A1A1A] hover:text-[#B91C1C]"}`} onClick={() => applyPurchaseRange("week")}>1주일</button>
+              <button className={`rounded-sm border border-black/10 px-3 py-1 transition-colors ${purchaseRange === "month1" ? "text-[#B91C1C]" : "text-[#1A1A1A] hover:text-[#B91C1C]"}`} onClick={() => applyPurchaseRange("month1")}>1개월</button>
+              <button className={`rounded-sm border border-black/10 px-3 py-1 transition-colors ${purchaseRange === "month3" ? "text-[#B91C1C]" : "text-[#1A1A1A] hover:text-[#B91C1C]"}`} onClick={() => applyPurchaseRange("month3")}>3개월</button>
+              <button className={`rounded-sm border border-black/10 px-3 py-1 transition-colors ${purchaseRange === "month6" ? "text-[#B91C1C]" : "text-[#1A1A1A] hover:text-[#B91C1C]"}`} onClick={() => applyPurchaseRange("month6")}>6개월</button>
+              <input type="date" className="rounded-sm border border-black/10 bg-white px-3 py-1 text-[#1A1A1A]" value={purchaseFrom} onChange={(e) => setPurchaseFrom(e.target.value)} />
+              <span className="text-[#1A1A1A]">~</span>
+              <input type="date" className="rounded-sm border border-black/10 bg-white px-3 py-1 text-[#1A1A1A]" value={purchaseTo} onChange={(e) => setPurchaseTo(e.target.value)} />
               <button
-                className="flex items-center gap-2 bg-[#1A1A1A] text-white px-6 py-1.5 text-[10px] font-bold uppercase tracking-widest rounded-sm hover:bg-[#B91C1C] transition-colors ml-2"
+                className="flex items-center gap-1 rounded-sm border border-black/10 bg-white px-3 py-1 font-semibold text-[#1A1A1A] transition-colors hover:border-[#B91C1C] hover:text-[#B91C1C]"
                 onClick={() => {
                   setAppliedPurchaseSelectType(purchaseSelectType);
                   setAppliedPurchaseStatusType(purchaseStatusType);
@@ -617,107 +682,112 @@ export function ReservationsSection({
                   setAppliedPurchaseTo(purchaseTo);
                 }}
               >
-                <Search size={14} /> Search
+                <Search className="h-4 w-4" /> 조회
               </button>
             </div>
           </div>
 
-          {/* 스토어 구매내역 리스트 */}
-          <div className="bg-[#FDFDFD] border border-black/5 rounded-sm shadow-xl overflow-hidden mb-10">
-            <div className="p-8 pb-4">
-              <p className="text-[10px] font-bold uppercase tracking-widest text-black/40">Total <span className="text-[#1A1A1A]">{purchaseRows.length}</span></p>
-            </div>
-            <div className="grid grid-cols-6 bg-black/[0.02] border-y border-black/5 px-4 py-4 text-center text-[10px] font-bold uppercase tracking-widest text-black/40">
-                <span>예매번호</span>
-                <span>결제일시</span>
-                <span>구분</span>
-                <span>상품명</span>
-                <span>결제금액</span>
-                <span>상태</span>
-            </div>
-            {purchaseRows.length === 0 ? (
-                <div className="py-20 text-center text-[10px] font-bold uppercase tracking-widest text-black/20">결제내역이 없습니다.</div>
-            ) : (
-                <div className="flex flex-col">
-                {purchaseRows.map((row) => (
-                    <div key={row.id} className="grid grid-cols-6 border-b border-black/5 last:border-0 px-4 py-5 text-center text-xs text-[#1A1A1A] items-center hover:bg-black/[0.01]">
-                    <span className="font-mono">{row.reservationNumber}</span>
-                    <span className="text-black/60">{formatDateTime(row.paymentDate.toISOString())}</span>
-                    <span className="font-bold">{row.category}</span>
-                    <span className="font-bold">{row.productName}</span>
-                    <span className="font-display text-lg text-[#B91C1C]">{formatMoney(row.amount)}</span>
-                    <span className={`font-bold ${row.isCancelled ? "text-[#B91C1C]" : "text-[#1A1A1A]"}`}>{row.statusLabel}</span>
-                    </div>
-                ))}
+          <div className="mt-6 overflow-hidden rounded-sm border border-black/5 bg-white shadow-xl">
+            <div className="p-5">
+              <p className="text-base font-semibold text-[#1A1A1A]">전체 {purchaseRows.length}건</p>
+              <div className="mt-2">
+                <div className="grid grid-cols-6 border-y border-black/5 bg-[#FDFDFD] px-4 py-4 text-center text-[11px] font-bold uppercase tracking-[0.18em] text-black/35">
+                  <span>예매번호</span>
+                  <span>결제일시</span>
+                  <span>구분</span>
+                  <span>상품명</span>
+                  <span>결제금액</span>
+                  <span>상태</span>
                 </div>
-            )}
+                {purchaseRows.length === 0 ? (
+                  <div className="border-b border-black/5 py-10 text-center text-black/45">결제내역이 없습니다.</div>
+                ) : (
+                  purchaseRows.map((row) => (
+                    <div key={row.id} className="grid grid-cols-6 border-b border-black/5 px-4 py-4 text-center text-sm text-[#1A1A1A]">
+                      <span>{row.reservationNumber}</span>
+                      <span>{formatDateTime(row.paymentDate.toISOString())}</span>
+                      <span>{row.category}</span>
+                      <span>{row.productName}</span>
+                      <span>{formatMoney(row.amount)}</span>
+                      <span className={row.isCancelled ? "text-[#B91C1C]" : "text-[#1A1A1A]"}>{row.statusLabel}</span>
+                    </div>
+                  ))
+                )}
+              </div>
+            </div>
           </div>
 
-          {/* 이용안내 (스토어) */}
-          <div className="bg-black/5 border border-black/10 rounded-sm p-8">
-            <h3 className="text-[10px] font-bold uppercase tracking-[0.3em] text-[#B91C1C] mb-6">Notice</h3>
-            
-            <p className="text-xs font-bold text-[#1A1A1A] mb-3">[스토어 구매/취소 안내]</p>
-            <ul className="space-y-2 text-[10px] font-bold tracking-widest text-black/60 leading-relaxed list-disc list-inside marker:text-black/20 mb-6">
-                <li>스토어 상품은 구매 후 취소가능기간 내 100% 환불이 가능하며, 부분환불은 불가 합니다.</li>
-                <li className="list-none pl-4 text-black/40">(ex. 3개의 쿠폰 합 번에 구매하신 경우, 3개 모두 취소만 가능하며 그 중 사용하신 쿠폰이 있는 경우 환불 불가)</li>
-                <li>스토어 교환권은 MMS로 최대 1회 재전송 하실 수 있습니다.</li>
-            </ul>
-
-            <p className="text-xs font-bold text-[#1A1A1A] mb-3">[모바일오더 구매/취소 안내]</p>
-            <ul className="space-y-2 text-[10px] font-bold tracking-widest text-black/60 leading-relaxed list-disc list-inside marker:text-black/20">
-                <li>모바일오더는 모바일앱을 통해 이용하실 수 있습니다.</li>
-                <li>모바일오더는 구매 후 즉시 조리되는 상품으로 취소가 불가합니다.</li>
-                <li>극장 매점에서 주문번호가 호출되면 상품을 수령하실 수 있습니다.</li>
-                <li>극장 상황에 따라 상품준비시간이 다소 길어질 수 있습니다.</li>
-            </ul>
+          <div className="mt-6 overflow-hidden rounded-sm border border-black/5 bg-white shadow-xl">
+            <div className="flex items-center justify-between bg-[#FDFDFD] px-4 py-4 text-[11px] font-bold uppercase tracking-[0.18em] text-black/35">
+              <span>이용안내</span>
+              <span>⌃</span>
+            </div>
+            <div className="p-4 text-sm leading-7 text-[#1A1A1A]">
+              <p className="font-semibold">[스토어 구매/취소 안내]</p>
+              <p>· 스토어 상품은 구매 후 취소가능기간 내 100% 환불이 가능하며, 부분환불은 불가 합니다.</p>
+              <p>· (ex. 3개의 쿠폰 합 번에 구매하신 경우, 3개 모두 취소만 가능하며 그 중 사용하신 쿠폰이 있는 경우 환불이 불가합니다)</p>
+              <p>· 스토어 교환권은 MMS로 최대 1회 재전송 하실 수 있습니다.</p>
+              <p className="mt-3 font-semibold">[모바일오더 구매/취소 안내]</p>
+              <p>· 모바일오더는 모바일앱을 통해 이용하실 수 있습니다.</p>
+              <p>· 모바일오더는 구매 후 즉시 조리되는 상품으로 취소가 불가합니다.</p>
+              <p>· 극장 매점에서 주문번호가 호출되면 상품을 수령하실 수 있습니다.</p>
+              <p>· 극장 상황에 따라 상품준비시간이 다소 길어질 수 있습니다.</p>
+            </div>
           </div>
         </>
       )}
 
-      {/* 예매 취소 내역 (하단 공통) */}
       {reservationTab === "reservation" ? (
-        <div className="mt-16">
-          <div className="flex items-center gap-3 text-[#B91C1C] font-bold tracking-[0.4em] uppercase text-xs mb-4">
-              <div className="w-8 h-px bg-[#B91C1C]"></div>
-              <span>Cancellation History</span>
-          </div>
-          <h2 className="font-display text-3xl uppercase tracking-tight text-[#1A1A1A] mb-2">예매취소내역</h2>
-          <p className="text-[10px] font-bold uppercase tracking-widest text-black/40 mb-6">상영일 기준 7일간 취소내역을 확인하실 수 있습니다.</p>
-          
-          <div className="bg-[#FDFDFD] border border-black/5 rounded-sm shadow-xl overflow-hidden mb-10">
-            <div className="grid grid-cols-5 bg-black/[0.02] px-4 py-4 text-center text-[10px] font-bold uppercase tracking-widest text-black/40 border-b border-black/5">
+        <div className="mt-10">
+          <h2 className="text-3xl font-semibold tracking-tight text-[#B91C1C]">예매취소내역</h2>
+          <p className="mt-2 text-sm text-black/55">· 상영일 기준 7일간 취소내역을 확인하실 수 있습니다.</p>
+          <div className="mt-4 overflow-hidden rounded-sm border border-black/5 bg-white shadow-xl">
+            <div className="grid grid-cols-[1.2fr_1fr_1fr_1.2fr_1fr_0.9fr] border-b border-black/5 bg-[#FDFDFD] px-4 py-4 text-center text-[11px] font-bold uppercase tracking-[0.18em] text-black/35">
               <span>취소일시</span>
               <span>영화명</span>
               <span>극장</span>
               <span>상영일시</span>
               <span>취소금액</span>
+              <span>취소사유</span>
             </div>
             {cancelledReservations.length === 0 ? (
-              <div className="py-12 text-center text-[10px] font-bold uppercase tracking-widest text-black/20">취소내역이 없습니다.</div>
+              <div className="py-6 text-center text-black/45">취소내역이 없습니다.</div>
             ) : (
-              cancelledReservations.map((item) => (
-                <div key={item.reservationId} className="grid grid-cols-5 border-b border-black/5 last:border-0 px-4 py-4 text-center text-xs text-[#1A1A1A] items-center">
-                  <span className="text-black/60">{formatDateTime(item.cancelledAt ?? "")}</span>
-                  <span className="font-bold">{item.movieTitle}</span>
-                  <span>{item.theaterName}</span>
-                  <span className="text-black/60">{formatDateTime(item.startTime)}</span>
-                  <span className="font-display text-lg text-[#B91C1C]">{formatMoney(item.finalAmount)}</span>
-                </div>
-              ))
+              cancelledReservations.map((item) => {
+                const [cancelDate, cancelTime] = formatCompactDateTime(item.cancelledAt);
+                const [screenDate, screenTime] = formatCompactDateTime(item.startTime);
+
+                return (
+                  <div
+                    key={item.reservationId}
+                    className="grid grid-cols-[1.2fr_1fr_1fr_1.2fr_1fr_0.9fr] items-center border-t border-black/5 px-4 py-4 text-center text-sm text-[#1A1A1A]"
+                  >
+                    <span className="leading-relaxed">
+                      <span className="block">{cancelDate}</span>
+                      <span className="block">{cancelTime}</span>
+                    </span>
+                    <span className="truncate px-2">{item.movieTitle}</span>
+                    <span className="truncate px-2">{item.theaterName}</span>
+                    <span className="leading-relaxed">
+                      <span className="block">{screenDate}</span>
+                      <span className="block">{screenTime}</span>
+                    </span>
+                    <span className="whitespace-nowrap font-medium">{formatMoney(item.finalAmount)}</span>
+                    <span className="flex justify-center">
+                      <span className="rounded-full bg-black/5 px-3 py-1 text-xs font-medium text-black/55">
+                        {mapCancelReasonLabel(item.cancelReason)}
+                      </span>
+                    </span>
+                  </div>
+                );
+              })
             )}
           </div>
-          
-          {/* 이용안내 (예매) */}
-          <div className="bg-black/5 border border-black/10 rounded-sm p-8">
-            <h3 className="text-[10px] font-bold uppercase tracking-[0.3em] text-[#B91C1C] mb-4">Notice</h3>
-            <ul className="space-y-3 text-[10px] font-bold tracking-widest text-black/60 leading-relaxed list-disc list-inside marker:text-black/20">
-                <li>온라인 예매 취소는 상영 시작 20분 전까지 가능합니다.</li>
-                <li>부분 취소는 불가하며, 전체 취소 후 다시 예매하셔야 합니다.</li>
-                <li>현장 결제하신 내역은 온라인에서 취소가 불가능하며, 극장 매표소에 방문하셔야 합니다.</li>
-            </ul>
-          </div>
         </div>
+      ) : null}
+
+      {reservationTab === "reservation" ? (
+        <div className="mt-8 rounded-sm border border-black/5 bg-[#FDFDFD] px-4 py-4 text-[11px] font-bold uppercase tracking-[0.18em] text-black/35 shadow-xl">이용안내</div>
       ) : null}
     </section>
   );

@@ -6,6 +6,8 @@ import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.util.Optional;
+
 public interface ReservationTicketRepository extends JpaRepository<ReservationTicket, Long> {
 
     /* =========================================================
@@ -14,5 +16,7 @@ public interface ReservationTicketRepository extends JpaRepository<ReservationTi
     // Spring Data JPA가 이름만 보고 자동으로 DELETE 쿼리를 짜줍니다!
     // (만약 엔티티 안에 필드명이 reservation이고 그 안의 id를 참조한다면 deleteAllByReservation_Id 로 써야 할 수도 있습니다)
     void deleteAllByReservationId(Long reservationId);
+
+    Optional<ReservationTicket> findByTicketCode(String ticketCode);
 
 }

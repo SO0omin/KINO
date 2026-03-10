@@ -240,12 +240,23 @@ public class MyPageService {
                 holdExpiresAt = seats.get(0).getHoldExpiresAt();
             }
 
-            log.info("자리: {}", seats);
-            log.info("시간: {}", holdExpiresAt);
-
             // 상영 시작 전이고, 아직 취소되지 않은 예약이면 모두 취소 가능 (결제 대기 상태 포함)
             boolean cancellable = reservation.getScreening().getStartTime().isAfter(LocalDateTime.now())
                     && reservation.getStatus() != ReservationStatus.CANCELED;
+
+            List<MyPageDTO.ReservationItem.TicketInfo> ticketInfos = reservation.getTickets().stream()
+                    .map(ticket -> {
+                        // 💡 ticket.getSeatId() 와 일치하는 좌석을 방금 위에서 찾은 seats 리스트에서 찾습니다!
+                        String seatName = seats.stream()
+                                .filter(s -> s.getSeat().getId().equals(ticket.getSeatId()))
+                                .findFirst()
+                                .map(s -> s.getSeat().getSeatRow() + s.getSeat().getSeatNumber())
+                                .orElse("알수없음"); // 혹시 못 찾을 경우 방어 코드
+
+                        // 좌석명(A1)과 난수(QR코드)를 묶어서 객체 생성
+                        return new MyPageDTO.ReservationItem.TicketInfo(seatName, ticket.getTicketCode());
+                    })
+                    .collect(Collectors.toList());
 
             items.add(MyPageDTO.ReservationItem.builder()
                     .reservationId(reservation.getId())
@@ -265,6 +276,7 @@ public class MyPageService {
                     .seatNames(seatNames)
                     .cancellable(cancellable)
                     .holdExpiresAt(holdExpiresAt)
+                    .tickets(ticketInfos)
                     .build());
         }
         return items;

@@ -67,6 +67,10 @@ export interface MyReservationItem {
   paidAt?: string;
   cancelledAt?: string;
   holdExpiresAt?: string; // "2026-03-08T14:30:00" 형태의 ISO 문자열
+  tickets?: {
+    seatName: string;
+    ticketCode: string;
+  }[];
 }
 
 export interface CancelReservationResponse {

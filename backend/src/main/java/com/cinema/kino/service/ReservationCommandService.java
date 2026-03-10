@@ -86,6 +86,8 @@ public class ReservationCommandService {
                         .reservation(reservation)
                         .seatId(t.getSeatId())
                         .priceType(PriceType.valueOf(t.getPriceType()))
+                        .ticketCode(UUID.randomUUID().toString()) // 겹치지 않는 난수 발급!
+                        .isIssued(false) // 처음엔 무조건 발급안함
                         .build())
                 .collect(Collectors.toList());
 
