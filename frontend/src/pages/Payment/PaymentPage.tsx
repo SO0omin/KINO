@@ -28,31 +28,6 @@ function buildTicketsFromReservationDetail(detail: any): TicketRequest[] {
   }));
 }
 
-/*function buildTicketTypeText(seats: Array<{ priceType?: PriceType }>): string {
-  const counts: Record<PriceType, number> = { ADULT: 0, YOUTH: 0, SENIOR: 0, SPECIAL: 0 };
-
-  for (const s of seats) {
-    const pt = normalizePriceType(s.priceType);
-    counts[pt] += 1;
-  }
-
-  const parts: string[] = [];
-  if (counts.ADULT) parts.push(`성인 ${counts.ADULT}명`);
-  if (counts.YOUTH) parts.push(`청소년 ${counts.YOUTH}명`);
-  if (counts.SENIOR) parts.push(`경로 ${counts.SENIOR}명`);
-  if (counts.SPECIAL) parts.push(`우대 ${counts.SPECIAL}명`);
-
-  return parts.length ? parts.join(' / ') : '성인 0명';
-}*/
-
-function filterAvailableTicketCoupons(list: MyCouponResponse[], totalAmount: number): MyCouponResponse[] {
-  return list.filter((coupon) => {
-    if (coupon.couponKind !== '매표') return false;
-    const minPrice = Number(coupon.minPrice ?? 0);
-    return totalAmount >= minPrice;
-  });
-}
-
 export default function PaymentPage() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
@@ -77,7 +52,7 @@ export default function PaymentPage() {
   const [serverUsedPoints, setServerUsedPoints] = useState<number>(0);
   const [currentFinalAmount, setCurrentFinalAmount] = useState<number>(0);
 
-  // 추가: 보유 포인트
+  // 보유 포인트
   const [availablePoints, setAvailablePoints] = useState<number>(0);
 
   const typeCounts = useMemo(() => {
@@ -90,13 +65,6 @@ export default function PaymentPage() {
     });
     return counts;
   }, [reservationDetail]);
-
-  useEffect(() => {
-    if (selectedCouponId == null) return;
-    if (!coupons.some((coupon) => coupon.memberCouponId === selectedCouponId)) {
-      setSelectedCouponId(null);
-    }
-  }, [coupons, selectedCouponId]);
 
   useEffect(() => {
     if (reservationId) fetchReservationDetail(reservationId);
@@ -116,9 +84,7 @@ export default function PaymentPage() {
       setCouponLoading(true);
       try {
         const list = await getMyCoupons(memberId);
-        const totalAmount = Number(reservationDetail?.totalAmount ?? 0);
-        const ticketCoupons = filterAvailableTicketCoupons(list, totalAmount);
-        setCoupons(ticketCoupons);
+        setCoupons(list);
       } catch (e) {
         console.error('쿠폰 목록 조회 실패:', e);
         setCoupons([]);
@@ -126,15 +92,15 @@ export default function PaymentPage() {
         setCouponLoading(false);
       }
     })();
-  }, [reservationDetail?.memberId, reservationDetail?.totalAmount]);
+  }, [reservationDetail?.memberId]);
 
-  // 추가: 보유 포인트 조회
+  // 보유 포인트 조회
   useEffect(() => {
     const memberId = reservationDetail?.memberId ?? null;
 
     if (!memberId) {
       setAvailablePoints(0);
-      setUsedPoints(0); // 비회원이면 사용 포인트도 0으로 정리
+      setUsedPoints(0);
       return;
     }
 
@@ -143,8 +109,6 @@ export default function PaymentPage() {
         const p = await getMyPoints(memberId);
         const n = Number(p) || 0;
         setAvailablePoints(n);
-
-        // 현재 입력 포인트를 보유 포인트/100단위에 맞게 자동 보정
         setUsedPoints((prev) => Math.floor(Math.min(prev, n) / 100) * 100);
       } catch (e) {
         console.error('포인트 조회 실패:', e);
@@ -166,9 +130,7 @@ export default function PaymentPage() {
     try {
       await redeemCoupon(code, memberId);
       const list = await getMyCoupons(memberId);
-      const totalAmount = Number(reservationDetail?.totalAmount ?? 0);
-      const ticketCoupons = filterAvailableTicketCoupons(list, totalAmount);
-      setCoupons(ticketCoupons);
+      setCoupons(list);
     } catch (e: any) {
       alert(e?.message ?? '쿠폰 등록에 실패했습니다.');
     } finally {
@@ -184,10 +146,9 @@ export default function PaymentPage() {
   // 쿠폰/포인트 변경 시 prepare 재계산
   useEffect(() => {
     const recalc = async () => {
-      if (!reservationDetail) return; //티켓 정보없으면 실행하지 않음
+      if (!reservationDetail) return; 
 
       const isMember = !!reservationDetail.memberId;
-
       const safeUsedPoints = isMember ? usedPoints : 0;
       const safeCouponId = isMember ? selectedCouponId : null;
 
@@ -211,8 +172,6 @@ export default function PaymentPage() {
         updateAmount(res.finalAmount);
       } catch (e) {
         console.error('prepare 재계산 실패:', e);
-
-        // 에러 발생 시 폴백 로직
         setServerOriginalPrice(reservationDetail.totalAmount);
         setServerCouponDiscount(0);
         setServerUsedPoints(safeUsedPoints);
@@ -223,23 +182,31 @@ export default function PaymentPage() {
       }
     };
 
-      recalc();
+    recalc();
   }, [reservationDetail?.reservationId, selectedCouponId, usedPoints]);
 
   if (!reservationId) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <p className="text-gray-700">잘못된 접근입니다. reservationId가 필요합니다.</p>
+      <div className="bg-white min-h-screen flex items-center justify-center">
+        <div className="text-center space-y-4">
+          <p className="font-display text-4xl uppercase tracking-tighter text-[#1A1A1A]">Invalid Access</p>
+          <p className="text-[10px] font-bold uppercase tracking-widest text-black/40">Reservation ID is required</p>
+        </div>
       </div>
     );
   }
 
   if (!reservationDetail && isLoading) {
-    return <div className="min-h-screen flex items-center justify-center">로딩 중...</div>;
+    return (
+      <div className="bg-white min-h-screen flex items-center justify-center">
+        <div className="text-[10px] font-bold uppercase tracking-[0.3em] text-[#B91C1C] animate-pulse">
+          Loading Payment Data...
+        </div>
+      </div>
+    );
   }
+  
   if (!reservationDetail) return null;
-
-  //const ticketTypeText = buildTicketTypeText(reservationDetail.seats);
 
   const handlePayment = async () => {
     if (!agreeTerms) {
@@ -264,9 +231,7 @@ export default function PaymentPage() {
     );
   };
 
-  const seatNamesText = reservationDetail.seats
-  .map((seat) => seat.seatName)
-  .join(', ');
+  const seatNamesText = reservationDetail.seats.map((seat) => seat.seatName).join(', ');
 
   const bookingData: BookingData = {
     movieTitle: reservationDetail.movieTitle,
@@ -297,9 +262,7 @@ export default function PaymentPage() {
     memberId: reservationDetail.memberId || null,
     guestId: reservationDetail.guestId || null,
   };
-  
 
-  // console.log("🚨 서버에서 온 예약 상세 데이터:", reservationDetail); 디버깅용
   const handleBack = () => {
     if (window.history.length > 1) {
       navigate(-1);
@@ -309,12 +272,35 @@ export default function PaymentPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#fdf4e3]">
-      <main className="max-w-[1200px] mx-auto px-6 pb-16 pt-8">
-        <div className="flex gap-8">
-          <div className="flex-1 space-y-8">
-            <h1 className="text-3xl font-bold text-gray-800">결제하기</h1>
+    <div className="bg-white text-[#1A1A1A] min-h-screen font-sans selection:bg-[#B91C1C] selection:text-white">
+      
+      {/* Header Area */}
+      <div className="bg-[#1A1A1A] text-white pt-15 pb-10 relative overflow-hidden mb-12">
+        <div className="absolute inset-0 opacity-10 pointer-events-none">
+          <div className="absolute top-0 left-0 w-full h-full bg-[radial-gradient(circle_at_50%_50%,#B91C1C_0%,transparent_70%)]"></div>
+        </div>
+        
+        <div className="max-w-7xl mx-auto px-6 md:px-10 relative z-10">
+          <div className="flex flex-col items-center text-center space-y-6">
+            <div className="flex items-center gap-4">
+              <div className="h-px w-12 bg-[#B91C1C]"></div>
+              <p className="font-sans text-[10px] font-bold tracking-[0.5em] text-[#B91C1C] uppercase">Kino Cinema</p>
+              <div className="h-px w-12 bg-[#B91C1C]"></div>
+            </div>
+            <h1 className="font-display text-6xl md:text-8xl uppercase tracking-tighter leading-none">
+              결제<span className="text-white/20"></span>
+            </h1>
+          </div>
+        </div>
+      </div>
 
+      <main className="max-w-7xl mx-auto px-6 md:px-10 pb-20">
+        <div className="flex flex-col lg:flex-row gap-12 items-start">
+          
+          {/* ===================== [좌측] 결제 상세 정보 영역 ===================== */}
+          <div className="flex-[2] flex flex-col gap-12 w-full">
+            
+            {/* 자식 컴포넌트들: 내부 디자인은 각 컴포넌트에서 수정해야 하지만 여백은 통일 */}
             <BookingInfo bookingData={bookingData} />
 
             <DiscountSection
@@ -335,28 +321,56 @@ export default function PaymentPage() {
               setSelectedPaymentMethod={setSelectedPaymentMethod}
             />
 
-            <section className="bg-white rounded-lg p-6 shadow-sm">
-              <label className="flex items-center gap-3 cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={agreeTerms}
-                  onChange={(e) => setAgreeTerms(e.target.checked)}
-                  className="w-5 h-5 accent-[#eb4d32]"
-                />
-                <span className="font-bold text-gray-700">취소 및 환불 규정에 동의합니다.</span>
-              </label>
+            {/* 약관 동의 체크박스 (디자인 리팩토링) */}
+            <section>
+              <div className="bg-[#FDFDFD] border border-black/5 rounded-sm p-6 shadow-xl transition-all hover:border-black/10">
+                <label className="flex items-center gap-4 cursor-pointer group">
+                  <div className="relative flex items-center justify-center w-6 h-6">
+                    <input
+                      type="checkbox"
+                      checked={agreeTerms}
+                      onChange={(e) => setAgreeTerms(e.target.checked)}
+                      className="peer sr-only"
+                    />
+                    <div className="w-6 h-6 border-2 border-black/20 rounded-sm peer-checked:bg-[#B91C1C] peer-checked:border-[#B91C1C] transition-all flex items-center justify-center group-hover:border-[#B91C1C]/50">
+                      <svg 
+                        className="w-4 h-4 text-white opacity-0 peer-checked:opacity-100 transition-opacity" 
+                        fill="none" 
+                        viewBox="0 0 24 24" 
+                        stroke="currentColor" 
+                        strokeWidth={3}
+                      >
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                      </svg>
+                    </div>
+                  </div>
+                  <span className="text-xs font-bold uppercase tracking-widest text-[#1A1A1A] group-hover:text-[#B91C1C] transition-colors">
+                    취소 및 환불 규정에 동의합니다.
+                  </span>
+                </label>
+              </div>
             </section>
           </div>
 
-          <div className="w-[380px]">
-            <PaymentSummary
-              paymentData={paymentData}
-              selectedPaymentMethod={selectedPaymentMethod}
-              onBack={handleBack}
-              onPayment={handlePayment}
-              isProcessing={isLoading}
-            />
+          {/* ===================== [우측] 결제 요약 (Ticket Stub) ===================== */}
+          <div className="w-full lg:w-[380px] lg:sticky lg:top-8 flex flex-col gap-8">
+            <div className="flex items-center gap-3 text-[#B91C1C] font-bold tracking-[0.4em] uppercase text-xs">
+              <div className="w-8 h-px bg-[#B91C1C]"></div>
+              <span>Payment Summary</span>
+            </div>
+            
+            <div className="bg-[#FDFDFD] border border-black/5 rounded-sm shadow-xl flex flex-col overflow-hidden">
+              {/* PaymentSummary 컴포넌트를 이 안에 렌더링 */}
+              <PaymentSummary
+                paymentData={paymentData}
+                selectedPaymentMethod={selectedPaymentMethod}
+                onBack={handleBack}
+                onPayment={handlePayment}
+                isProcessing={isLoading}
+              />
+            </div>
           </div>
+
         </div>
       </main>
     </div>

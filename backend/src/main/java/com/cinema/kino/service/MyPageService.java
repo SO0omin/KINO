@@ -260,6 +260,7 @@ public class MyPageService {
                     .cancelledAt(payment != null ? payment.getCancelledAt() : null)
                     .finalAmount(payment != null ? payment.getFinalAmount() : reservation.getTotalPrice())
                     .reservationStatus(reservation.getStatus().name())
+                    .reservationNumber(reservation.getReservationNumber())
                     // 결제 정보가 없으면 기본값으로 PENDING 처리
                     .paymentStatus(payment != null ? payment.getPaymentStatus().name() : "PENDING")
                     .seatNames(seatNames)

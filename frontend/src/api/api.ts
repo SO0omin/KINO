@@ -11,7 +11,7 @@ let isRedirecting = false;
 api.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem('jwt_token'); // 로컬 스토리지에서 토큰 꺼냄
-    console.log("🚀 지금 나가는 토큰:", token); // 💡 여기 로그를 확인하세요!
+    //console.log("🚀 지금 나가는 토큰:", token); // 💡 여기 로그를 확인하세요!
     
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;

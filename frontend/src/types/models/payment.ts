@@ -148,3 +148,9 @@ export interface PaymentData {
    */
   guestId?: number | null;
 }
+
+export type TossPaymentType =
+  | 'CARD'
+  | 'TRANSFER'
+  | 'VIRTUAL_ACCOUNT'
+  | 'MOBILE_PHONE';

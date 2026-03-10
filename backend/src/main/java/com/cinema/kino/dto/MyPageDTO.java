@@ -98,6 +98,7 @@ public class MyPageDTO {
         private LocalDateTime cancelledAt;
         private Integer finalAmount;
         private String reservationStatus;
+        private String reservationNumber;
         private String paymentStatus;
         private List<String> seatNames;
         private boolean cancellable;
