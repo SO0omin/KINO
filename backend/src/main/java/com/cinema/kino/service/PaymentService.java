@@ -271,7 +271,7 @@ public class PaymentService {
             seat.setPriceType(pt);
             seat.setStatus(SeatStatus.HELD);
             seat.setReservation(reservation);
-            seat.setHoldExpiresAt(LocalDateTime.now().plusMinutes(10));
+            seat.setHoldExpiresAt(seat.getHoldExpiresAt() == null ? LocalDateTime.now().plusMinutes(10) : seat.getHoldExpiresAt());
         }
 
         return PaymentDTO.PrepareResponse.builder()

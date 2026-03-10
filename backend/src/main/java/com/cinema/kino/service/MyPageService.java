@@ -244,6 +244,20 @@ public class MyPageService {
             boolean cancellable = reservation.getScreening().getStartTime().isAfter(LocalDateTime.now())
                     && reservation.getStatus() != ReservationStatus.CANCELED;
 
+            List<MyPageDTO.ReservationItem.TicketInfo> ticketInfos = reservation.getTickets().stream()
+                    .map(ticket -> {
+                        // 💡 ticket.getSeatId() 와 일치하는 좌석을 방금 위에서 찾은 seats 리스트에서 찾습니다!
+                        String seatName = seats.stream()
+                                .filter(s -> s.getSeat().getId().equals(ticket.getSeatId()))
+                                .findFirst()
+                                .map(s -> s.getSeat().getSeatRow() + s.getSeat().getSeatNumber())
+                                .orElse("알수없음"); // 혹시 못 찾을 경우 방어 코드
+
+                        // 좌석명(A1)과 난수(QR코드)를 묶어서 객체 생성
+                        return new MyPageDTO.ReservationItem.TicketInfo(seatName, ticket.getTicketCode());
+                    })
+                    .collect(Collectors.toList());
+
             items.add(MyPageDTO.ReservationItem.builder()
                     .reservationId(reservation.getId())
                     .movieTitle(reservation.getScreening().getMovie().getTitle())
@@ -262,6 +276,7 @@ public class MyPageService {
                     .seatNames(seatNames)
                     .cancellable(cancellable)
                     .holdExpiresAt(holdExpiresAt)
+                    .tickets(ticketInfos)
                     .build());
         }
         return items;

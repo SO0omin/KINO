@@ -178,7 +178,7 @@ export default function TimetablePage() {
             <div className="flex justify-between items-end w-full mt-2 pt-3 border-t border-black/5">
               <span className="text-[10px] font-bold text-black/20 uppercase tracking-tighter">~{formatTime(sc.endTime)}</span>
               <div className="text-[10px] font-bold">
-                <span className={sc.remainingSeats < 10 && !isSoldOut ? 'text-[#B91C1C]' : 'text-black/40'}>{sc.remainingSeats}석</span>
+                <span className={sc.remainingSeats < 10 && !isSoldOut ? 'text-[#B91C1C]' : 'text-black/40'}>{sc.remainingSeats}</span>
                 <span className="text-black/10 font-normal"> / {sc.totalSeats}</span>
               </div>
             </div>

@@ -74,10 +74,15 @@ export async function redeemCoupon(
 }
 
 export async function getMyCoupons(
-  memberId: number
+  memberId: number,
+  couponKind?: string
 ): Promise<MyCouponResponse[]> {
   try {
-    const response = await api.get(`/api/coupons/my?memberId=${memberId}`);
+    const params = new URLSearchParams({ memberId: String(memberId) });
+    if (couponKind) {
+      params.set('couponKind', couponKind);
+    }
+    const response = await api.get(`/api/coupons/my?${params.toString()}`);
     return response.data;
   } catch (error: any) {
     throw new Error(error.response?.data?.message || '쿠폰 목록 조회 실패');
