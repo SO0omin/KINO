@@ -61,7 +61,7 @@ public class ScreeningSeat {
         }
 
         this.status = SeatStatus.HELD;
-        this.holdExpiresAt = LocalDateTime.now().plusMinutes(5);
+        this.holdExpiresAt = LocalDateTime.now().plusMinutes(10);
 
         if (memberId != null) {
             this.heldByMember = new Member(memberId); // 프록시

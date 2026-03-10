@@ -146,7 +146,6 @@ const TheaterListPage = () => {
                   <div 
                     key={theater.id}
                     className="group relative bg-[#FDFDFD] border border-black/5 p-8 rounded-sm shadow-xl hover:shadow-2xl transition-all duration-500 hover:border-[#B91C1C]/30 flex flex-col justify-between overflow-hidden cursor-pointer"
-                    onClick={() => navigate(`/theater/${theater.id}`)}
                   >
                     {/* 배경 장식 아이콘 */}
                     <MapPin size={100} className="absolute -right-6 -top-6 text-black/[0.02] group-hover:text-[#B91C1C]/5 transition-colors duration-500 rotate-12" />

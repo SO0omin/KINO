@@ -1,6 +1,7 @@
+import { useState } from "react"; // ✨ 필수 추가!
 import { Search } from "lucide-react";
 import type { MyReservationItem } from "../../../api/myPageApi";
-import {ReservationTimer} from "../modals/ReservationTimer";
+import { ReservationTimer } from "../modals/ReservationTimer";
 
 type PurchaseRow = {
   id: number;
@@ -14,6 +15,7 @@ type PurchaseRow = {
 };
 
 type ReservationsSectionProps = {
+  // ... (기존과 동일하므로 생략 없이 풀버전으로 드립니다)
   guestView?: boolean;
   reservationTab: "reservation" | "purchase";
   setReservationTab: (value: "reservation" | "purchase") => void;
@@ -31,7 +33,7 @@ type ReservationsSectionProps = {
   formatMoney: (value: number) => string;
   isCancelling: number | null;
   openCancelModal: (reservationId: number) => void;
-  onClickPay: (reservationId: number) => void; // 결제하러 가기 클릭 핸들러 추가
+  onClickPay: (reservationId: number) => void; 
   purchaseSelectType: "all" | "movie";
   setPurchaseSelectType: (value: "all" | "movie") => void;
   purchaseStatusType: "all" | "purchase" | "cancel";
@@ -109,6 +111,20 @@ export function ReservationsSection({
   purchaseRows,
   cancelledReservations,
 }: ReservationsSectionProps) {
+  
+  // ✨ [핵심 로직 1] 만료된 예약 ID들을 담아두는 바구니
+  const [expiredList, setExpiredList] = useState<number[]>([]);
+
+  // ✨ [핵심 로직 2] 타이머가 0초가 되면 호출될 함수
+  const handleExpire = (reservationId: number) => {
+    setExpiredList((prev) => {
+      if (!prev.includes(reservationId)) {
+        return [...prev, reservationId];
+      }
+      return prev;
+    });
+  };
+
   const parseDateTime = (value?: string) => {
     if (!value) return new Date();
     const normalized = value.includes(" ") ? value.replace(" ", "T") : value;
@@ -125,8 +141,10 @@ export function ReservationsSection({
     return `KINO-${yy}${mm}${dd}-${seq}`;
   };
   
-  const isPayable = (paymentStatus?: string, holdExpiresAt?: string) => {
+  // ✨ [핵심 로직 3] 만료된 리스트에 있으면 무조건 결제 불가(false) 처리
+  const isPayable = (paymentStatus?: string, holdExpiresAt?: string, reservationId?: number) => {
     if (paymentStatus !== "READY" || !holdExpiresAt) return false;
+    if (reservationId && expiredList.includes(reservationId)) return false; // 0초 된 녀석 컷!
     return new Date(holdExpiresAt).getTime() > Date.now();
   };
 
@@ -141,6 +159,27 @@ export function ReservationsSection({
     const amountText = formatMoney(item.finalAmount);
     const issueAtText = formatDateTime(new Date().toISOString());
 
+    // ✨ [추가된 핵심 로직] 내 사이트 기본 주소
+    const baseUrl = window.location.origin;
+
+    // ✨ [추가된 핵심 로직] 티켓 개수만큼 QR 코드 이미지 HTML 블록 만들기
+    const qrCodesHtml = item.tickets && item.tickets.length > 0 
+      ? item.tickets.map((ticket) => {
+          // 스마트폰으로 찍었을 때 접속될 관리자 페이지 URL
+          const verifyUrl = `${baseUrl}/admin/verify-ticket?code=${ticket.ticketCode}`;
+          // 외부 API를 이용해 URL을 QR코드 이미지 주소로 변환
+          const qrImageUrl = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(verifyUrl)}&color=1a1a1a&bgcolor=ffffff`;
+
+          return `
+            <div class="qr-box">
+              <p class="qr-seat">${ticket.seatName} 좌석</p>
+              <img src="${qrImageUrl}" alt="QR Code for ${ticket.seatName}" class="qr-img" />
+              <p class="qr-code-text">${ticket.ticketCode.substring(0, 8)}...</p>
+            </div>
+          `;
+        }).join("") 
+      : `<p class="qr-empty">QR 코드를 불러올 수 없습니다. (백엔드 데이터 확인 필요)</p>`;
+
     const printWindow = window.open("", "_blank", "width=860,height=900");
     if (!printWindow) {
       alert("팝업이 차단되어 교환권을 열 수 없습니다. 팝업을 허용해 주세요.");
@@ -152,7 +191,7 @@ export function ReservationsSection({
 <html lang="ko">
   <head>
     <meta charset="utf-8" />
-    <title>${bookingNo} 교환권</title>
+    <title>${bookingNo} 입장권</title>
     <style>
       * { box-sizing: border-box; }
       body { margin: 0; padding: 32px; background: linear-gradient(180deg, #f7f7f7 0%, #efefef 100%); font-family: "Inter", "Apple SD Gothic Neo", "Noto Sans KR", sans-serif; color: #1a1a1a; }
@@ -168,10 +207,20 @@ export function ReservationsSection({
       .head h1 { margin: 14px 0 0; font-size: 44px; line-height: 0.95; letter-spacing: -0.04em; font-weight: 800; text-transform: uppercase; }
       .head p { margin: 10px 0 0; font-size: 14px; color: rgba(255,255,255,0.72); }
       .body { position: relative; padding: 30px; }
-      .booking-row { display: flex; align-items: flex-end; justify-content: space-between; gap: 20px; padding-bottom: 24px; border-bottom: 1px solid rgba(26, 26, 26, 0.08); }
+      .booking-row { display: flex; align-items: flex-end; justify-content: space-between; gap: 20px; padding-bottom: 24px; border-bottom: 1px dashed rgba(26, 26, 26, 0.15); }
       .booking .label { font-size: 11px; font-weight: 800; letter-spacing: 0.24em; text-transform: uppercase; color: rgba(26,26,26,0.38); }
       .booking .no { margin-top: 10px; font-size: 42px; font-weight: 800; letter-spacing: -0.04em; color: #b91c1c; }
-      .stamp { padding: 10px 14px; border: 1px solid rgba(185, 28, 28, 0.28); color: #b91c1c; background: rgba(185, 28, 28, 0.05); border-radius: 999px; font-size: 11px; font-weight: 800; letter-spacing: 0.18em; text-transform: uppercase; white-space: nowrap; }
+      
+      /* ✨ 추가된 QR 코드 섹션 스타일 */
+      .qr-section { padding: 30px 0; border-bottom: 1px dashed rgba(26, 26, 26, 0.15); text-align: center; }
+      .qr-title { font-size: 12px; font-weight: 800; letter-spacing: 0.2em; text-transform: uppercase; color: #1a1a1a; margin-bottom: 20px; }
+      .qr-container { display: flex; flex-wrap: wrap; justify-content: center; gap: 24px; }
+      .qr-box { padding: 16px; border: 1px solid rgba(26, 26, 26, 0.1); border-radius: 12px; background: #fff; display: flex; flex-direction: column; items-center; width: 140px; }
+      .qr-seat { font-size: 13px; font-weight: 800; color: #b91c1c; margin: 0 0 12px 0; text-align: center; }
+      .qr-img { width: 100px; height: 100px; margin: 0 auto; display: block; }
+      .qr-code-text { font-family: monospace; font-size: 10px; color: rgba(26,26,26,0.4); margin: 10px 0 0 0; text-align: center; }
+      .qr-empty { font-size: 12px; color: rgba(26,26,26,0.4); }
+
       .grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px 26px; margin-top: 24px; }
       .item { padding: 14px 16px; border-radius: 14px; background: #ffffff; border: 1px solid rgba(26, 26, 26, 0.06); }
       .item .k { display: block; margin-bottom: 6px; font-size: 11px; font-weight: 800; letter-spacing: 0.22em; text-transform: uppercase; color: rgba(26,26,26,0.38); }
@@ -179,7 +228,7 @@ export function ReservationsSection({
       .price { margin-top: 24px; padding: 18px 20px; border-radius: 18px; background: #1a1a1a; color: #fff; display: flex; align-items: center; justify-content: space-between; gap: 18px; }
       .price .label { font-size: 11px; font-weight: 800; letter-spacing: 0.26em; text-transform: uppercase; color: rgba(255,255,255,0.5); }
       .price .value { font-size: 34px; font-weight: 800; letter-spacing: -0.04em; color: #b91c1c; }
-      .foot { margin-top: 20px; padding-top: 18px; border-top: 1px solid rgba(26,26,26,0.08); font-size: 12px; line-height: 1.7; color: rgba(26,26,26,0.56); }
+      .foot { margin-top: 20px; padding-top: 18px; border-top: 1px solid rgba(26,26,26,0.08); font-size: 12px; line-height: 1.7; color: rgba(26,26,26,0.56); text-align: center; }
       .actions { margin: 20px auto 0; max-width: 860px; display: flex; gap: 10px; justify-content: flex-end; }
       .btn { border: 1px solid rgba(26, 26, 26, 0.12); background: #fff; color: #1a1a1a; padding: 13px 18px; border-radius: 14px; font-size: 12px; font-weight: 800; letter-spacing: 0.16em; text-transform: uppercase; cursor: pointer; }
       .btn.primary { border-color: #b91c1c; background: #b91c1c; color: #fff; }
@@ -190,15 +239,6 @@ export function ReservationsSection({
         .ticket { box-shadow: none; border-color: rgba(26, 26, 26, 0.2); }
         .frame { max-width: none; }
       }
-      @media (max-width: 720px) {
-        body { padding: 16px; }
-        .head h1 { font-size: 32px; }
-        .booking-row { flex-direction: column; align-items: flex-start; }
-        .booking .no { font-size: 30px; }
-        .grid { grid-template-columns: 1fr; }
-        .price { flex-direction: column; align-items: flex-start; }
-        .price .value { font-size: 28px; }
-      }
     </style>
   </head>
   <body>
@@ -206,8 +246,8 @@ export function ReservationsSection({
       <section class="ticket">
         <header class="head">
           <div class="eyebrow">Kino Cinema</div>
-          <h1>Movie Voucher</h1>
-          <p>현장에서 직원에게 아래 교환권을 제시해 주세요.</p>
+          <h1>E-Ticket</h1>
+          <p>입장 시 직원에게 아래의 QR 코드를 스캔해 주세요.</p>
         </header>
         <div class="body">
           <div class="booking-row">
@@ -216,6 +256,14 @@ export function ReservationsSection({
               <div class="no mono">${bookingNo}</div>
             </div>
           </div>
+          
+          <div class="qr-section">
+            <div class="qr-title">Scan to Enter</div>
+            <div class="qr-container">
+              ${qrCodesHtml}
+            </div>
+          </div>
+
           <div class="grid">
             <div class="item"><span class="k">영화명</span><span class="v">${movieTitle}</span></div>
             <div class="item"><span class="k">관람인원</span><span class="v">${peopleText}</span></div>
@@ -232,7 +280,7 @@ export function ReservationsSection({
           </div>
           <div class="foot">
             <div>발행시각: ${issueAtText}</div>
-            <div>본 교환권은 재출력이 가능하며, 유효 여부는 매표소 시스템 기준으로 판단됩니다.</div>
+            <div>본 E-Ticket(교환권)은 입장 확인 용도로 사용되며, 캡처된 이미지는 사용이 제한될 수 있습니다.</div>
           </div>
         </div>
       </section>
@@ -250,7 +298,8 @@ export function ReservationsSection({
     printWindow.document.close();
     printWindow.focus();
   };
-
+  
+  // ====================== [비회원 뷰] ======================
   if (guestView) {
     return (
       <section>
@@ -311,7 +360,8 @@ export function ReservationsSection({
           ) : (
             <div className="mt-4 space-y-4">
               {visibleReservations.map((item) => {
-                const canPay = isPayable(item.paymentStatus, item.holdExpiresAt); // ✨ 결제 가능 여부 체크
+                // ✨ reservationId 추가 전달!
+                const canPay = isPayable(item.paymentStatus, item.holdExpiresAt, item.reservationId); 
 
                 return (
                   <div key={item.reservationId} className="rounded-sm border border-black/5 bg-[#FDFDFD] p-6 shadow-xl">
@@ -333,18 +383,24 @@ export function ReservationsSection({
                         </div>
                         <div className="mt-4 flex items-center justify-between rounded-sm bg-white px-4 py-3 text-sm font-semibold text-[#1A1A1A]">
                           <span>결제금액 {formatMoney(item.finalAmount)}</span>
+                          
+                          {/* ✨ 타이머 영역에 onExpire 붙이기 */}
                           {canPay && item.holdExpiresAt && (
                             <div className="flex items-center gap-2">
                               <span className="text-xs font-normal text-black/40">남은 결제 시간</span>
-                              <ReservationTimer expiresAt={item.holdExpiresAt} />
+                              <ReservationTimer 
+                                expiresAt={item.holdExpiresAt} 
+                                onExpire={() => handleExpire(item.reservationId)} 
+                              />
                             </div>
                           )}
+                          {/* 만료 표시 배지 추가 */}
+                          {!canPay && item.paymentStatus === "READY" && <span className="text-black/40">(시간 만료)</span>}
                           {canPay && <span className="text-[#B91C1C]">(결제 대기 중)</span>}
                         </div>
                       </div>
                     </div>
                     <div className="mt-4 flex justify-end gap-2">
-                      {/* ✨ 결제하러 가기 버튼 (비회원 뷰) */}
                       {canPay && (
                         <button
                           className="rounded-sm bg-[#1A1A1A] px-5 py-2 text-sm font-semibold text-white transition-colors hover:bg-[#B91C1C]"
@@ -354,8 +410,7 @@ export function ReservationsSection({
                         </button>
                       )}
                       
-                      {/* 결제가 안 된 상태면 교환권 출력 숨김 처리 */}
-                      {!canPay && (
+                      {!canPay && item.paymentStatus === "PAID" && (
                         <button
                           className="rounded-sm border border-[#B91C1C] bg-white px-5 py-2 text-sm font-semibold text-[#B91C1C] transition-colors hover:bg-[#B91C1C] hover:text-white"
                           onClick={() => openPrintVoucher(item)}
@@ -383,6 +438,7 @@ export function ReservationsSection({
           )}
         </div>
 
+        {/* ... (비회원 취소내역 생략 없이 그대로 둠) ... */}
         <div className="mt-10">
           <h2 className="text-3xl font-semibold tracking-tight text-[#B91C1C]">예매취소내역</h2>
           <p className="mt-2 text-sm text-black/55">· 상영일 기준 7일간 취소내역을 확인하실 수 있습니다.</p>
@@ -433,6 +489,7 @@ export function ReservationsSection({
     );
   }
 
+  // ====================== [회원 뷰] ======================
   return (
     <section>
       <h1 className="text-5xl font-semibold tracking-tight text-[#1A1A1A]">예매/구매 내역</h1>
@@ -509,7 +566,8 @@ export function ReservationsSection({
             ) : (
               <div className="divide-y divide-black/5">
                 {visibleReservations.map((item) => {
-                  const canPay = isPayable(item.paymentStatus, item.holdExpiresAt); //결제 가능 여부 체크
+                  // ✨ reservationId 추가 전달!
+                  const canPay = isPayable(item.paymentStatus, item.holdExpiresAt, item.reservationId);
 
                   return (
                     <div key={item.reservationId} className="flex flex-col gap-4 p-5 lg:flex-row lg:items-center lg:justify-between">
@@ -518,22 +576,29 @@ export function ReservationsSection({
                           <p className="text-xl font-semibold tracking-tight text-[#1A1A1A]">{item.movieTitle}</p>
                           {canPay && <span className="rounded-sm bg-[#B91C1C]/10 px-2 py-0.5 text-xs font-bold text-[#B91C1C]">결제 대기</span>}
                           {!canPay && item.paymentStatus == "PAID" && <span className="rounded bg-green-100 px-2 py-0.5 text-xs font-bold text-green-600">결제 완료</span>}
+                          
+                          {/* 만료 표시 배지 추가 */}
+                          {!canPay && item.paymentStatus === "READY" && <span className="rounded-sm bg-black/5 px-2 py-0.5 text-xs font-bold text-black/40">시간 만료</span>}
                         </div>
                         <p className="mt-1 text-sm text-black/55">{item.theaterName} / {item.screenName}</p>
                         <p className="text-sm text-black/55">{formatDateTime(item.startTime)}</p>
                         <p className="text-sm text-black/55">좌석: {item.seatNames.join(", ") || "-"}</p>
                       </div>
                       <div className="flex flex-col items-end gap-2 text-right">
+                        
+                        {/* ✨ 타이머 영역에 onExpire 붙이기 */}
                         {canPay && item.holdExpiresAt && (
                             <div className="flex items-center gap-2">
                               <span className="text-xs font-normal text-black/40">남은 결제 시간</span>
-                              <ReservationTimer expiresAt={item.holdExpiresAt} />
+                              <ReservationTimer 
+                                expiresAt={item.holdExpiresAt} 
+                                onExpire={() => handleExpire(item.reservationId)} 
+                              />
                             </div>
-                          )}
+                        )}
                         <p className="text-lg font-semibold text-[#1A1A1A]">{formatMoney(item.finalAmount)}</p>
                         
                         <div className="flex gap-2">
-                          {/* ✨ 결제하러 가기 버튼 (환불하기 옆/위에 배치) */}
                           {canPay && (
                             <button
                               className="rounded-sm border border-[#1A1A1A] bg-[#1A1A1A] px-4 py-2 text-sm text-white transition-colors hover:border-[#B91C1C] hover:bg-[#B91C1C]"
@@ -543,8 +608,7 @@ export function ReservationsSection({
                             </button>
                           )}
 
-                          {/* 결제가 안 된 상태면 교환권 출력 숨김 처리 */}
-                          {!canPay && (
+                          {!canPay && item.paymentStatus === "PAID" && (
                             <button
                               className="rounded-sm border border-[#B91C1C] bg-white px-5 py-2 text-sm font-semibold text-[#B91C1C] transition-colors hover:bg-[#B91C1C] hover:text-white"
                               onClick={() => openPrintVoucher(item)}
