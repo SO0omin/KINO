@@ -231,7 +231,7 @@ const LoginPage: React.FC = () => {
                       className="group flex flex-col items-center gap-3 transition-transform duration-300 hover:-translate-y-1 focus:outline-none"
                     >
                       <div className="w-12 h-12 rounded-full shadow-sm hover:shadow-md transition-shadow flex items-center justify-center overflow-hidden border border-black/5 bg-white">
-                        <img src="/src/assets/google_login_btn.png" alt="Google" className="w-full h-full object-cover p-1" />
+                        <img src="/src/assets/google_g_logo.svg" alt="Google" className="h-7 w-7 object-contain" />
                       </div>
                       <span className="text-[9px] font-bold uppercase tracking-widest text-black/20 group-hover:text-[#B91C1C] transition-colors">Google</span>
                     </button>
