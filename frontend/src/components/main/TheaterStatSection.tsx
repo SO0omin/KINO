@@ -21,7 +21,7 @@ const TheaterStatSection = ({ stats }: TheaterStatSectionProps) => {
   };
 
   return (
-    <section className="py-32 relative bg-white border-t border-black/5 font-sans">
+    <section className="pt-32 pb-0 relative bg-white border-t border-black/5 font-sans">
       <div className="max-w-7xl mx-auto px-6 md:px-10">
         
         {/* 1. 헤더 영역 */}

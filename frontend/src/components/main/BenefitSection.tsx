@@ -67,7 +67,7 @@ const BenefitSection = ({ coupons }: BenefitSectionProps) => {
   };
 
   return (
-    <section className="py-32 relative bg-white overflow-hidden">
+    <section className="py-20 relative bg-white overflow-hidden">
       {/* 배경 장식: 은은한 레드 글로우 효과 */}
       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-[#B91C1C]/5 rounded-full blur-[120px] pointer-events-none"></div>
 

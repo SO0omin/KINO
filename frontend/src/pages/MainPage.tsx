@@ -62,7 +62,6 @@ const Main = () => {
     <main className="bg-white min-h-screen text-[#1A1A1A] selection:bg-[#B91C1C] selection:text-white relative overflow-x-hidden font-sans">
       <style dangerouslySetInnerHTML={{ __html: modernStyles }} />
       
-
       {/* 4. 메인 콘텐츠 섹션 (기존 데이터 바인딩 유지) */}
       <HeroSection movies={data.heroTrailers} />
 
@@ -74,8 +73,8 @@ const Main = () => {
 
         {/* 각 섹션: 기존 기능과 데이터 전달 유지 */}
         <RankingSection movies={data.bookingRank} />
-        
-        <div className="bg-[#F8F8F8] py-20">
+
+        <div className="border-y border-black/5 bg-white">
             <BenefitSection coupons={data.activeCoupons} />
         </div>
 

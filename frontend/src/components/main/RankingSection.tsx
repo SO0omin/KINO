@@ -15,7 +15,7 @@ const RankingSection = ({ movies }: RankingSectionProps) => {
   if (!movies || movies.length === 0) return null;
 
   return (
-    <section className="py-32 relative bg-white">
+    <section className="pt-32 pb-16 relative bg-white">
       <div className="max-w-7xl mx-auto px-6 md:px-10">
         
         {/* 1. 헤더 영역 */}
