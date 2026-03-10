@@ -248,7 +248,13 @@ const LoginPage: React.FC = () => {
                     <Link to="/signup" className="hover:text-[#B91C1C] transition-colors">회원가입</Link>
                   </>
                 ) : (
-                  <Link to="/signup" className="hover:text-[#B91C1C] transition-colors">비회원 등록</Link>
+                  <Link
+                    to="/signup"
+                    state={{ initialTab: 'GUEST' }}
+                    className="hover:text-[#B91C1C] transition-colors"
+                  >
+                    비회원 등록
+                  </Link>
                 )}
               </div>
             </div>

@@ -279,24 +279,24 @@ export function MyPageModals(
 
       {showCardRegisterModal ? (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#000000]/70 px-4">
-          <div className="w-full max-w-3xl overflow-hidden rounded-sm border border-[#000000] bg-[#ffffff]">
-            <div className="flex items-center justify-between bg-[#000000] px-5 py-4">
-              <h3 className="text-3xl font-semibold text-[#ffffff]">멤버십카드 등록</h3>
-              <button className="text-4xl leading-none text-[#ffffff]" onClick={closeCardRegisterModal} aria-label="닫기">×</button>
+          <div className="w-full max-w-3xl overflow-hidden rounded-sm border border-black/5 bg-[#FDFDFD] shadow-2xl">
+            <div className="flex items-center justify-between bg-[#1A1A1A] px-5 py-4">
+              <h3 className="text-3xl font-semibold tracking-tight text-white">멤버십카드 등록</h3>
+              <button className="text-4xl leading-none text-white" onClick={closeCardRegisterModal} aria-label="닫기">×</button>
             </div>
             <div className="space-y-5 p-6">
-              <div className="rounded-sm bg-[#fdf4e3] p-4">
+              <div className="rounded-sm border border-black/5 bg-white p-4">
                 <div className="grid grid-cols-[110px_1fr] items-center gap-x-4 gap-y-3">
-                  <label className="text-right text-2xl font-semibold text-[#000000]">카드번호</label>
-                  <input className="h-12 border border-gray-200 bg-[#ffffff] px-3 text-base text-[#000000] outline-none focus:border-[#eb4d32]" value={cardNumberInput} onChange={(e) => { setCardNumberInput(e.target.value.replace(/\D/g, "")); if (cardRegisterError) setCardRegisterError(""); }} maxLength={19} placeholder="숫자만 입력" />
-                  <label className="text-right text-2xl font-semibold text-[#000000]">CVC 번호</label>
-                  <input className="h-12 w-40 border border-gray-200 bg-[#ffffff] px-3 text-base text-[#000000] outline-none focus:border-[#eb4d32]" value={cardCvcInput} onChange={(e) => { setCardCvcInput(e.target.value.replace(/\D/g, "")); if (cardRegisterError) setCardRegisterError(""); }} maxLength={4} placeholder="3~4자리" />
+                  <label className="text-right text-2xl font-semibold text-[#1A1A1A]">카드번호</label>
+                  <input className="h-12 border border-black/10 bg-white px-3 text-base text-[#1A1A1A] outline-none focus:border-[#B91C1C]" value={cardNumberInput} onChange={(e) => { setCardNumberInput(e.target.value.replace(/\D/g, "")); if (cardRegisterError) setCardRegisterError(""); }} maxLength={19} placeholder="숫자만 입력" />
+                  <label className="text-right text-2xl font-semibold text-[#1A1A1A]">CVC 번호</label>
+                  <input className="h-12 w-40 border border-black/10 bg-white px-3 text-base text-[#1A1A1A] outline-none focus:border-[#B91C1C]" value={cardCvcInput} onChange={(e) => { setCardCvcInput(e.target.value.replace(/\D/g, "")); if (cardRegisterError) setCardRegisterError(""); }} maxLength={4} placeholder="3~4자리" />
                 </div>
-                {cardRegisterError ? <p className="mt-3 text-sm text-[#eb4d32]">{cardRegisterError}</p> : null}
+                {cardRegisterError ? <p className="mt-3 text-sm text-[#B91C1C]">{cardRegisterError}</p> : null}
               </div>
               <div className="flex justify-center gap-3">
-                <button className="rounded border border-[#eb4d32] px-8 py-2 text-lg font-semibold text-[#eb4d32]" onClick={closeCardRegisterModal} disabled={cardRegistering}>취소</button>
-                <button className="rounded bg-[#eb4d32] px-8 py-2 text-lg font-semibold text-[#ffffff] disabled:opacity-60" onClick={handleMembershipCardRegister} disabled={cardRegistering}>{cardRegistering ? "등록 중" : "등록"}</button>
+                <button className="rounded-sm border border-[#B91C1C] px-8 py-2 text-lg font-semibold text-[#B91C1C] transition-colors hover:bg-[#B91C1C] hover:text-white" onClick={closeCardRegisterModal} disabled={cardRegistering}>취소</button>
+                <button className="rounded-sm bg-[#B91C1C] px-8 py-2 text-lg font-semibold text-white disabled:opacity-60" onClick={handleMembershipCardRegister} disabled={cardRegistering}>{cardRegistering ? "등록 중" : "등록"}</button>
               </div>
             </div>
           </div>

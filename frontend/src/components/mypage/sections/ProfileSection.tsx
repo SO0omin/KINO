@@ -53,40 +53,38 @@ export function ProfileSection({
   toggleSocialLink,
   loadMemberProfile,
 }: ProfileSectionProps) {
-
   const { logout } = useAuth();
 
   const handleWithdraw = async () => {
+    if (!window.confirm("정말로 탈퇴하시겠습니까?")) return;
 
-  if (!window.confirm("정말로 탈퇴하시겠습니까?")) return;
+    try {
+      await deleteMember();
 
-  try {
-    await deleteMember();
-
-    logout();
-    window.location.href = '/'; 
-  } catch (error: any) {
-    console.error("4. 에러 발생:", error);
-    alert(error.message);
-  }
-};
+      logout();
+      window.location.href = "/";
+    } catch (error: any) {
+      console.error("4. 에러 발생:", error);
+      alert(error.message);
+    }
+  };
   return (
     <section>
-      <h1 className="text-4xl font-semibold text-[#000000]">개인정보 수정</h1>
-      <p className="mt-4 text-sm text-gray-600">· 회원님의 정보를 정확히 입력해주세요.</p>
+      <h1 className="text-5xl font-semibold tracking-tight text-[#1A1A1A]">개인정보 수정</h1>
+      <p className="mt-4 text-sm text-black/55">· 회원님의 정보를 정확히 입력해주세요.</p>
 
-      <div className="mt-5 overflow-hidden rounded-sm border border-gray-200 bg-[#ffffff]">
-        <div className="grid grid-cols-[170px_1fr_auto] items-center border-b border-gray-200">
-          <div className="bg-[#ffffff] px-5 py-5 text-base font-semibold text-[#000000]">프로필 사진</div>
+      <div className="mt-6 overflow-hidden rounded-sm border border-black/10 bg-[#FDFDFD] shadow-[0_24px_80px_rgba(15,23,42,0.08)]">
+        <div className="grid grid-cols-[170px_1fr_auto] items-center border-b border-black/10">
+          <div className="px-6 py-6 text-base font-semibold text-[#1A1A1A]">프로필 사진</div>
           <div className="flex items-center gap-3 px-3 py-3">
-            <div className="h-16 w-16 overflow-hidden rounded-full border border-gray-200 bg-gray-100">
+            <div className="h-16 w-16 overflow-hidden rounded-full border border-black/10 bg-black/5">
               {profileImageUrl && profileImageUrl != "default" ? (
                 <img src={profileImageUrl} alt="profile" className="h-full w-full object-cover" />
               ) : (
-                <div className="flex h-full w-full items-center justify-center text-xs text-white-600">K</div>
+                <div className="flex h-full w-full items-center justify-center text-xs font-semibold text-[#B91C1C]">K</div>
               )}
             </div>
-            <label className="cursor-pointer rounded border border-gray-300 bg-[#ffffff] px-4 py-2 text-sm text-[#000000]">
+            <label className="cursor-pointer rounded-sm border border-[#B91C1C] bg-white px-4 py-2 text-sm font-medium text-[#B91C1C] transition-colors hover:bg-[#B91C1C] hover:text-white">
               이미지 등록
               <input
                 type="file"
@@ -101,62 +99,62 @@ export function ProfileSection({
                 }}
               />
             </label>
-            <span className="text-xs text-gray-400">개인정보가 포함된 이미지는 등록하지 마시기 바랍니다.</span>
+            <span className="text-xs text-black/40">개인정보가 포함된 이미지는 등록하지 마시기 바랍니다.</span>
           </div>
           <div className="px-4 text-right">
-            <button 
-              onClick={handleWithdraw} // 💡 클릭 이벤트 연결
-              className="rounded border border-[#eb4d32] px-4 py-2 text-sm text-[#eb4d32] hover:bg-[#eb4d32] hover:text-white transition-colors"
+            <button
+              onClick={handleWithdraw}
+              className="rounded-sm border border-[#B91C1C] px-4 py-2 text-sm font-medium text-[#B91C1C] transition-colors hover:bg-[#B91C1C] hover:text-white"
             >
               회원탈퇴
             </button>
           </div>
         </div>
 
-        <div className="grid grid-cols-[170px_1fr] border-b border-gray-200">
-          <div className="bg-[#ffffff] px-5 py-4 text-base font-semibold text-[#000000]">아이디</div>
-          <div className="px-4 py-4 text-base text-gray-700">{memberProfile?.username ?? "-"}</div>
+        <div className="grid grid-cols-[170px_1fr] border-b border-black/10">
+          <div className="px-6 py-4 text-base font-semibold text-[#1A1A1A]">아이디</div>
+          <div className="px-4 py-4 text-base text-black/70">{memberProfile?.username ?? "-"}</div>
         </div>
       </div>
 
-      <h2 className="mt-8 text-4xl font-semibold text-[#eb4d32]">기본정보</h2>
-      <div className="mt-3 overflow-hidden rounded-sm border border-gray-200 bg-[#ffffff]">
-        <div className="grid grid-cols-[170px_1fr] border-b border-gray-200">
-          <div className="bg-[#ffffff] px-5 py-4 text-base font-semibold text-[#000000]">이름 <span className="text-[#eb4d32]">*</span></div>
+      <h2 className="mt-10 text-4xl font-semibold tracking-tight text-[#B91C1C]">기본정보</h2>
+      <div className="mt-4 overflow-hidden rounded-sm border border-black/10 bg-[#FDFDFD] shadow-[0_24px_80px_rgba(15,23,42,0.08)]">
+        <div className="grid grid-cols-[170px_1fr] border-b border-black/10">
+          <div className="px-6 py-4 text-base font-semibold text-[#1A1A1A]">이름 <span className="text-[#B91C1C]">*</span></div>
           <div className="flex items-center gap-2 px-4 py-3">
             <input
-              className="h-10 w-[220px] border border-gray-300 px-3 text-base"
+              className="h-11 w-[220px] rounded-sm border border-black/10 bg-white px-4 text-base text-[#1A1A1A] outline-none transition-colors focus:border-[#B91C1C]"
               value={profileName}
               onChange={(e) => setProfileName(e.target.value)}
               disabled={profileLoading}
             />
             <button
-              className="rounded border border-gray-300 px-3 py-2 text-sm text-gray-600 disabled:opacity-60"
+              className="rounded-sm border border-[#B91C1C] px-4 py-2 text-sm font-medium text-[#B91C1C] transition-colors hover:bg-[#B91C1C] hover:text-white disabled:opacity-60"
               onClick={handleSaveProfile}
               disabled={profileLoading || profileSaving}
             >
               이름변경
             </button>
-            <span className="text-sm text-gray-500">개명으로 이름이 변경된 경우 회원정보의 이름을 변경하실 수 있습니다.</span>
+            <span className="text-sm text-black/50">개명으로 이름이 변경된 경우 회원정보의 이름을 변경하실 수 있습니다.</span>
           </div>
         </div>
-        <div className="grid grid-cols-[170px_1fr] border-b border-gray-200">
-          <div className="bg-[#ffffff] px-5 py-4 text-base font-semibold text-[#000000]">생년월일 <span className="text-[#eb4d32]">*</span></div>
-          <div className="px-4 py-4 text-base text-gray-700">
+        <div className="grid grid-cols-[170px_1fr] border-b border-black/10">
+          <div className="px-6 py-4 text-base font-semibold text-[#1A1A1A]">생년월일 <span className="text-[#B91C1C]">*</span></div>
+          <div className="px-4 py-4 text-base text-black/70">
             {profileBirthDate ? formatDateSimple(profileBirthDate) : "-"}
           </div>
         </div>
-        <div className="grid grid-cols-[170px_1fr] border-b border-gray-200">
-          <div className="bg-[#ffffff] px-5 py-4 text-base font-semibold text-[#000000]">휴대폰 <span className="text-[#eb4d32]">*</span></div>
+        <div className="grid grid-cols-[170px_1fr] border-b border-black/10">
+          <div className="px-6 py-4 text-base font-semibold text-[#1A1A1A]">휴대폰 <span className="text-[#B91C1C]">*</span></div>
           <div className="flex items-center gap-2 px-4 py-3">
             <input
-              className="h-10 w-[220px] border border-gray-300 px-3 text-base"
+              className="h-11 w-[220px] rounded-sm border border-black/10 bg-white px-4 text-base text-[#1A1A1A] outline-none transition-colors focus:border-[#B91C1C]"
               value={profileTel}
               onChange={(e) => setProfileTel(e.target.value)}
               disabled={profileLoading}
             />
             <button
-              className="rounded border border-gray-300 px-3 py-2 text-sm text-gray-600 disabled:opacity-60"
+              className="rounded-sm border border-[#B91C1C] px-4 py-2 text-sm font-medium text-[#B91C1C] transition-colors hover:bg-[#B91C1C] hover:text-white disabled:opacity-60"
               onClick={handlePhoneChange}
               disabled={profileLoading || profileSaving}
             >
@@ -164,11 +162,11 @@ export function ProfileSection({
             </button>
           </div>
         </div>
-        <div className="grid grid-cols-[170px_1fr] border-b border-gray-200">
-          <div className="bg-[#ffffff] px-5 py-4 text-base font-semibold text-[#000000]">이메일 <span className="text-[#eb4d32]">*</span></div>
+        <div className="grid grid-cols-[170px_1fr] border-b border-black/10">
+          <div className="px-6 py-4 text-base font-semibold text-[#1A1A1A]">이메일 <span className="text-[#B91C1C]">*</span></div>
           <div className="px-4 py-3">
             <input
-              className="h-10 w-full max-w-[700px] border border-gray-300 px-3 text-base"
+              className="h-11 w-full max-w-[700px] rounded-sm border border-black/10 bg-white px-4 text-base text-[#1A1A1A] outline-none transition-colors focus:border-[#B91C1C]"
               value={profileEmail}
               onChange={(e) => setProfileEmail(e.target.value)}
               disabled={profileLoading}
@@ -176,97 +174,96 @@ export function ProfileSection({
           </div>
         </div>
         <div className="grid grid-cols-[170px_1fr]">
-          <div className="bg-[#ffffff] px-5 py-4 text-base font-semibold text-[#000000]">비밀번호 <span className="text-[#eb4d32]">*</span></div>
-          <div className="flex items-center gap-2 px-4 py-3 text-sm text-gray-600">
-            <button className="rounded border border-gray-300 px-3 py-2" onClick={() => setShowPasswordChangeModal(true)}>
+          <div className="px-6 py-4 text-base font-semibold text-[#1A1A1A]">비밀번호 <span className="text-[#B91C1C]">*</span></div>
+          <div className="flex items-center gap-2 px-4 py-3 text-sm text-black/60">
+            <button
+              className="rounded-sm border border-[#B91C1C] px-4 py-2 font-medium text-[#B91C1C] transition-colors hover:bg-[#B91C1C] hover:text-white"
+              onClick={() => setShowPasswordChangeModal(true)}
+            >
               비밀번호 변경
             </button>
           </div>
         </div>
       </div>
 
-      <h2 className="mt-8 text-4xl font-semibold text-[#eb4d32]">포인트 비밀번호 설정</h2>
-      <div className="mt-3 overflow-hidden rounded-sm border border-gray-200 bg-[#ffffff]">
+      <h2 className="mt-10 text-4xl font-semibold tracking-tight text-[#B91C1C]">포인트 비밀번호 설정</h2>
+      <div className="mt-4 overflow-hidden rounded-sm border border-black/10 bg-[#FDFDFD] shadow-[0_24px_80px_rgba(15,23,42,0.08)]">
         <div className="grid grid-cols-[170px_1fr]">
-          <div className="bg-[#ffffff] px-5 py-4 text-base font-semibold text-[#000000]">멤버십 포인트 사용시 비밀번호 설정</div>
-          <div className="flex items-center gap-4 px-4 py-3 text-sm">
-          <button
-            className="rounded border border-gray-300 px-3 py-2"
-            onClick={openPointPhoneModal}
-          >
-            포인트 비밀번호 설정
-          </button>
-          
-          {/* 💡 hasPointPassword 값에 따라 라디오 버튼 상태 결정 */}
-          <label className="flex items-center gap-1 cursor-default">
-            <input 
-              type="radio" 
-              name="pointuse" 
-              // 💡 비밀번호가 null이면(false) '사용안함'이 true가 되어야 함
-              checked={memberProfile?.hasPointPassword === false} 
-              readOnly 
-            />
-            <span className={!memberProfile?.hasPointPassword ? "text-[#000000] font-semibold" : "text-gray-400"}>
-              사용안함
-            </span>
-          </label>
+          <div className="px-6 py-4 text-base font-semibold text-[#1A1A1A]">멤버십 포인트 사용시 비밀번호 설정</div>
+          <div className="flex items-center gap-4 px-4 py-4 text-sm">
+            <button
+              className="rounded-sm border border-[#B91C1C] px-4 py-2 font-medium text-[#B91C1C] transition-colors hover:bg-[#B91C1C] hover:text-white"
+              onClick={openPointPhoneModal}
+            >
+              포인트 비밀번호 설정
+            </button>
 
-          <label className="flex items-center gap-1 cursor-default">
-            <input 
-              type="radio" 
-              name="pointuse" 
-              // 💡 비밀번호가 존재하면(true) '사용함'이 true가 됨
-              checked={memberProfile?.hasPointPassword === true} 
-              readOnly 
-            />
-            <span className={memberProfile?.hasPointPassword ? "text-[#000000] font-semibold" : "text-gray-400"}>
-              사용함
-            </span>
-          </label>
-        </div>
-        </div>
-      </div>
+            <label className="flex cursor-default items-center gap-1">
+              <input
+                type="radio"
+                name="pointuse"
+                checked={memberProfile?.hasPointPassword === false}
+                readOnly
+              />
+              <span className={!memberProfile?.hasPointPassword ? "font-semibold text-[#1A1A1A]" : "text-black/35"}>
+                사용안함
+              </span>
+            </label>
 
-      <h2 className="mt-8 text-4xl font-semibold text-[#eb4d32]">생년월일 로그인 설정</h2>
-      <div className="mt-3 overflow-hidden rounded-sm border border-gray-200 bg-[#ffffff]">
-        <div className="grid grid-cols-[170px_1fr]">
-          <div className="bg-[#ffffff] px-5 py-4 text-base font-semibold text-[#000000]">무인발권기(KIOSK) 기능설정</div>
-          <div className="flex items-center gap-4 px-4 py-3 text-sm">
-            <label className="flex items-center gap-1"><input type="radio" name="kiosk" defaultChecked />사용</label>
-            <label className="flex items-center gap-1"><input type="radio" name="kiosk" />사용안함</label>
-            <span className="text-gray-500">생년월일+휴대폰번호 티켓 출력 및 회원서비스 이용</span>
+            <label className="flex cursor-default items-center gap-1">
+              <input
+                type="radio"
+                name="pointuse"
+                checked={memberProfile?.hasPointPassword === true}
+                readOnly
+              />
+              <span className={memberProfile?.hasPointPassword ? "font-semibold text-[#1A1A1A]" : "text-black/35"}>
+                사용함
+              </span>
+            </label>
           </div>
         </div>
       </div>
 
-      <h2 className="mt-8 text-4xl font-semibold text-[#eb4d32]">간편로그인 계정연동</h2>
-      <div className="mt-3 overflow-hidden rounded-sm border border-gray-200 bg-[#ffffff]">
-        <div className="grid grid-cols-[120px_1fr_120px] border-b border-gray-200 bg-[#ffffff] px-4 py-3 text-sm font-semibold text-[#000000]">
+      <h2 className="mt-10 text-4xl font-semibold tracking-tight text-[#B91C1C]">생년월일 로그인 설정</h2>
+      <div className="mt-4 overflow-hidden rounded-sm border border-black/10 bg-[#FDFDFD] shadow-[0_24px_80px_rgba(15,23,42,0.08)]">
+        <div className="grid grid-cols-[170px_1fr]">
+          <div className="px-6 py-4 text-base font-semibold text-[#1A1A1A]">무인발권기(KIOSK) 기능설정</div>
+          <div className="flex items-center gap-4 px-4 py-3 text-sm">
+            <label className="flex items-center gap-1"><input type="radio" name="kiosk" defaultChecked />사용</label>
+            <label className="flex items-center gap-1"><input type="radio" name="kiosk" />사용안함</label>
+            <span className="text-black/50">생년월일+휴대폰번호 티켓 출력 및 회원서비스 이용</span>
+          </div>
+        </div>
+      </div>
+
+      <h2 className="mt-10 text-4xl font-semibold tracking-tight text-[#B91C1C]">간편로그인 계정연동</h2>
+      <div className="mt-4 overflow-hidden rounded-sm border border-black/10 bg-[#FDFDFD] shadow-[0_24px_80px_rgba(15,23,42,0.08)]">
+        <div className="grid grid-cols-[120px_1fr_120px] border-b border-black/10 px-4 py-3 text-sm font-semibold text-[#1A1A1A]">
           <span>구분</span>
           <span>연동정보</span>
           <span className="text-center">연결</span>
         </div>
         {["네이버", "카카오", "구글"].map((row) => {
-          // 💡 매핑을 통해 코드를 훨씬 직관적으로 정리했습니다.
-          const isLinked = 
-            row === "네이버" ? socialNaverLinked : 
-            row === "카카오" ? socialKakaoLinked : 
-            socialGoogleLinked; // 부모 컴포넌트(props)에 socialGoogleLinked 추가 필수!
+          const isLinked =
+            row === "네이버" ? socialNaverLinked :
+            row === "카카오" ? socialKakaoLinked :
+            socialGoogleLinked;
 
-          const providerKey = 
-            row === "네이버" ? "naver" : 
-            row === "카카오" ? "kakao" : 
+          const providerKey =
+            row === "네이버" ? "naver" :
+            row === "카카오" ? "kakao" :
             "google";
 
           return (
-            <div key={row} className="grid grid-cols-[120px_1fr_120px] border-b border-gray-200 px-4 py-3 text-sm">
+            <div key={row} className="grid grid-cols-[120px_1fr_120px] border-b border-black/10 px-4 py-3 text-sm text-[#1A1A1A]">
               <span>{row}</span>
-              <span className="text-gray-500">
+              <span className="text-black/50">
                 {isLinked ? `${row} 계정 연동됨` : "연결된 계정정보가 없습니다."}
               </span>
               <div className="text-center">
                 <button
-                  className="rounded bg-[#000000] px-3 py-1.5 text-xs text-[#ffffff]"
+                  className="rounded-sm bg-[#1A1A1A] px-4 py-1.5 text-xs font-medium text-white transition-colors hover:bg-[#B91C1C]"
                   onClick={() => toggleSocialLink(providerKey)}
                 >
                   {isLinked ? "해제" : "연동"}
@@ -279,14 +276,14 @@ export function ProfileSection({
 
       <div className="mt-10 flex justify-center gap-3">
         <button
-          className="rounded border border-[#eb4d32] px-8 py-3 text-base font-semibold text-[#eb4d32]"
+          className="rounded-sm border border-[#B91C1C] px-8 py-3 text-base font-semibold text-[#B91C1C] transition-colors hover:bg-[#B91C1C] hover:text-white"
           onClick={() => loadMemberProfile()}
           disabled={profileLoading || profileSaving}
         >
           취소
         </button>
         <button
-          className="rounded bg-[#eb4d32] px-8 py-3 text-base font-semibold text-[#ffffff] disabled:opacity-60"
+          className="rounded-sm bg-[#B91C1C] px-8 py-3 text-base font-semibold text-white shadow-[0_16px_40px_rgba(185,28,28,0.18)] transition-colors hover:bg-[#991B1B] disabled:opacity-60"
           disabled={profileLoading || profileSaving}
           onClick={handleSaveProfile}
         >

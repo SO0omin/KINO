@@ -155,57 +155,88 @@ export function ReservationsSection({
     <title>${bookingNo} 교환권</title>
     <style>
       * { box-sizing: border-box; }
-      body { margin: 0; padding: 28px; background: #f3f4f6; font-family: "Apple SD Gothic Neo", "Noto Sans KR", sans-serif; color: #111827; }
-      .ticket { max-width: 760px; margin: 0 auto; background: #ffffff; border: 2px solid #eb4d32; border-radius: 16px; overflow: hidden; }
-      .head { padding: 18px 22px; background: linear-gradient(135deg, #eb4d32, #d43d22); color: #fff; }
-      .head h1 { margin: 0; font-size: 22px; letter-spacing: 0.02em; }
-      .head p { margin: 6px 0 0 0; font-size: 13px; opacity: 0.95; }
-      .body { padding: 20px 22px 24px; }
-      .booking { margin-bottom: 16px; }
-      .booking .label { font-size: 12px; color: #6b7280; }
-      .booking .no { margin-top: 3px; font-size: 28px; font-weight: 800; color: #eb4d32; letter-spacing: 0.02em; }
-      .barcode { margin-top: 10px; padding: 10px 12px; background: #f9fafb; border: 1px solid #e5e7eb; font-family: monospace; letter-spacing: 0.2em; font-weight: 700; text-align: center; }
-      .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px 20px; margin-top: 14px; }
-      .item { font-size: 14px; line-height: 1.45; }
-      .item b { color: #111827; margin-right: 6px; }
-      .price { margin-top: 16px; padding: 12px; border-radius: 10px; background: #fff7f5; border: 1px solid #ffd8d0; font-size: 16px; font-weight: 700; color: #9a3412; }
-      .foot { margin-top: 18px; font-size: 12px; color: #6b7280; line-height: 1.5; }
-      .actions { margin: 18px auto 0; max-width: 760px; display: flex; gap: 8px; justify-content: flex-end; }
-      .btn { border: 1px solid #d1d5db; background: #fff; color: #111827; padding: 10px 14px; border-radius: 8px; font-size: 13px; cursor: pointer; }
-      .btn.primary { border-color: #eb4d32; background: #eb4d32; color: #fff; }
+      body { margin: 0; padding: 32px; background: linear-gradient(180deg, #f7f7f7 0%, #efefef 100%); font-family: "Inter", "Apple SD Gothic Neo", "Noto Sans KR", sans-serif; color: #1a1a1a; }
+      .frame { max-width: 860px; margin: 0 auto; }
+      .ticket { position: relative; overflow: hidden; border: 1px solid rgba(26, 26, 26, 0.08); border-radius: 22px; background: #fdfdfd; box-shadow: 0 28px 80px rgba(0, 0, 0, 0.12); }
+      .ticket::before { content: ""; position: absolute; inset: 0; background:
+        radial-gradient(circle at top right, rgba(185, 28, 28, 0.12), transparent 32%),
+        radial-gradient(circle at bottom left, rgba(185, 28, 28, 0.08), transparent 28%);
+        pointer-events: none; }
+      .head { position: relative; padding: 26px 30px 24px; background: #1a1a1a; color: #fff; border-bottom: 1px solid rgba(255,255,255,0.08); }
+      .eyebrow { display: inline-flex; align-items: center; gap: 10px; color: #b91c1c; font-size: 10px; font-weight: 800; letter-spacing: 0.38em; text-transform: uppercase; }
+      .eyebrow::before, .eyebrow::after { content: ""; width: 34px; height: 1px; background: rgba(185, 28, 28, 0.9); }
+      .head h1 { margin: 14px 0 0; font-size: 44px; line-height: 0.95; letter-spacing: -0.04em; font-weight: 800; text-transform: uppercase; }
+      .head p { margin: 10px 0 0; font-size: 14px; color: rgba(255,255,255,0.72); }
+      .body { position: relative; padding: 30px; }
+      .booking-row { display: flex; align-items: flex-end; justify-content: space-between; gap: 20px; padding-bottom: 24px; border-bottom: 1px solid rgba(26, 26, 26, 0.08); }
+      .booking .label { font-size: 11px; font-weight: 800; letter-spacing: 0.24em; text-transform: uppercase; color: rgba(26,26,26,0.38); }
+      .booking .no { margin-top: 10px; font-size: 42px; font-weight: 800; letter-spacing: -0.04em; color: #b91c1c; }
+      .stamp { padding: 10px 14px; border: 1px solid rgba(185, 28, 28, 0.28); color: #b91c1c; background: rgba(185, 28, 28, 0.05); border-radius: 999px; font-size: 11px; font-weight: 800; letter-spacing: 0.18em; text-transform: uppercase; white-space: nowrap; }
+      .grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px 26px; margin-top: 24px; }
+      .item { padding: 14px 16px; border-radius: 14px; background: #ffffff; border: 1px solid rgba(26, 26, 26, 0.06); }
+      .item .k { display: block; margin-bottom: 6px; font-size: 11px; font-weight: 800; letter-spacing: 0.22em; text-transform: uppercase; color: rgba(26,26,26,0.38); }
+      .item .v { display: block; font-size: 16px; font-weight: 700; line-height: 1.45; color: #1a1a1a; }
+      .price { margin-top: 24px; padding: 18px 20px; border-radius: 18px; background: #1a1a1a; color: #fff; display: flex; align-items: center; justify-content: space-between; gap: 18px; }
+      .price .label { font-size: 11px; font-weight: 800; letter-spacing: 0.26em; text-transform: uppercase; color: rgba(255,255,255,0.5); }
+      .price .value { font-size: 34px; font-weight: 800; letter-spacing: -0.04em; color: #b91c1c; }
+      .foot { margin-top: 20px; padding-top: 18px; border-top: 1px solid rgba(26,26,26,0.08); font-size: 12px; line-height: 1.7; color: rgba(26,26,26,0.56); }
+      .actions { margin: 20px auto 0; max-width: 860px; display: flex; gap: 10px; justify-content: flex-end; }
+      .btn { border: 1px solid rgba(26, 26, 26, 0.12); background: #fff; color: #1a1a1a; padding: 13px 18px; border-radius: 14px; font-size: 12px; font-weight: 800; letter-spacing: 0.16em; text-transform: uppercase; cursor: pointer; }
+      .btn.primary { border-color: #b91c1c; background: #b91c1c; color: #fff; }
+      .mono { font-family: "JetBrains Mono", monospace; }
       @media print {
         body { background: #fff; padding: 0; }
         .actions { display: none; }
-        .ticket { border-color: #111827; }
+        .ticket { box-shadow: none; border-color: rgba(26, 26, 26, 0.2); }
+        .frame { max-width: none; }
+      }
+      @media (max-width: 720px) {
+        body { padding: 16px; }
+        .head h1 { font-size: 32px; }
+        .booking-row { flex-direction: column; align-items: flex-start; }
+        .booking .no { font-size: 30px; }
+        .grid { grid-template-columns: 1fr; }
+        .price { flex-direction: column; align-items: flex-start; }
+        .price .value { font-size: 28px; }
       }
     </style>
   </head>
   <body>
-    <section class="ticket">
-      <header class="head">
-        <h1>KINO MOVIE VOUCHER</h1>
-        <p>현장에서 직원에게 아래 교환권을 제시해 주세요.</p>
-      </header>
-      <div class="body">
-        <div class="booking">
-          <div class="label">예매번호</div>
-          <div class="no">${bookingNo}</div>
+    <div class="frame">
+      <section class="ticket">
+        <header class="head">
+          <div class="eyebrow">Kino Cinema</div>
+          <h1>Movie Voucher</h1>
+          <p>현장에서 직원에게 아래 교환권을 제시해 주세요.</p>
+        </header>
+        <div class="body">
+          <div class="booking-row">
+            <div class="booking">
+              <div class="label">예매번호</div>
+              <div class="no mono">${bookingNo}</div>
+            </div>
+          </div>
+          <div class="grid">
+            <div class="item"><span class="k">영화명</span><span class="v">${movieTitle}</span></div>
+            <div class="item"><span class="k">관람인원</span><span class="v">${peopleText}</span></div>
+            <div class="item"><span class="k">극장 / 상영관</span><span class="v">${theaterText}</span></div>
+            <div class="item"><span class="k">관람좌석</span><span class="v">${seatsText}</span></div>
+            <div class="item"><span class="k">관람일시</span><span class="v">${startTimeText}</span></div>
+            <div class="item"><span class="k">결제일시</span><span class="v">${paidAtText}</span></div>
+          </div>
+          <div class="price">
+            <div>
+              <div class="label">결제금액</div>
+              <div class="value">${amountText}</div>
+            </div>
+          </div>
+          <div class="foot">
+            <div>발행시각: ${issueAtText}</div>
+            <div>본 교환권은 재출력이 가능하며, 유효 여부는 매표소 시스템 기준으로 판단됩니다.</div>
+          </div>
         </div>
-        <div class="grid">
-          <div class="item"><b>영화명</b>${movieTitle}</div>
-          <div class="item"><b>관람인원</b>${peopleText}</div>
-          <div class="item"><b>극장/상영관</b>${theaterText}</div>
-          <div class="item"><b>관람좌석</b>${seatsText}</div>
-          <div class="item"><b>관람일시</b>${startTimeText}</div>
-          <div class="item"><b>결제일시</b>${paidAtText}</div>
-        </div>
-        <div class="price">결제금액 ${amountText}</div>
-        <div class="foot">
-          <div>발행시각: ${issueAtText}</div>
-          <div>본 교환권은 재출력이 가능하며, 유효 여부는 매표소 시스템 기준으로 판단됩니다.</div>
-        </div>
-      </div>
-    </section>
+      </section>
+    </div>
 
     <div class="actions">
       <button class="btn" onclick="window.close()">닫기</button>
@@ -223,12 +254,12 @@ export function ReservationsSection({
   if (guestView) {
     return (
       <section>
-        <h1 className="text-4xl font-semibold text-[#000000]">예매/취소내역</h1>
+        <h1 className="text-5xl font-semibold tracking-tight text-[#1A1A1A]">예매/취소내역</h1>
 
-        <div className="mt-8 rounded-sm bg-[#f1f2f5] p-5">
+        <div className="mt-8 rounded-sm border border-black/5 bg-[#FDFDFD] p-5 shadow-xl">
           <div className="flex flex-wrap items-center gap-4 text-sm">
-            <span className="font-semibold text-[#000000]">구분</span>
-            <label className="flex items-center gap-2">
+            <span className="font-semibold text-[#1A1A1A]">구분</span>
+            <label className="flex items-center gap-2 text-[#1A1A1A]">
               <input
                 type="radio"
                 checked={historyType === "current"}
@@ -236,7 +267,7 @@ export function ReservationsSection({
               />
               예매내역
             </label>
-            <label className="flex items-center gap-2">
+            <label className="flex items-center gap-2 text-[#1A1A1A]">
               <input
                 type="radio"
                 checked={historyType === "past"}
@@ -245,7 +276,7 @@ export function ReservationsSection({
               지난내역
             </label>
             <select
-              className="rounded border border-gray-300 bg-white px-3 py-2 text-sm disabled:bg-gray-100 disabled:text-gray-400"
+              className="rounded-sm border border-black/10 bg-white px-3 py-2 text-sm text-[#1A1A1A] disabled:bg-black/5 disabled:text-black/25"
               value={selectedMonth}
               onChange={(e) => setSelectedMonth(e.target.value)}
               disabled={historyType === "current"}
@@ -261,7 +292,7 @@ export function ReservationsSection({
               )}
             </select>
             <button
-              className="flex items-center gap-1 rounded border border-gray-300 bg-white px-4 py-2 text-sm"
+              className="flex items-center gap-1 rounded-sm border border-black/10 bg-white px-4 py-2 text-sm font-semibold text-[#1A1A1A] transition-colors hover:border-[#B91C1C] hover:text-[#B91C1C]"
               onClick={() => {
                 setAppliedHistoryType(historyType);
                 setAppliedMonth(historyType === "current" ? "" : selectedMonth);
@@ -272,27 +303,27 @@ export function ReservationsSection({
           </div>
         </div>
           <div className="mt-8">
-          <p className="text-2xl font-semibold text-[#000000]">총 {visibleReservations.length}건</p>
+          <p className="text-2xl font-semibold tracking-tight text-[#1A1A1A]">총 {visibleReservations.length}건</p>
           {loading ? (
-            <div className="mt-4 rounded border border-gray-200 bg-white py-12 text-center text-gray-500">불러오는 중...</div>
+            <div className="mt-4 rounded-sm border border-black/5 bg-[#FDFDFD] py-12 text-center text-black/45 shadow-xl">불러오는 중...</div>
           ) : visibleReservations.length === 0 ? (
-            <div className="mt-4 rounded border border-gray-200 bg-white py-12 text-center text-gray-500">예매 내역이 없습니다.</div>
+            <div className="mt-4 rounded-sm border border-black/5 bg-[#FDFDFD] py-12 text-center text-black/45 shadow-xl">예매 내역이 없습니다.</div>
           ) : (
             <div className="mt-4 space-y-4">
               {visibleReservations.map((item) => {
                 const canPay = isPayable(item.paymentStatus, item.holdExpiresAt); // ✨ 결제 가능 여부 체크
 
                 return (
-                  <div key={item.reservationId} className="rounded-xl border border-gray-300 bg-white p-6">
+                  <div key={item.reservationId} className="rounded-sm border border-black/5 bg-[#FDFDFD] p-6 shadow-xl">
                     <div className="flex flex-col gap-5 lg:flex-row">
-                      <div className="h-[210px] w-[140px] shrink-0 overflow-hidden rounded border border-gray-200 bg-gray-100">
+                      <div className="h-[210px] w-[140px] shrink-0 overflow-hidden rounded-sm border border-black/10 bg-black/5">
                         {item.posterUrl ? <img src={item.posterUrl} alt={item.movieTitle} className="h-full w-full object-cover" /> : null}
                       </div>
                       <div className="flex-1">
-                        <p className="text-sm text-gray-600">
-                          예매번호 <span className="text-2xl font-semibold text-[#eb4d32]">{formatGuestBookingNo(item.reservationId, item.paidAt)}</span>
+                        <p className="text-sm text-black/45">
+                          예매번호 <span className="text-2xl font-semibold tracking-tight text-[#B91C1C]">{formatGuestBookingNo(item.reservationId, item.paidAt)}</span>
                         </p>
-                        <div className="mt-4 grid grid-cols-1 gap-y-2 text-sm text-[#000000] lg:grid-cols-2">
+                        <div className="mt-4 grid grid-cols-1 gap-y-2 text-sm text-[#1A1A1A] lg:grid-cols-2">
                           <p><span className="font-semibold">영화명</span> {item.movieTitle}</p>
                           <p><span className="font-semibold">관람인원</span> 성인 {item.seatNames.length}명</p>
                           <p><span className="font-semibold">극장/상영관</span> {item.theaterName} / {item.screenName}</p>
@@ -300,15 +331,15 @@ export function ReservationsSection({
                           <p><span className="font-semibold">관람일시</span> {formatDateTime(item.startTime)}</p>
                           <p><span className="font-semibold">결제일시</span> {canPay ? "-" : formatDateTime(item.paidAt ?? item.startTime)}</p>
                         </div>
-                        <div className="mt-4 flex items-center justify-between rounded bg-[#f3f4f6] px-4 py-3 text-sm font-semibold text-[#000000]">
+                        <div className="mt-4 flex items-center justify-between rounded-sm bg-white px-4 py-3 text-sm font-semibold text-[#1A1A1A]">
                           <span>결제금액 {formatMoney(item.finalAmount)}</span>
                           {canPay && item.holdExpiresAt && (
                             <div className="flex items-center gap-2">
-                              <span className="text-gray-500 text-xs font-normal">남은 결제 시간</span>
+                              <span className="text-xs font-normal text-black/40">남은 결제 시간</span>
                               <ReservationTimer expiresAt={item.holdExpiresAt} />
                             </div>
                           )}
-                          {canPay && <span className="text-[#eb4d32]">(결제 대기 중)</span>}
+                          {canPay && <span className="text-[#B91C1C]">(결제 대기 중)</span>}
                         </div>
                       </div>
                     </div>
@@ -316,7 +347,7 @@ export function ReservationsSection({
                       {/* ✨ 결제하러 가기 버튼 (비회원 뷰) */}
                       {canPay && (
                         <button
-                          className="rounded bg-[#111827] px-5 py-2 text-sm font-semibold text-white hover:bg-black"
+                          className="rounded-sm bg-[#1A1A1A] px-5 py-2 text-sm font-semibold text-white transition-colors hover:bg-[#B91C1C]"
                           onClick={() => onClickPay(item.reservationId)}
                         >
                           결제하러 가기
@@ -326,7 +357,7 @@ export function ReservationsSection({
                       {/* 결제가 안 된 상태면 교환권 출력 숨김 처리 */}
                       {!canPay && (
                         <button
-                          className="rounded border border-[#eb4d32] bg-white px-5 py-2 text-sm font-semibold text-[#eb4d32]"
+                          className="rounded-sm border border-[#B91C1C] bg-white px-5 py-2 text-sm font-semibold text-[#B91C1C] transition-colors hover:bg-[#B91C1C] hover:text-white"
                           onClick={() => openPrintVoucher(item)}
                         >
                           교환권출력
@@ -335,14 +366,14 @@ export function ReservationsSection({
 
                       {item.cancellable ? (
                         <button
-                          className="rounded bg-[#eb4d32] px-5 py-2 text-sm font-semibold text-white hover:bg-[#d43d22]"
+                          className="rounded-sm bg-[#B91C1C] px-5 py-2 text-sm font-semibold text-white transition-colors hover:bg-[#9f1919]"
                           disabled={isCancelling === item.reservationId}
                           onClick={() => openCancelModal(item.reservationId)}
                         >
                           {isCancelling === item.reservationId ? "처리 중..." : "예매취소"}
                         </button>
                       ) : (
-                        <button className="cursor-not-allowed rounded bg-gray-300 px-5 py-2 text-sm font-semibold text-white" disabled>취소불가</button>
+                        <button className="cursor-not-allowed rounded-sm bg-black/15 px-5 py-2 text-sm font-semibold text-white" disabled>취소불가</button>
                       )}
                     </div>
                   </div>
@@ -353,10 +384,10 @@ export function ReservationsSection({
         </div>
 
         <div className="mt-10">
-          <h2 className="text-2xl font-semibold text-[#eb4d32]">예매취소내역</h2>
-          <p className="mt-2 text-sm text-gray-600">· 상영일 기준 7일간 취소내역을 확인하실 수 있습니다.</p>
-          <div className="mt-4 overflow-hidden rounded-sm border border-gray-200 bg-white">
-            <div className="grid grid-cols-[1.2fr_1fr_1fr_1.2fr_1fr_0.9fr] bg-[#ffffff] px-4 py-3 text-center text-sm font-semibold">
+          <h2 className="text-3xl font-semibold tracking-tight text-[#B91C1C]">예매취소내역</h2>
+          <p className="mt-2 text-sm text-black/55">· 상영일 기준 7일간 취소내역을 확인하실 수 있습니다.</p>
+          <div className="mt-4 overflow-hidden rounded-sm border border-black/5 bg-white shadow-xl">
+            <div className="grid grid-cols-[1.2fr_1fr_1fr_1.2fr_1fr_0.9fr] border-b border-black/5 bg-[#FDFDFD] px-4 py-4 text-center text-[11px] font-bold uppercase tracking-[0.18em] text-black/35">
               <span>취소일시</span>
               <span>영화명</span>
               <span>극장</span>
@@ -365,7 +396,7 @@ export function ReservationsSection({
               <span>취소사유</span>
             </div>
             {cancelledReservations.length === 0 ? (
-              <div className="py-6 text-center text-gray-500">취소내역이 없습니다.</div>
+              <div className="py-6 text-center text-black/45">취소내역이 없습니다.</div>
             ) : (
               cancelledReservations.map((item) => {
                 const [cancelDate, cancelTime] = formatCompactDateTime(item.cancelledAt);
@@ -374,7 +405,7 @@ export function ReservationsSection({
                 return (
                   <div
                     key={item.reservationId}
-                    className="grid grid-cols-[1.2fr_1fr_1fr_1.2fr_1fr_0.9fr] items-center border-t border-gray-200 px-4 py-4 text-center text-sm"
+                    className="grid grid-cols-[1.2fr_1fr_1fr_1.2fr_1fr_0.9fr] items-center border-t border-black/5 px-4 py-4 text-center text-sm text-[#1A1A1A]"
                   >
                     <span className="leading-relaxed">
                       <span className="block">{cancelDate}</span>
@@ -388,7 +419,7 @@ export function ReservationsSection({
                     </span>
                     <span className="whitespace-nowrap font-medium">{formatMoney(item.finalAmount)}</span>
                     <span className="flex justify-center">
-                      <span className="rounded-full bg-[#f3f4f6] px-3 py-1 text-xs font-medium text-gray-700">
+                      <span className="rounded-full bg-black/5 px-3 py-1 text-xs font-medium text-black/55">
                         {mapCancelReasonLabel(item.cancelReason)}
                       </span>
                     </span>
@@ -404,17 +435,17 @@ export function ReservationsSection({
 
   return (
     <section>
-      <h1 className="text-4xl font-semibold text-[#000000]">예매/구매 내역</h1>
+      <h1 className="text-5xl font-semibold tracking-tight text-[#1A1A1A]">예매/구매 내역</h1>
 
-      <div className="mt-5 flex border-b border-gray-300">
+      <div className="mt-5 flex border-b border-black/10">
         <button
-          className={`w-40 border border-b-0 px-4 py-2 ${reservationTab === "reservation" ? "border-[#000000] bg-[#000000] text-[#ffffff]" : "border-gray-300 bg-white text-gray-500"}`}
+          className={`w-40 border border-b-0 px-4 py-3 text-sm font-semibold tracking-tight transition-colors ${reservationTab === "reservation" ? "border-[#1A1A1A] bg-[#1A1A1A] text-white" : "border-black/10 bg-white text-black/40 hover:text-[#B91C1C]"}`}
           onClick={() => setReservationTab("reservation")}
         >
           예매
         </button>
         <button
-          className={`w-40 border border-b-0 px-4 py-2 ${reservationTab === "purchase" ? "border-[#000000] bg-[#000000] text-[#ffffff]" : "border-gray-300 bg-white text-gray-500"}`}
+          className={`w-40 border border-b-0 px-4 py-3 text-sm font-semibold tracking-tight transition-colors ${reservationTab === "purchase" ? "border-[#1A1A1A] bg-[#1A1A1A] text-white" : "border-black/10 bg-white text-black/40 hover:text-[#B91C1C]"}`}
           onClick={() => setReservationTab("purchase")}
         >
           구매
@@ -423,10 +454,10 @@ export function ReservationsSection({
 
       {reservationTab === "reservation" ? (
         <>
-          <div className="mt-5 rounded-sm bg-[#ffffff] p-5">
+          <div className="mt-5 rounded-sm border border-black/5 bg-[#FDFDFD] p-5 shadow-xl">
             <div className="flex flex-wrap items-center gap-4 text-sm">
-              <span className="font-semibold">구분</span>
-              <label className="flex items-center gap-2">
+              <span className="font-semibold text-[#1A1A1A]">구분</span>
+              <label className="flex items-center gap-2 text-[#1A1A1A]">
                 <input
                   type="radio"
                   checked={historyType === "current"}
@@ -434,16 +465,16 @@ export function ReservationsSection({
                 />
                 예매내역
               </label>
-              <label className="flex items-center gap-2">
+              <label className="flex items-center gap-2 text-[#1A1A1A]">
                 <input
                   type="radio"
                   checked={historyType === "past"}
                   onChange={() => setHistoryType("past")}
                 />
                 지난내역
-              </label>
-              <select
-                className="rounded border border-gray-300 bg-white px-3 py-2 text-sm disabled:bg-gray-100 disabled:text-gray-400"
+            </label>
+            <select
+                className="rounded-sm border border-black/10 bg-white px-3 py-2 text-sm text-[#1A1A1A] disabled:bg-black/5 disabled:text-black/25"
                 value={selectedMonth}
                 onChange={(e) => setSelectedMonth(e.target.value)}
                 disabled={historyType === "current"}
@@ -459,7 +490,7 @@ export function ReservationsSection({
                 )}
               </select>
               <button
-                className="flex items-center gap-1 rounded border border-gray-300 bg-white px-4 py-2 text-sm"
+                className="flex items-center gap-1 rounded-sm border border-black/10 bg-white px-4 py-2 text-sm font-semibold text-[#1A1A1A] transition-colors hover:border-[#B91C1C] hover:text-[#B91C1C]"
                 onClick={() => {
                   setAppliedHistoryType(historyType);
                   setAppliedMonth(historyType === "current" ? "" : selectedMonth);
@@ -470,13 +501,13 @@ export function ReservationsSection({
             </div>
           </div>
 
-          <div className="mt-6 rounded-sm border border-gray-200 bg-white">
+          <div className="mt-6 rounded-sm border border-black/5 bg-white shadow-xl">
             {loading ? (
-              <div className="py-12 text-center text-gray-500">불러오는 중...</div>
+              <div className="py-12 text-center text-black/45">불러오는 중...</div>
             ) : visibleReservations.length === 0 ? (
-              <div className="py-12 text-center text-gray-500">예매 내역이 없습니다.</div>
+              <div className="py-12 text-center text-black/45">예매 내역이 없습니다.</div>
             ) : (
-              <div className="divide-y divide-gray-200">
+              <div className="divide-y divide-black/5">
                 {visibleReservations.map((item) => {
                   const canPay = isPayable(item.paymentStatus, item.holdExpiresAt); //결제 가능 여부 체크
 
@@ -484,28 +515,28 @@ export function ReservationsSection({
                     <div key={item.reservationId} className="flex flex-col gap-4 p-5 lg:flex-row lg:items-center lg:justify-between">
                       <div>
                         <div className="flex items-center gap-2">
-                          <p className="text-lg font-semibold">{item.movieTitle}</p>
-                          {canPay && <span className="rounded bg-red-100 px-2 py-0.5 text-xs font-bold text-red-600">결제 대기</span>}
+                          <p className="text-xl font-semibold tracking-tight text-[#1A1A1A]">{item.movieTitle}</p>
+                          {canPay && <span className="rounded-sm bg-[#B91C1C]/10 px-2 py-0.5 text-xs font-bold text-[#B91C1C]">결제 대기</span>}
                           {!canPay && item.paymentStatus == "PAID" && <span className="rounded bg-green-100 px-2 py-0.5 text-xs font-bold text-green-600">결제 완료</span>}
                         </div>
-                        <p className="mt-1 text-sm text-gray-600">{item.theaterName} / {item.screenName}</p>
-                        <p className="text-sm text-gray-600">{formatDateTime(item.startTime)}</p>
-                        <p className="text-sm text-gray-600">좌석: {item.seatNames.join(", ") || "-"}</p>
+                        <p className="mt-1 text-sm text-black/55">{item.theaterName} / {item.screenName}</p>
+                        <p className="text-sm text-black/55">{formatDateTime(item.startTime)}</p>
+                        <p className="text-sm text-black/55">좌석: {item.seatNames.join(", ") || "-"}</p>
                       </div>
                       <div className="flex flex-col items-end gap-2 text-right">
                         {canPay && item.holdExpiresAt && (
                             <div className="flex items-center gap-2">
-                              <span className="text-gray-500 text-xs font-normal">남은 결제 시간</span>
+                              <span className="text-xs font-normal text-black/40">남은 결제 시간</span>
                               <ReservationTimer expiresAt={item.holdExpiresAt} />
                             </div>
                           )}
-                        <p className="font-semibold">{formatMoney(item.finalAmount)}</p>
+                        <p className="text-lg font-semibold text-[#1A1A1A]">{formatMoney(item.finalAmount)}</p>
                         
                         <div className="flex gap-2">
                           {/* ✨ 결제하러 가기 버튼 (환불하기 옆/위에 배치) */}
                           {canPay && (
                             <button
-                              className="rounded border border-[#111827] bg-[#111827] px-4 py-2 text-sm text-white hover:bg-black"
+                              className="rounded-sm border border-[#1A1A1A] bg-[#1A1A1A] px-4 py-2 text-sm text-white transition-colors hover:border-[#B91C1C] hover:bg-[#B91C1C]"
                               onClick={() => onClickPay(item.reservationId)}
                             >
                               결제하러 가기
@@ -515,7 +546,7 @@ export function ReservationsSection({
                           {/* 결제가 안 된 상태면 교환권 출력 숨김 처리 */}
                           {!canPay && (
                             <button
-                              className="rounded border border-[#eb4d32] bg-white px-5 py-2 text-sm font-semibold text-[#eb4d32]"
+                              className="rounded-sm border border-[#B91C1C] bg-white px-5 py-2 text-sm font-semibold text-[#B91C1C] transition-colors hover:bg-[#B91C1C] hover:text-white"
                               onClick={() => openPrintVoucher(item)}
                             >
                               교환권출력
@@ -524,14 +555,14 @@ export function ReservationsSection({
 
                           {!canPay && item.cancellable ? (
                             <button
-                              className="rounded border border-[#eb4d32] px-4 py-2 text-sm text-[#eb4d32] hover:bg-red-50"
+                              className="rounded-sm border border-[#B91C1C] px-4 py-2 text-sm text-[#B91C1C] transition-colors hover:bg-[#B91C1C]/5"
                               disabled={isCancelling === item.reservationId}
                               onClick={() => openCancelModal(item.reservationId)}
                             >
                               {isCancelling === item.reservationId ? "처리 중..." : "환불하기"}
                             </button>
                           ) : (
-                            <span className="inline-block rounded bg-gray-100 px-4 py-2 text-sm text-gray-500">환불 불가</span>
+                            <span className="inline-block rounded-sm bg-black/5 px-4 py-2 text-sm text-black/35">환불 불가</span>
                           )}
                         </div>
                       </div>
@@ -544,42 +575,42 @@ export function ReservationsSection({
         </>
       ) : (
         <>
-          <div className="mt-5 rounded-sm bg-[#ffffff] p-5">
+          <div className="mt-5 rounded-sm border border-black/5 bg-[#FDFDFD] p-5 shadow-xl">
             <div className="flex flex-wrap items-center gap-3 text-sm">
-              <span className="mr-2 font-semibold text-[#000000]">구분</span>
+              <span className="mr-2 font-semibold text-[#1A1A1A]">구분</span>
               <select
-                className="rounded border border-gray-200 bg-[#ffffff] px-3 py-1.5 text-sm text-[#000000]"
+                className="rounded-sm border border-black/10 bg-white px-3 py-1.5 text-sm text-[#1A1A1A]"
                 value={purchaseSelectType}
                 onChange={(e) => setPurchaseSelectType(e.target.value as "all" | "movie")}
               >
                 <option value="all">전체</option>
                 <option value="movie">영화예매</option>
               </select>
-              <label className="flex items-center gap-1.5 text-[#000000]">
+              <label className="flex items-center gap-1.5 text-[#1A1A1A]">
                 <input type="radio" checked={purchaseStatusType === "all"} onChange={() => setPurchaseStatusType("all")} />
                 전체
               </label>
-              <label className="flex items-center gap-1.5 text-[#000000]">
+              <label className="flex items-center gap-1.5 text-[#1A1A1A]">
                 <input type="radio" checked={purchaseStatusType === "purchase"} onChange={() => setPurchaseStatusType("purchase")} />
                 구매내역
               </label>
-              <label className="flex items-center gap-1.5 text-[#000000]">
+              <label className="flex items-center gap-1.5 text-[#1A1A1A]">
                 <input type="radio" checked={purchaseStatusType === "cancel"} onChange={() => setPurchaseStatusType("cancel")} />
                 취소내역
               </label>
             </div>
 
             <div className="mt-3 flex flex-wrap items-center gap-2 text-sm">
-              <span className="mr-2 font-semibold text-[#000000]">조회기간</span>
-              <button className={`rounded border border-gray-200 px-3 py-1 ${purchaseRange === "week" ? "text-[#eb4d32]" : "text-[#000000]"}`} onClick={() => applyPurchaseRange("week")}>1주일</button>
-              <button className={`rounded border border-gray-200 px-3 py-1 ${purchaseRange === "month1" ? "text-[#eb4d32]" : "text-[#000000]"}`} onClick={() => applyPurchaseRange("month1")}>1개월</button>
-              <button className={`rounded border border-gray-200 px-3 py-1 ${purchaseRange === "month3" ? "text-[#eb4d32]" : "text-[#000000]"}`} onClick={() => applyPurchaseRange("month3")}>3개월</button>
-              <button className={`rounded border border-gray-200 px-3 py-1 ${purchaseRange === "month6" ? "text-[#eb4d32]" : "text-[#000000]"}`} onClick={() => applyPurchaseRange("month6")}>6개월</button>
-              <input type="date" className="rounded border border-gray-200 bg-[#ffffff] px-3 py-1" value={purchaseFrom} onChange={(e) => setPurchaseFrom(e.target.value)} />
-              <span className="text-[#000000]">~</span>
-              <input type="date" className="rounded border border-gray-200 bg-[#ffffff] px-3 py-1" value={purchaseTo} onChange={(e) => setPurchaseTo(e.target.value)} />
+              <span className="mr-2 font-semibold text-[#1A1A1A]">조회기간</span>
+              <button className={`rounded-sm border border-black/10 px-3 py-1 transition-colors ${purchaseRange === "week" ? "text-[#B91C1C]" : "text-[#1A1A1A] hover:text-[#B91C1C]"}`} onClick={() => applyPurchaseRange("week")}>1주일</button>
+              <button className={`rounded-sm border border-black/10 px-3 py-1 transition-colors ${purchaseRange === "month1" ? "text-[#B91C1C]" : "text-[#1A1A1A] hover:text-[#B91C1C]"}`} onClick={() => applyPurchaseRange("month1")}>1개월</button>
+              <button className={`rounded-sm border border-black/10 px-3 py-1 transition-colors ${purchaseRange === "month3" ? "text-[#B91C1C]" : "text-[#1A1A1A] hover:text-[#B91C1C]"}`} onClick={() => applyPurchaseRange("month3")}>3개월</button>
+              <button className={`rounded-sm border border-black/10 px-3 py-1 transition-colors ${purchaseRange === "month6" ? "text-[#B91C1C]" : "text-[#1A1A1A] hover:text-[#B91C1C]"}`} onClick={() => applyPurchaseRange("month6")}>6개월</button>
+              <input type="date" className="rounded-sm border border-black/10 bg-white px-3 py-1 text-[#1A1A1A]" value={purchaseFrom} onChange={(e) => setPurchaseFrom(e.target.value)} />
+              <span className="text-[#1A1A1A]">~</span>
+              <input type="date" className="rounded-sm border border-black/10 bg-white px-3 py-1 text-[#1A1A1A]" value={purchaseTo} onChange={(e) => setPurchaseTo(e.target.value)} />
               <button
-                className="flex items-center gap-1 rounded border border-gray-200 bg-[#ffffff] px-3 py-1 text-[#000000]"
+                className="flex items-center gap-1 rounded-sm border border-black/10 bg-white px-3 py-1 font-semibold text-[#1A1A1A] transition-colors hover:border-[#B91C1C] hover:text-[#B91C1C]"
                 onClick={() => {
                   setAppliedPurchaseSelectType(purchaseSelectType);
                   setAppliedPurchaseStatusType(purchaseStatusType);
@@ -592,11 +623,11 @@ export function ReservationsSection({
             </div>
           </div>
 
-          <div className="mt-6 rounded-sm bg-[#ffffff]">
+          <div className="mt-6 overflow-hidden rounded-sm border border-black/5 bg-white shadow-xl">
             <div className="p-5">
-              <p className="text-base font-semibold text-[#000000]">전체 {purchaseRows.length}건</p>
+              <p className="text-base font-semibold text-[#1A1A1A]">전체 {purchaseRows.length}건</p>
               <div className="mt-2">
-                <div className="grid grid-cols-6 border-y border-gray-200 bg-[#ffffff] px-4 py-3 text-center text-sm font-semibold text-[#000000]">
+                <div className="grid grid-cols-6 border-y border-black/5 bg-[#FDFDFD] px-4 py-4 text-center text-[11px] font-bold uppercase tracking-[0.18em] text-black/35">
                   <span>예매번호</span>
                   <span>결제일시</span>
                   <span>구분</span>
@@ -605,16 +636,16 @@ export function ReservationsSection({
                   <span>상태</span>
                 </div>
                 {purchaseRows.length === 0 ? (
-                  <div className="border-b border-gray-200 py-10 text-center text-[#000000]">결제내역이 없습니다.</div>
+                  <div className="border-b border-black/5 py-10 text-center text-black/45">결제내역이 없습니다.</div>
                 ) : (
                   purchaseRows.map((row) => (
-                    <div key={row.id} className="grid grid-cols-6 border-b border-gray-200 px-4 py-3 text-center text-sm text-[#000000]">
+                    <div key={row.id} className="grid grid-cols-6 border-b border-black/5 px-4 py-4 text-center text-sm text-[#1A1A1A]">
                       <span>{row.reservationNumber}</span>
                       <span>{formatDateTime(row.paymentDate.toISOString())}</span>
                       <span>{row.category}</span>
                       <span>{row.productName}</span>
                       <span>{formatMoney(row.amount)}</span>
-                      <span className={row.isCancelled ? "text-[#eb4d32]" : "text-[#000000]"}>{row.statusLabel}</span>
+                      <span className={row.isCancelled ? "text-[#B91C1C]" : "text-[#1A1A1A]"}>{row.statusLabel}</span>
                     </div>
                   ))
                 )}
@@ -622,12 +653,12 @@ export function ReservationsSection({
             </div>
           </div>
 
-          <div className="mt-6 overflow-hidden rounded-sm bg-[#ffffff]">
-            <div className="flex items-center justify-between bg-[#ffffff] px-4 py-3 text-sm font-semibold text-[#000000]">
+          <div className="mt-6 overflow-hidden rounded-sm border border-black/5 bg-white shadow-xl">
+            <div className="flex items-center justify-between bg-[#FDFDFD] px-4 py-4 text-[11px] font-bold uppercase tracking-[0.18em] text-black/35">
               <span>이용안내</span>
               <span>⌃</span>
             </div>
-            <div className="p-4 text-sm leading-7 text-[#000000]">
+            <div className="p-4 text-sm leading-7 text-[#1A1A1A]">
               <p className="font-semibold">[스토어 구매/취소 안내]</p>
               <p>· 스토어 상품은 구매 후 취소가능기간 내 100% 환불이 가능하며, 부분환불은 불가 합니다.</p>
               <p>· (ex. 3개의 쿠폰 합 번에 구매하신 경우, 3개 모두 취소만 가능하며 그 중 사용하신 쿠폰이 있는 경우 환불이 불가합니다)</p>
@@ -644,10 +675,10 @@ export function ReservationsSection({
 
       {reservationTab === "reservation" ? (
         <div className="mt-10">
-          <h2 className="text-2xl font-semibold text-[#eb4d32]">예매취소내역</h2>
-          <p className="mt-2 text-sm text-gray-600">· 상영일 기준 7일간 취소내역을 확인하실 수 있습니다.</p>
-          <div className="mt-4 overflow-hidden rounded-sm border border-gray-200 bg-white">
-            <div className="grid grid-cols-[1.2fr_1fr_1fr_1.2fr_1fr_0.9fr] bg-[#ffffff] px-4 py-3 text-center text-sm font-semibold">
+          <h2 className="text-3xl font-semibold tracking-tight text-[#B91C1C]">예매취소내역</h2>
+          <p className="mt-2 text-sm text-black/55">· 상영일 기준 7일간 취소내역을 확인하실 수 있습니다.</p>
+          <div className="mt-4 overflow-hidden rounded-sm border border-black/5 bg-white shadow-xl">
+            <div className="grid grid-cols-[1.2fr_1fr_1fr_1.2fr_1fr_0.9fr] border-b border-black/5 bg-[#FDFDFD] px-4 py-4 text-center text-[11px] font-bold uppercase tracking-[0.18em] text-black/35">
               <span>취소일시</span>
               <span>영화명</span>
               <span>극장</span>
@@ -656,7 +687,7 @@ export function ReservationsSection({
               <span>취소사유</span>
             </div>
             {cancelledReservations.length === 0 ? (
-              <div className="py-6 text-center text-gray-500">취소내역이 없습니다.</div>
+              <div className="py-6 text-center text-black/45">취소내역이 없습니다.</div>
             ) : (
               cancelledReservations.map((item) => {
                 const [cancelDate, cancelTime] = formatCompactDateTime(item.cancelledAt);
@@ -665,7 +696,7 @@ export function ReservationsSection({
                 return (
                   <div
                     key={item.reservationId}
-                    className="grid grid-cols-[1.2fr_1fr_1fr_1.2fr_1fr_0.9fr] items-center border-t border-gray-200 px-4 py-4 text-center text-sm"
+                    className="grid grid-cols-[1.2fr_1fr_1fr_1.2fr_1fr_0.9fr] items-center border-t border-black/5 px-4 py-4 text-center text-sm text-[#1A1A1A]"
                   >
                     <span className="leading-relaxed">
                       <span className="block">{cancelDate}</span>
@@ -679,7 +710,7 @@ export function ReservationsSection({
                     </span>
                     <span className="whitespace-nowrap font-medium">{formatMoney(item.finalAmount)}</span>
                     <span className="flex justify-center">
-                      <span className="rounded-full bg-[#f3f4f6] px-3 py-1 text-xs font-medium text-gray-700">
+                      <span className="rounded-full bg-black/5 px-3 py-1 text-xs font-medium text-black/55">
                         {mapCancelReasonLabel(item.cancelReason)}
                       </span>
                     </span>
@@ -692,7 +723,7 @@ export function ReservationsSection({
       ) : null}
 
       {reservationTab === "reservation" ? (
-        <div className="mt-8 rounded border border-gray-300 bg-[#ffffff] px-4 py-3">이용안내</div>
+        <div className="mt-8 rounded-sm border border-black/5 bg-[#FDFDFD] px-4 py-4 text-[11px] font-bold uppercase tracking-[0.18em] text-black/35 shadow-xl">이용안내</div>
       ) : null}
     </section>
   );

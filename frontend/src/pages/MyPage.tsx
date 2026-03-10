@@ -1049,7 +1049,7 @@ export default function MyPage() {
     };
 
     const renderDashboard = () => {
-        const cardClass = "rounded-sm border border-gray-200 bg-white p-5";
+        const cardClass = "rounded-sm border border-black/5 bg-[#FDFDFD] p-5 shadow-xl";
         const tierSteps = ["WELCOME", "FRIENDS", "VIP", "VVIP", "MVIP"] as const;
         const currentTier = (summary?.pointTier ?? "WELCOME").toUpperCase();
         const currentTierIndex = Math.max(0, tierSteps.indexOf(currentTier as (typeof tierSteps)[number]));
@@ -1058,11 +1058,11 @@ export default function MyPage() {
 
         return (
             <>
-                <section className="overflow-hidden rounded-md border border-[#000000] bg-[#000000] text-[#ffffff]">
-                    <div className="bg-[#000000] px-8 py-9">
+                <section className="overflow-hidden rounded-sm border border-black/5 bg-[#1A1A1A] text-white shadow-2xl">
+                    <div className="bg-[#1A1A1A] px-8 py-9">
                         <div className="flex flex-col gap-8 lg:flex-row lg:items-center lg:justify-between">
                             <div className="flex items-center gap-5">
-                                <div className="flex h-24 w-24 items-center justify-center overflow-hidden rounded-3xl bg-[#eb4d32] text-2xl font-bold text-[#ffffff]">
+                                <div className="flex h-24 w-24 items-center justify-center overflow-hidden rounded-3xl bg-[#B91C1C] text-2xl font-bold text-white">
                                     {/* 백엔드에서 내려주는 이름(profileImage)으로 정확히 매칭! */}
                                     {summary?.profileImage && summary.profileImage !== "default" ? (
                                         <img 
@@ -1075,26 +1075,27 @@ export default function MyPage() {
                                     )}
                                 </div>
                                 <div>
-                                    <h1 className="text-3xl font-semibold leading-none">안녕하세요!</h1>
-                                    <p className="mt-2 text-3xl font-semibold leading-none">{(summary?.availablePoints ?? 0).toLocaleString()} P</p>
-                                    <p className="mt-3 text-base font-semibold">{summary?.memberName ?? "회원"}님</p>
+                                    <p className="text-[11px] font-bold uppercase tracking-[0.35em] text-[#B91C1C]">Kino Membership</p>
+                                    <h1 className="mt-3 text-4xl font-semibold leading-none tracking-tight">안녕하세요!</h1>
+                                    <p className="mt-3 font-display text-5xl font-semibold leading-none tracking-tight text-[#B91C1C]">{(summary?.availablePoints ?? 0).toLocaleString()} P</p>
+                                    <p className="mt-4 text-base font-semibold text-white/85">{summary?.memberName ?? "회원"}님</p>
                                 </div>
                             </div>
                             <div className="text-right">
-                                <p className="text-sm">현재등급 <span className="font-semibold text-[#eb4d32]">{currentTier}</span></p>
+                                <p className="text-[11px] font-bold uppercase tracking-[0.22em] text-white/55">현재등급 <span className="font-semibold text-[#B91C1C]">{currentTier}</span></p>
                                 {nextTier ? (
-                                    <div className="mt-3 inline-block rounded bg-[#eb4d32] px-4 py-1 text-sm font-semibold text-[#ffffff]">
+                                    <div className="mt-3 inline-block rounded-sm bg-[#B91C1C] px-4 py-2 text-sm font-semibold text-white">
                                         다음 {nextTier} 등급까지 {pointsToNextTier.toLocaleString()} P 남았어요!
                                     </div>
                                 ) : (
-                                    <div className="mt-3 inline-block rounded bg-[#eb4d32] px-4 py-1 text-sm font-semibold text-[#ffffff]">
+                                    <div className="mt-3 inline-block rounded-sm bg-[#B91C1C] px-4 py-2 text-sm font-semibold text-white">
                                         최고 등급을 달성했어요!
                                     </div>
                                 )}
-                                <div className="mt-4 flex items-center justify-end gap-5 text-sm">
+                                <div className="mt-5 flex items-center justify-end gap-5 text-sm">
                                     {tierSteps.map((label, index) => (
                                         <div key={label} className="flex items-center gap-2 text-white/85">
-                                            <span className={`h-3 w-3 rounded-full ${index === currentTierIndex ? "bg-[#eb4d32]" : "bg-[#ffffff]"}`} />
+                                            <span className={`h-3 w-3 rounded-full ${index === currentTierIndex ? "bg-[#B91C1C]" : "bg-white"}`} />
                                             <span>{label}</span>
                                         </div>
                                     ))}
@@ -1102,48 +1103,48 @@ export default function MyPage() {
                             </div>
                         </div>
                     </div>
-                    <div className="grid grid-cols-1 gap-0 border-t border-[#000000] bg-[#ffffff] text-[#000000] lg:grid-cols-3">
+                    <div className="grid grid-cols-1 gap-0 border-t border-white/10 bg-[#FDFDFD] text-[#1A1A1A] lg:grid-cols-3">
                         <button
                             type="button"
-                            className="p-5 text-left transition-colors hover:bg-gray-50"
+                            className="p-5 text-left transition-colors hover:bg-white"
                             onClick={() => moveMenu("/mypage/points")}
                         >
-                            <div className="mb-3 flex items-center justify-between text-base font-semibold text-[#eb4d32]">
+                            <div className="mb-3 flex items-center justify-between text-base font-semibold text-[#B91C1C]">
                                 <span>포인트 이용내역</span>
-                                <ChevronRight className="h-5 w-5 text-gray-400" />
+                                <ChevronRight className="h-5 w-5 text-black/25" />
                             </div>
-                            <p className="text-sm">적립예정 <span className="float-right font-semibold">{(summary?.pendingPoints ?? 0).toLocaleString()} P</span></p>
-                            <p className="mt-2 text-sm">당월소멸예정 <span className="float-right font-semibold">{(summary?.expiringPointsThisMonth ?? 0).toLocaleString()} P</span></p>
+                            <p className="text-sm text-black/65">적립예정 <span className="float-right font-semibold text-[#1A1A1A]">{(summary?.pendingPoints ?? 0).toLocaleString()} P</span></p>
+                            <p className="mt-2 text-sm text-black/65">당월소멸예정 <span className="float-right font-semibold text-[#1A1A1A]">{(summary?.expiringPointsThisMonth ?? 0).toLocaleString()} P</span></p>
                         </button>
                         <button
                             type="button"
-                            className="p-5 text-left transition-colors hover:bg-gray-50"
+                            className="p-5 text-left transition-colors hover:bg-white"
                             onClick={() => moveMenu("/mypage/profile/preferences")}
                         >
-                            <div className="mb-3 flex items-center justify-between text-base font-semibold text-[#eb4d32]">
+                            <div className="mb-3 flex items-center justify-between text-base font-semibold text-[#B91C1C]">
                                 <span>선호하는 극장</span>
-                                <ChevronRight className="h-5 w-5 text-gray-400" />
+                                <ChevronRight className="h-5 w-5 text-black/25" />
                             </div>
                             {preferredTheaterName ? (
-                                <p className="text-[#eb4d32]">{preferredTheaterName}</p>
+                                <p className="font-medium text-[#B91C1C]">{preferredTheaterName}</p>
                             ) : (
                                 <>
-                                    <p className="text-[#eb4d32]">선호극장</p>
-                                    <p>을 설정하세요.</p>
+                                    <p className="font-medium text-[#B91C1C]">선호극장</p>
+                                    <p className="text-black/65">을 설정하세요.</p>
                                 </>
                             )}
                         </button>
                         <button
                             type="button"
-                            className="p-5 text-left transition-colors hover:bg-gray-50"
+                            className="p-5 text-left transition-colors hover:bg-white"
                             onClick={() => moveMenu("/mypage/vouchers/movie")}
                         >
-                            <div className="mb-3 flex items-center justify-between text-base font-semibold text-[#eb4d32]">
+                            <div className="mb-3 flex items-center justify-between text-base font-semibold text-[#B91C1C]">
                                 <span>관람권/쿠폰</span>
-                                <ChevronRight className="h-5 w-5 text-gray-400" />
+                                <ChevronRight className="h-5 w-5 text-black/25" />
                             </div>
-                            <p className="text-sm">영화관람권 <span className="float-right font-semibold">{availableMovieVoucherCount} 매</span></p>
-                            <p className="mt-2 text-sm">할인/제휴쿠폰 <span className="float-right font-semibold">{availableCouponCount} 매</span></p>
+                            <p className="text-sm text-black/65">영화관람권 <span className="float-right font-semibold text-[#1A1A1A]">{availableMovieVoucherCount} 매</span></p>
+                            <p className="mt-2 text-sm text-black/65">할인/제휴쿠폰 <span className="float-right font-semibold text-[#1A1A1A]">{availableCouponCount} 매</span></p>
                         </button>
                     </div>
                 </section>
@@ -1151,9 +1152,9 @@ export default function MyPage() {
                 <section className="mt-6 grid grid-cols-1 gap-4">
                     <div className={cardClass}>
                         <div className="mb-5 flex items-center justify-between">
-                            <h3 className="text-xl font-semibold text-[#eb4d32]">나의 무비스토리</h3>
+                            <h3 className="text-2xl font-semibold tracking-tight text-[#B91C1C]">나의 무비스토리</h3>
                             <button
-                                className="rounded border border-gray-300 px-4 py-1 text-sm"
+                                className="rounded-sm border border-black/10 px-4 py-2 text-[11px] font-bold uppercase tracking-[0.18em] text-[#1A1A1A] transition-colors hover:border-[#B91C1C] hover:text-[#B91C1C]"
                                 onClick={() => {
                                     const params = new URLSearchParams(location.search);
                                     params.set("movieTab", "watched");
@@ -1165,46 +1166,46 @@ export default function MyPage() {
                         </div>
                         <div className="grid grid-cols-3 text-center">
                             <div>
-                                <p className="text-3xl font-semibold text-[#eb4d32]">{summary?.paidReservationCount ?? 0}</p>
-                                <p className="text-sm">본 영화</p>
+                                <p className="text-4xl font-semibold tracking-tight text-[#B91C1C]">{summary?.paidReservationCount ?? 0}</p>
+                                <p className="text-sm text-black/65">본 영화</p>
                             </div>
                             <div>
-                                <p className="text-3xl font-semibold text-[#eb4d32]">{summary?.reviewCount ?? 0}</p>
-                                <p className="text-sm">관람평</p>
+                                <p className="text-4xl font-semibold tracking-tight text-[#B91C1C]">{summary?.reviewCount ?? 0}</p>
+                                <p className="text-sm text-black/65">관람평</p>
                             </div>
                             <div>
-                                <p className="text-3xl font-semibold text-[#eb4d32]">{summary?.likedMovieCount ?? 0}</p>
-                                <p className="text-sm">보고싶어</p>
+                                <p className="text-4xl font-semibold tracking-tight text-[#B91C1C]">{summary?.likedMovieCount ?? 0}</p>
+                                <p className="text-sm text-black/65">보고싶어</p>
                             </div>
                         </div>
                     </div>
                 </section>
 
-                <section className="mt-7 rounded-sm border border-gray-200 bg-white p-4">
-                    <div className="mb-2 flex items-center justify-between border-b border-gray-300 pb-3">
-                        <h3 className="text-2xl font-semibold text-[#eb4d32]">나의 예매내역</h3>
-                        <button className="flex items-center gap-1 text-base text-gray-600" onClick={() => moveMenu("/mypage/reservations")}>더보기 <ChevronRight className="h-5 w-5" /></button>
+                <section className="mt-7 rounded-sm border border-black/5 bg-[#FDFDFD] p-5 shadow-xl">
+                    <div className="mb-2 flex items-center justify-between border-b border-black/10 pb-4">
+                        <h3 className="text-3xl font-semibold tracking-tight text-[#B91C1C]">나의 예매내역</h3>
+                        <button className="flex items-center gap-1 text-sm font-semibold uppercase tracking-[0.16em] text-black/45 transition-colors hover:text-[#B91C1C]" onClick={() => moveMenu("/mypage/reservations")}>더보기 <ChevronRight className="h-5 w-5" /></button>
                     </div>
                     {activeReservations.length === 0 ? <EmptyLine message="예매 내역이 없습니다." /> : (
                         <div className="divide-y">
                             {activeReservations.slice(0, 2).map((item) => (
                                 <div key={item.reservationId} className="flex flex-col gap-3 py-4 lg:flex-row lg:items-center lg:justify-between">
                                     <div>
-                                        <p className="text-lg font-semibold">{item.movieTitle}</p>
-                                        <p className="text-sm text-gray-600">{item.theaterName} · {formatDateTime(item.startTime)} · 좌석 {item.seatNames.join(", ") || "-"}</p>
+                                        <p className="text-xl font-semibold tracking-tight text-[#1A1A1A]">{item.movieTitle}</p>
+                                        <p className="text-sm text-black/55">{item.theaterName} · {formatDateTime(item.startTime)} · 좌석 {item.seatNames.join(", ") || "-"}</p>
                                     </div>
-                                    <p className="font-semibold">{formatMoney(item.finalAmount)}</p>
+                                    <p className="text-lg font-semibold text-[#1A1A1A]">{formatMoney(item.finalAmount)}</p>
                                 </div>
                             ))}
                         </div>
                     )}
                 </section>
 
-                <section className="mt-7 rounded-sm border border-gray-200 bg-white p-4">
-                    <div className="mb-2 flex items-center justify-between border-b border-gray-300 pb-3">
-                        <h3 className="text-2xl font-semibold text-[#eb4d32]">나의 구매내역</h3>
+                <section className="mt-7 rounded-sm border border-black/5 bg-[#FDFDFD] p-5 shadow-xl">
+                    <div className="mb-2 flex items-center justify-between border-b border-black/10 pb-4">
+                        <h3 className="text-3xl font-semibold tracking-tight text-[#B91C1C]">나의 구매내역</h3>
                         <button
-                            className="flex items-center gap-1 text-base text-gray-600"
+                            className="flex items-center gap-1 text-sm font-semibold uppercase tracking-[0.16em] text-black/45 transition-colors hover:text-[#B91C1C]"
                             onClick={() => {
                                 const params = new URLSearchParams(location.search);
                                 params.set("tab", "purchase");
@@ -1219,10 +1220,10 @@ export default function MyPage() {
                             {recentPaidPurchases.map((item) => (
                                 <div key={item.reservationId} className="flex flex-col gap-3 py-4 lg:flex-row lg:items-center lg:justify-between">
                                     <div>
-                                        <p className="text-lg font-semibold">{item.movieTitle}</p>
-                                        <p className="text-sm text-gray-600">{item.theaterName} · 결제일시 {formatDateTime(item.paidAt ?? item.startTime)}</p>
+                                        <p className="text-xl font-semibold tracking-tight text-[#1A1A1A]">{item.movieTitle}</p>
+                                        <p className="text-sm text-black/55">{item.theaterName} · 결제일시 {formatDateTime(item.paidAt ?? item.startTime)}</p>
                                     </div>
-                                    <p className="font-semibold">{formatMoney(item.finalAmount)}</p>
+                                    <p className="text-lg font-semibold text-[#1A1A1A]">{formatMoney(item.finalAmount)}</p>
                                 </div>
                             ))}
                         </div>
@@ -1394,19 +1395,19 @@ export default function MyPage() {
         <section>
             <div className="flex flex-wrap items-start justify-between gap-4">
                 <div>
-                    <h1 className="text-4xl font-semibold text-[#000000]">멤버십 카드관리</h1>
-                    <p className="mt-5 text-sm text-gray-600">· 키노 계정에 등록된 멤버십 카드를 관리할 수 있습니다.</p>
+                    <h1 className="text-5xl font-semibold tracking-tight text-[#1A1A1A]">멤버십 카드관리</h1>
+                    <p className="mt-5 text-sm text-black/55">· 키노 계정에 등록된 멤버십 카드를 관리할 수 있습니다.</p>
                 </div>
                 <button
-                    className="rounded border border-[#eb4d32] px-5 py-3 text-sm text-[#eb4d32]"
+                    className="rounded-sm border border-[#B91C1C] bg-white px-5 py-3 text-[11px] font-bold uppercase tracking-[0.18em] text-[#B91C1C] transition-colors hover:bg-[#B91C1C] hover:text-white"
                     onClick={openCardRegisterModal}
                 >
                     멤버십 카드 등록
                 </button>
             </div>
 
-            <div className="mt-6 overflow-hidden rounded-sm border border-gray-200 bg-white">
-                <div className="grid grid-cols-5 bg-[#ffffff] px-4 py-3 text-center text-sm font-semibold">
+            <div className="mt-6 overflow-hidden rounded-sm border border-black/5 bg-white shadow-xl">
+                <div className="grid grid-cols-5 border-b border-black/5 bg-[#FDFDFD] px-4 py-4 text-center text-[11px] font-bold uppercase tracking-[0.18em] text-black/35">
                     <span>구분</span>
                     <span>카드번호</span>
                     <span>카드명</span>
@@ -1414,12 +1415,12 @@ export default function MyPage() {
                     <span>발급일</span>
                 </div>
                 {membershipCardLoading ? (
-                    <div className="border-t px-4 py-8 text-center text-sm text-gray-500">불러오는 중...</div>
+                    <div className="border-t border-black/5 px-4 py-8 text-center text-sm text-black/45">불러오는 중...</div>
                 ) : membershipCards.length === 0 ? (
-                    <div className="border-t px-4 py-8 text-center text-sm text-gray-500">등록된 멤버십 카드가 없습니다.</div>
+                    <div className="border-t border-black/5 px-4 py-8 text-center text-sm text-black/45">등록된 멤버십 카드가 없습니다.</div>
                 ) : (
                     membershipCards.map((card) => (
-                        <div key={card.cardId} className="grid grid-cols-5 border-t border-gray-200 px-4 py-4 text-center text-sm">
+                        <div key={card.cardId} className="grid grid-cols-5 border-t border-black/5 px-4 py-4 text-center text-sm text-[#1A1A1A]">
                             <span>{card.channelName}</span>
                             <span>{card.cardNumber}</span>
                             <span>{card.cardName}</span>
@@ -1430,9 +1431,9 @@ export default function MyPage() {
                 )}
             </div>
 
-            <div className="mt-8 rounded-sm border border-gray-200 bg-white">
-                <div className="border-b bg-[#ffffff] px-4 py-3 font-semibold">이용안내</div>
-                <div className="p-4 text-base text-gray-600">
+            <div className="mt-8 rounded-sm border border-black/5 bg-[#FDFDFD] shadow-xl">
+                <div className="border-b border-black/5 bg-[#FDFDFD] px-4 py-4 text-[11px] font-bold uppercase tracking-[0.18em] text-black/35">이용안내</div>
+                <div className="p-4 text-base text-black/55">
                     <p>· 앞 혹은 뒷면의 카드 번호와 CVC코드가 있는 카드로만 온라인 등록이 가능합니다.</p>
                     <p>· 등록된 멤버십 카드는 온라인 및 극장에서 사용하실 수 있습니다.</p>
                     <p>· 한 번 삭제하신 카드번호는 재등록이 불가합니다.</p>
@@ -1564,13 +1565,13 @@ export default function MyPage() {
     };
 
     return (
-        <div className="min-h-screen bg-[#fdf4e3] text-[#000000]">
+        <div className="min-h-screen bg-white font-sans text-[#1A1A1A] selection:bg-[#B91C1C] selection:text-white [&_section>h1]:text-5xl [&_section>h1]:font-semibold [&_section>h1]:tracking-tight [&_section>h1]:text-[#1A1A1A] [&_section>h2]:tracking-tight">
             <BreadcrumbBar
                 crumbs={isGuestReservationOnly ? ["나의 키노", "예매/구매내역", "예매내역"] : crumbs}
                 onMoveMenu={moveMenu}
             />
 
-            <div className="mx-auto flex w-full max-w-[1200px] gap-8 px-4 py-10">
+            <div className="mx-auto flex w-full max-w-[1280px] items-start gap-10 px-6 py-12">
                 {isGuestReservationOnly ? null : (
                     <SidebarMenu currentPath={location.pathname} pageKey={pageKey} onMoveMenu={moveMenu} />
                 )}

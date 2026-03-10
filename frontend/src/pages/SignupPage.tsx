@@ -16,9 +16,12 @@ const SignupPage: React.FC = () => {
     tel?: string;          
     birth_date?: string;
     email?: string;
+    initialTab?: 'MEMBER' | 'GUEST';
   } | null;
 
-  const [activeTab, setActiveTab] = useState<'MEMBER' | 'GUEST'>('MEMBER');
+  const [activeTab, setActiveTab] = useState<'MEMBER' | 'GUEST'>(
+    socialData?.initialTab === 'GUEST' ? 'GUEST' : 'MEMBER'
+  );
 
   const [memberData, setMemberData] = useState({
     username: socialData?.username || '',

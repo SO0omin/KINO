@@ -136,17 +136,17 @@ export function CouponsSection({
 
   return (
     <section>
-      <h1 className="text-4xl font-semibold text-[#000000]">키노/제휴쿠폰</h1>
+      <h1 className="text-5xl font-semibold tracking-tight text-[#1A1A1A]">키노/제휴쿠폰</h1>
 
-      <div className="mt-5 flex border-b border-gray-200">
+      <div className="mt-5 flex border-b border-black/10">
         <button
-          className={`w-44 border border-b-0 px-4 py-2 text-sm ${couponTab === "megabox" ? "border-[#000000] bg-[#000000] text-[#ffffff]" : "border-gray-200 bg-[#ffffff] text-[#000000]"}`}
+          className={`w-44 border border-b-0 px-4 py-3 text-sm font-semibold tracking-tight transition-colors ${couponTab === "megabox" ? "border-[#1A1A1A] bg-[#1A1A1A] text-white" : "border-black/10 bg-white text-black/40 hover:text-[#B91C1C]"}`}
           onClick={() => setCouponTab("megabox")}
         >
           키노 쿠폰
         </button>
         <button
-          className={`w-44 border border-b-0 px-4 py-2 text-sm ${couponTab === "partner" ? "border-[#000000] bg-[#000000] text-[#ffffff]" : "border-gray-200 bg-[#ffffff] text-[#000000]"}`}
+          className={`w-44 border border-b-0 px-4 py-3 text-sm font-semibold tracking-tight transition-colors ${couponTab === "partner" ? "border-[#1A1A1A] bg-[#1A1A1A] text-white" : "border-black/10 bg-white text-black/40 hover:text-[#B91C1C]"}`}
           onClick={() => setCouponTab("partner")}
         >
           제휴 쿠폰
@@ -155,19 +155,19 @@ export function CouponsSection({
 
       <div className="mt-5 flex flex-wrap items-start justify-between gap-4">
         <div>
-          <p className="text-sm text-[#000000]">· 보유하신 쿠폰 내역입니다.</p>
-          <p className="text-sm text-[#000000]">· 각 쿠폰 별 사용 방법이 다르니 사용 전 상세 쿠폰정보를 확인바랍니다.</p>
+          <p className="text-sm text-black/55">· 보유하신 쿠폰 내역입니다.</p>
+          <p className="text-sm text-black/55">· 각 쿠폰 별 사용 방법이 다르니 사용 전 상세 쿠폰정보를 확인바랍니다.</p>
         </div>
         <div className="flex items-center gap-2">
           <button
-            className="rounded border border-gray-300 px-5 py-2 text-sm text-[#000000] disabled:opacity-60"
+            className="rounded-sm border border-black/10 bg-white px-5 py-2 text-[11px] font-bold uppercase tracking-[0.18em] text-[#1A1A1A] transition-colors hover:border-[#B91C1C] hover:text-[#B91C1C] disabled:opacity-60"
             onClick={openDownloadModal}
             disabled={downloadSubmitting}
           >
             {downloadSubmitting ? "다운로드 중..." : "전체 다운로드"}
           </button>
           <button
-            className="rounded border border-[#eb4d32] px-5 py-2 text-sm text-[#eb4d32]"
+            className="rounded-sm border border-[#B91C1C] bg-white px-5 py-2 text-[11px] font-bold uppercase tracking-[0.18em] text-[#B91C1C] transition-colors hover:bg-[#B91C1C] hover:text-white"
             onClick={openCouponRegisterModal}
           >
             {couponTab === "partner" ? "제휴쿠폰 등록" : "할인쿠폰 등록"}
@@ -175,21 +175,21 @@ export function CouponsSection({
         </div>
       </div>
 
-      <div className="mt-5 rounded-sm bg-[#ffffff] p-5">
+      <div className="mt-5 rounded-sm border border-black/5 bg-[#FDFDFD] p-5 shadow-xl">
         <div className="flex flex-wrap items-center gap-3 text-sm">
-          <span className="font-semibold text-[#000000]">유형</span>
+          <span className="font-semibold text-[#1A1A1A]">유형</span>
           {(["전체", "매표", "매점", "포인트", "포토카드", "기타"] as const).map((type) => (
             <button
               key={type}
-              className={`rounded border px-4 py-2 ${couponKindFilter === type ? "border-[#eb4d32] text-[#eb4d32]" : "border-gray-200 text-[#000000]"}`}
+              className={`rounded-sm border px-4 py-2 transition-colors ${couponKindFilter === type ? "border-[#B91C1C] text-[#B91C1C]" : "border-black/10 text-[#1A1A1A] hover:border-[#B91C1C] hover:text-[#B91C1C]"}`}
               onClick={() => setCouponKindFilter(type)}
             >
               {type}
             </button>
           ))}
-          <span className="ml-4 font-semibold text-[#000000]">구분</span>
+          <span className="ml-4 font-semibold text-[#1A1A1A]">구분</span>
           <select
-            className="rounded border border-gray-200 bg-[#ffffff] px-3 py-2"
+            className="rounded-sm border border-black/10 bg-white px-3 py-2 text-[#1A1A1A]"
             value={couponSourceFilter}
             onChange={(e) => setCouponSourceFilter(e.target.value as "전체" | "사용가능" | "사용완료" | "기간만료")}
           >
@@ -199,7 +199,7 @@ export function CouponsSection({
             <option>기간만료</option>
           </select>
           <button
-            className="flex items-center gap-1 rounded border border-gray-200 bg-[#ffffff] px-4 py-2"
+            className="flex items-center gap-1 rounded-sm border border-black/10 bg-white px-4 py-2 font-semibold text-[#1A1A1A] transition-colors hover:border-[#B91C1C] hover:text-[#B91C1C]"
             onClick={applyCouponFilters}
           >
             <Search className="h-4 w-4" /> 조회
@@ -208,13 +208,13 @@ export function CouponsSection({
       </div>
 
       <div className="mt-7 flex items-center justify-between">
-        <p className="text-lg font-semibold text-[#000000]">
-          총 <span className="text-[#eb4d32]">{filteredCoupons.length}</span>매
+        <p className="text-lg font-semibold text-[#1A1A1A]">
+          총 <span className="text-[#B91C1C]">{filteredCoupons.length}</span>매
         </p>
       </div>
 
-      <div className="mt-3 overflow-hidden rounded-sm border border-gray-200 bg-[#ffffff]">
-        <div className="grid grid-cols-5 border-b border-gray-200 bg-[#ffffff] px-4 py-3 text-center text-sm font-semibold">
+      <div className="mt-3 overflow-hidden rounded-sm border border-black/5 bg-white shadow-xl">
+        <div className="grid grid-cols-5 border-b border-black/5 bg-[#FDFDFD] px-4 py-4 text-center text-[11px] font-bold uppercase tracking-[0.18em] text-black/35">
           <span>구분</span>
           <span>쿠폰명</span>
           <span>유효기간</span>
@@ -223,21 +223,21 @@ export function CouponsSection({
         </div>
 
         {couponLoading ? (
-          <div className="py-10 text-center text-sm text-gray-500">불러오는 중...</div>
+          <div className="py-10 text-center text-sm text-black/45">불러오는 중...</div>
         ) : filteredCoupons.length === 0 ? (
-          <div className="py-10 text-center text-sm text-gray-500">조회된 쿠폰 내역이 없습니다.</div>
+          <div className="py-10 text-center text-sm text-black/45">조회된 쿠폰 내역이 없습니다.</div>
         ) : (
           pagedCoupons.map((item) => (
-            <div key={item.memberCouponId} className="grid grid-cols-5 items-center border-t border-gray-200 px-4 py-4 text-center text-sm">
+            <div key={item.memberCouponId} className="grid grid-cols-5 items-center border-t border-black/5 px-4 py-4 text-center text-sm text-[#1A1A1A]">
               <span>{item.couponKind || "기타"}</span>
               <div>
                 <p>{item.couponName}</p>
-                <p className="text-gray-500">{item.couponCode}</p>
+                <p className="text-black/40">{item.couponCode}</p>
               </div>
               <span>{item.expiresAt ? formatDateTime(item.expiresAt) : "-"}</span>
               <span>{mapCouponStatusLabel(item.status)}</span>
               <button
-                className="mx-auto rounded border border-gray-200 px-3 py-1 text-sm"
+                className="mx-auto rounded-sm border border-black/10 bg-white px-3 py-1 text-sm text-[#1A1A1A] transition-colors hover:border-[#B91C1C] hover:text-[#B91C1C]"
                 onClick={() => openCouponInfoModal(item)}
               >
                 쿠폰정보
@@ -250,7 +250,7 @@ export function CouponsSection({
       {filteredCoupons.length > 0 ? (
         <div className="mt-6 flex items-center justify-center gap-2">
           <button
-            className="rounded border border-gray-200 bg-[#ffffff] px-3 py-2 text-sm text-[#000000] transition-colors"
+            className="rounded-sm border border-black/10 bg-white px-3 py-2 text-sm text-[#1A1A1A] transition-colors hover:border-[#B91C1C] hover:text-[#B91C1C]"
             disabled={couponPage === 1}
             onClick={() => setCouponPage((prev) => Math.max(1, prev - 1))}
           >
@@ -259,14 +259,14 @@ export function CouponsSection({
           {Array.from({ length: totalCouponPages }, (_, idx) => idx + 1).map((page) => (
             <button
               key={page}
-              className={`rounded px-4 py-2 text-sm ${couponPage === page ? "bg-[#eb4d32] text-[#ffffff]" : "border border-gray-200 bg-[#ffffff] text-[#000000]"}`}
+              className={`rounded-sm px-4 py-2 text-sm ${couponPage === page ? "bg-[#B91C1C] text-white" : "border border-black/10 bg-white text-[#1A1A1A]"}`}
               onClick={() => setCouponPage(page)}
             >
               {page}
             </button>
           ))}
           <button
-            className="rounded border border-gray-200 bg-[#ffffff] px-3 py-2 text-sm text-[#000000] transition-colors"
+            className="rounded-sm border border-black/10 bg-white px-3 py-2 text-sm text-[#1A1A1A] transition-colors hover:border-[#B91C1C] hover:text-[#B91C1C]"
             disabled={couponPage === totalCouponPages}
             onClick={() => setCouponPage((prev) => Math.min(totalCouponPages, prev + 1))}
           >
@@ -275,15 +275,15 @@ export function CouponsSection({
         </div>
       ) : null}
 
-      <div className="mt-8 rounded border border-gray-200 bg-[#ffffff] px-4 py-3">이용안내</div>
+      <div className="mt-8 rounded-sm border border-black/5 bg-[#FDFDFD] px-4 py-4 text-[11px] font-bold uppercase tracking-[0.18em] text-black/35 shadow-xl">이용안내</div>
 
       {showDownloadModal ? (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#000000]/70 px-4">
-          <div className="max-h-[88vh] w-full max-w-3xl overflow-auto rounded-sm border border-[#000000] bg-[#ffffff]">
-            <div className="flex items-center justify-between bg-[#000000] px-5 py-4">
-              <h3 className="text-3xl font-semibold text-[#ffffff]">다운로드 가능 쿠폰</h3>
+          <div className="max-h-[88vh] w-full max-w-3xl overflow-auto rounded-sm border border-black/5 bg-[#FDFDFD] shadow-2xl">
+            <div className="flex items-center justify-between bg-[#1A1A1A] px-5 py-4">
+              <h3 className="text-3xl font-semibold tracking-tight text-white">다운로드 가능 쿠폰</h3>
               <button
-                className="text-4xl leading-none text-[#ffffff]"
+                className="text-4xl leading-none text-white"
                 onClick={() => setShowDownloadModal(false)}
                 aria-label="닫기"
               >
@@ -292,17 +292,17 @@ export function CouponsSection({
             </div>
             <div className="space-y-4 p-6">
               {downloadLoading ? (
-                <div className="py-10 text-center text-sm text-gray-500">불러오는 중...</div>
+                <div className="py-10 text-center text-sm text-black/45">불러오는 중...</div>
               ) : downloadableCoupons.length === 0 ? (
-                <div className="py-10 text-center text-sm text-gray-500">다운로드 가능한 쿠폰이 없습니다.</div>
+                <div className="py-10 text-center text-sm text-black/45">다운로드 가능한 쿠폰이 없습니다.</div>
               ) : (
                 <>
-                  <div className="flex items-center justify-between rounded border border-gray-200 bg-[#fdf4e3] px-4 py-3">
+                  <div className="flex items-center justify-between rounded-sm border border-black/10 bg-white px-4 py-3">
                     <label className="flex cursor-pointer items-center gap-2 text-sm">
                       <input type="checkbox" checked={allSelected} onChange={toggleSelectAll} />
                       전체 선택
                     </label>
-                    <p className="text-sm text-gray-600">
+                    <p className="text-sm text-black/55">
                       선택 {selectedCouponIds.length}건 / 전체 {selectableIds.length}건
                     </p>
                   </div>
@@ -314,7 +314,7 @@ export function CouponsSection({
                       return (
                         <label
                           key={item.couponId}
-                          className={`flex items-center justify-between rounded border px-4 py-3 ${disabled ? "border-gray-200 bg-gray-100 text-gray-400" : "border-gray-200 bg-[#ffffff]"}`}
+                          className={`flex items-center justify-between rounded-sm border px-4 py-3 ${disabled ? "border-black/10 bg-black/5 text-black/30" : "border-black/10 bg-white text-[#1A1A1A]"}`}
                         >
                           <div className="flex items-center gap-3">
                             <input
@@ -325,13 +325,13 @@ export function CouponsSection({
                             />
                             <div>
                               <p className="text-sm font-semibold">{item.couponName}</p>
-                              <p className="text-xs text-gray-500">
+                              <p className="text-xs text-black/45">
                                 {item.couponCode} / {item.couponKind || "기타"}
                                 {item.couponKind === "포인트" ? " (다운로드 즉시 포인트 적립)" : ""}
                               </p>
                             </div>
                           </div>
-                          <p className="text-xs text-gray-500">
+                          <p className="text-xs text-black/45">
                             {item.discountType === "RATE"
                               ? `${item.discountValue}% 할인`
                               : `${item.discountValue.toLocaleString()} ${item.couponKind === "포인트" ? "P" : "원"}`}
@@ -344,14 +344,14 @@ export function CouponsSection({
               )}
               <div className="mt-2 flex justify-center gap-3">
                 <button
-                  className="rounded border border-[#eb4d32] px-8 py-2 text-base font-semibold text-[#eb4d32]"
+                  className="rounded-sm border border-[#B91C1C] px-8 py-2 text-base font-semibold text-[#B91C1C] transition-colors hover:bg-[#B91C1C] hover:text-white"
                   onClick={() => setShowDownloadModal(false)}
                   disabled={downloadSubmitting}
                 >
                   취소
                 </button>
                 <button
-                  className="rounded bg-[#eb4d32] px-8 py-2 text-base font-semibold text-[#ffffff] disabled:opacity-60"
+                  className="rounded-sm bg-[#B91C1C] px-8 py-2 text-base font-semibold text-white disabled:opacity-60"
                   onClick={submitSelectedDownload}
                   disabled={downloadSubmitting || downloadLoading || selectedCouponIds.length === 0}
                 >
