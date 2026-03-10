@@ -54,6 +54,7 @@ public class ReservationCommandService {
         } else {
             throw new IllegalArgumentException("회원 또는 비회원 식별 정보가 필요합니다.");
         }
+
         Screening screening = screeningRepository.findById(request.getScreeningId())
                 .orElseThrow(() -> new IllegalArgumentException("상영 정보를 찾을 수 없습니다."));
 

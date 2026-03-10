@@ -1007,12 +1007,7 @@ export default function MyPage() {
             const messageListener = (event: MessageEvent) => {
                 if (event.origin !== window.location.origin) return;
 
-                // 🚨 1번 CCTV: 일단 뭐가 날아오긴 하는지 무조건 찍어보기!
-                console.log("👀 팝업에서 날아온 데이터 전체:", event.data);
-
                 if (event.data?.type === 'SOCIAL_LINK' && event.data?.provider?.toUpperCase() === provider.toUpperCase()) {
-                    // 🚨 2번 CCTV: 코드를 제대로 낚아챘는지 확인!
-                    console.log("✅ 성공적으로 받은 코드(Code):", event.data.code);
                     
                     resolve(event.data.code); 
                     window.removeEventListener('message', messageListener);
@@ -1032,7 +1027,7 @@ export default function MyPage() {
         });
     };
 
-    
+    console.log(visibleReservations);
 
     const handlePayAgain = (reservationId: number) => {
         navigate(`/payment?reservationId=${reservationId}`);
@@ -1047,177 +1042,246 @@ export default function MyPage() {
         const pointsToNextTier = summary?.pointsToNextTier ?? 0;
 
         return (
-            <>
-                <section className="overflow-hidden rounded-md border border-[#000000] bg-[#000000] text-[#ffffff]">
-                    <div className="bg-[#000000] px-8 py-9">
-                        <div className="flex flex-col gap-8 lg:flex-row lg:items-center lg:justify-between">
-                            <div className="flex items-center gap-5">
-                                <div className="flex h-24 w-24 items-center justify-center overflow-hidden rounded-3xl bg-[#eb4d32] text-2xl font-bold text-[#ffffff]">
-                                    {/* 백엔드에서 내려주는 이름(profileImage)으로 정확히 매칭! */}
-                                    {summary?.profileImage && summary.profileImage !== "default" ? (
-                                        <img 
-                                            src={summary.profileImage} 
-                                            alt="profile" 
-                                            className="h-full w-full object-cover" 
-                                        />
-                                    ) : (
-                                        <div className="flex h-full w-full items-center justify-center text-xs text-white-600">K</div>
-                                    )}
-                                </div>
-                                <div>
-                                    <h1 className="text-3xl font-semibold leading-none">안녕하세요!</h1>
-                                    <p className="mt-2 text-3xl font-semibold leading-none">{(summary?.availablePoints ?? 0).toLocaleString()} P</p>
-                                    <p className="mt-3 text-base font-semibold">{summary?.memberName ?? "회원"}님</p>
-                                </div>
-                            </div>
-                            <div className="text-right">
-                                <p className="text-sm">현재등급 <span className="font-semibold text-[#eb4d32]">{currentTier}</span></p>
-                                {nextTier ? (
-                                    <div className="mt-3 inline-block rounded bg-[#eb4d32] px-4 py-1 text-sm font-semibold text-[#ffffff]">
-                                        다음 {nextTier} 등급까지 {pointsToNextTier.toLocaleString()} P 남았어요!
-                                    </div>
+           <>
+                {/* ===================== [1] 프로필 및 등급 헤더 ===================== */}
+                <section className="relative overflow-hidden bg-[#1A1A1A] text-white rounded-sm shadow-xl mb-6">
+                    {/* 시네마틱 배경 효과 */}
+                    <div className="absolute inset-0 opacity-10 pointer-events-none">
+                        <div className="absolute top-0 right-0 w-full h-full bg-[radial-gradient(circle_at_100%_0%,#B91C1C_0%,transparent_50%)]"></div>
+                    </div>
+
+                    <div className="px-8 py-10 relative z-10 flex flex-col gap-10 lg:flex-row lg:items-end lg:justify-between">
+                        <div className="flex items-center gap-8">
+                            {/* 프로필 이미지 */}
+                            <div className="flex h-24 w-24 flex-shrink-0 items-center justify-center overflow-hidden rounded-full border border-white/10 bg-black/50 shadow-lg">
+                                {summary?.profileImage && summary.profileImage !== "default" ? (
+                                    <img 
+                                        src={summary.profileImage} 
+                                        alt="profile" 
+                                        className="h-full w-full object-cover transition-all duration-500" 
+                                    />
                                 ) : (
-                                    <div className="mt-3 inline-block rounded bg-[#eb4d32] px-4 py-1 text-sm font-semibold text-[#ffffff]">
-                                        최고 등급을 달성했어요!
-                                    </div>
+                                    <div className="font-display text-4xl text-white/40">K</div>
                                 )}
-                                <div className="mt-4 flex items-center justify-end gap-5 text-sm">
-                                    {tierSteps.map((label, index) => (
-                                        <div key={label} className="flex items-center gap-2 text-white/85">
-                                            <span className={`h-3 w-3 rounded-full ${index === currentTierIndex ? "bg-[#eb4d32]" : "bg-[#ffffff]"}`} />
-                                            <span>{label}</span>
-                                        </div>
-                                    ))}
+                            </div>
+                            {/* 유저 정보 */}
+                            <div className="flex flex-col gap-1">
+                                <p className="text-[10px] font-bold tracking-[0.3em] text-[#B91C1C] uppercase">Welcome Back</p>
+                                <h1 className="font-display text-4xl tracking-tight uppercase text-white mb-2">
+                                    {summary?.memberName ?? "회원"}
+                                </h1>
+                                <div className="flex items-baseline gap-2">
+                                    <span className="font-display text-3xl text-white">{(summary?.availablePoints ?? 0).toLocaleString()}</span>
+                                    <span className="text-[10px] font-bold tracking-widest text-white/40 uppercase">Points</span>
                                 </div>
                             </div>
                         </div>
-                    </div>
-                    <div className="grid grid-cols-1 gap-0 border-t border-[#000000] bg-[#ffffff] text-[#000000] lg:grid-cols-3">
-                        <button
-                            type="button"
-                            className="p-5 text-left transition-colors hover:bg-gray-50"
-                            onClick={() => moveMenu("/mypage/points")}
-                        >
-                            <div className="mb-3 flex items-center justify-between text-base font-semibold text-[#eb4d32]">
-                                <span>포인트 이용내역</span>
-                                <ChevronRight className="h-5 w-5 text-gray-400" />
+
+                        {/* 등급 정보 */}
+                        <div className="flex flex-col lg:items-end gap-3">
+                            <p className="text-[10px] font-bold tracking-[0.3em] text-white/40 uppercase">Current Tier</p>
+                            <div className="flex items-baseline gap-3">
+                                <span className="font-display text-3xl text-[#B91C1C] uppercase tracking-widest">{currentTier}</span>
                             </div>
-                            <p className="text-sm">적립예정 <span className="float-right font-semibold">{(summary?.pendingPoints ?? 0).toLocaleString()} P</span></p>
-                            <p className="mt-2 text-sm">당월소멸예정 <span className="float-right font-semibold">{(summary?.expiringPointsThisMonth ?? 0).toLocaleString()} P</span></p>
-                        </button>
-                        <button
-                            type="button"
-                            className="p-5 text-left transition-colors hover:bg-gray-50"
-                            onClick={() => moveMenu("/mypage/profile/preferences")}
-                        >
-                            <div className="mb-3 flex items-center justify-between text-base font-semibold text-[#eb4d32]">
-                                <span>선호하는 극장</span>
-                                <ChevronRight className="h-5 w-5 text-gray-400" />
-                            </div>
-                            {preferredTheaterName ? (
-                                <p className="text-[#eb4d32]">{preferredTheaterName}</p>
+                            
+                            {nextTier ? (
+                                <div className="inline-block border border-[#B91C1C]/30 bg-[#B91C1C]/10 px-4 py-1.5 rounded-sm text-[10px] font-bold tracking-widest text-white uppercase mt-1">
+                                    <span className="text-[#B91C1C]">{(pointsToNextTier).toLocaleString()}P</span> to {nextTier}
+                                </div>
                             ) : (
-                                <>
-                                    <p className="text-[#eb4d32]">선호극장</p>
-                                    <p>을 설정하세요.</p>
-                                </>
+                                <div className="inline-block border border-white/20 bg-white/5 px-4 py-1.5 rounded-sm text-[10px] font-bold tracking-widest text-white uppercase mt-1">
+                                    최고 등급 달성
+                                </div>
                             )}
-                        </button>
-                        <button
-                            type="button"
-                            className="p-5 text-left transition-colors hover:bg-gray-50"
-                            onClick={() => moveMenu("/mypage/vouchers/movie")}
-                        >
-                            <div className="mb-3 flex items-center justify-between text-base font-semibold text-[#eb4d32]">
-                                <span>관람권/쿠폰</span>
-                                <ChevronRight className="h-5 w-5 text-gray-400" />
-                            </div>
-                            <p className="text-sm">영화관람권 <span className="float-right font-semibold">{availableMovieVoucherCount} 매</span></p>
-                            <p className="mt-2 text-sm">할인/제휴쿠폰 <span className="float-right font-semibold">{availableCouponCount} 매</span></p>
-                        </button>
-                    </div>
-                </section>
-
-                <section className="mt-6 grid grid-cols-1 gap-4">
-                    <div className={cardClass}>
-                        <div className="mb-5 flex items-center justify-between">
-                            <h3 className="text-xl font-semibold text-[#eb4d32]">나의 무비스토리</h3>
-                            <button
-                                className="rounded border border-gray-300 px-4 py-1 text-sm"
-                                onClick={() => moveMenu("/mypage/movie-story")}
-                            >
-                                본 영화 등록
-                            </button>
-                        </div>
-                        <div className="grid grid-cols-3 text-center">
-                            <div>
-                                <p className="text-3xl font-semibold text-[#eb4d32]">{summary?.paidReservationCount ?? 0}</p>
-                                <p className="text-sm">본 영화</p>
-                            </div>
-                            <div>
-                                <p className="text-3xl font-semibold text-[#eb4d32]">{summary?.reviewCount ?? 0}</p>
-                                <p className="text-sm">관람평</p>
-                            </div>
-                            <div>
-                                <p className="text-3xl font-semibold text-[#eb4d32]">{summary?.likedMovieCount ?? 0}</p>
-                                <p className="text-sm">보고싶어</p>
-                            </div>
-                        </div>
-                    </div>
-                </section>
-
-                <section className="mt-7 rounded-sm border border-gray-200 bg-white p-4">
-                    <div className="mb-2 flex items-center justify-between border-b border-gray-300 pb-3">
-                        <h3 className="text-2xl font-semibold text-[#eb4d32]">나의 예매내역</h3>
-                        <button className="flex items-center gap-1 text-base text-gray-600" onClick={() => moveMenu("/mypage/reservations")}>더보기 <ChevronRight className="h-5 w-5" /></button>
-                    </div>
-                    {activeReservations.length === 0 ? <EmptyLine message="예매 내역이 없습니다." /> : (
-                        <div className="divide-y">
-                            {activeReservations.slice(0, 2).map((item) => (
-                                <div key={item.reservationId} className="flex flex-col gap-3 py-4 lg:flex-row lg:items-center lg:justify-between">
-                                    <div>
-                                        <p className="text-lg font-semibold">{item.movieTitle}</p>
-                                        <p className="text-sm text-gray-600">{item.theaterName} · {formatDateTime(item.startTime)} · 좌석 {item.seatNames.join(", ") || "-"}</p>
+                            
+                            {/* 등급 진행도 표시 (세련된 선 형태) */}
+                            <div className="mt-4 flex items-center gap-3">
+                                {tierSteps.map((label, index) => (
+                                    <div key={label} className="flex items-center gap-2">
+                                        <span className={`text-[9px] font-bold tracking-widest uppercase transition-colors ${index === currentTierIndex ? "text-[#B91C1C]" : "text-white/20"}`}>
+                                            {label}
+                                        </span>
+                                        {index < tierSteps.length - 1 && (
+                                            <div className={`w-6 h-px ${index < currentTierIndex ? "bg-[#B91C1C]" : "bg-white/10"}`}></div>
+                                        )}
                                     </div>
-                                    <p className="font-semibold">{formatMoney(item.finalAmount)}</p>
+                                ))}
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                {/* ===================== [2] 퀵 메뉴 3종 (포인트, 극장, 쿠폰) ===================== */}
+                <div className="grid grid-cols-1 gap-4 lg:grid-cols-3 mb-10">
+                    <button
+                        type="button"
+                        className="bg-[#FDFDFD] border border-black/5 rounded-sm p-6 text-left transition-all hover:shadow-lg hover:border-black/10 group"
+                        onClick={() => moveMenu("/mypage/points")}
+                    >
+                        <div className="mb-6 flex items-center justify-between">
+                            <span className="text-[10px] font-bold uppercase tracking-widest text-black/40 group-hover:text-[#B91C1C] transition-colors">Point History</span>
+                            <ChevronRight className="h-4 w-4 text-black/20 group-hover:text-[#B91C1C] transition-colors" />
+                        </div>
+                        <div className="space-y-3">
+                            <div className="flex items-center justify-between border-b border-black/5 pb-2">
+                                <span className="text-xs font-bold text-[#1A1A1A]">적립 예정</span>
+                                <span className="font-display text-lg">{(summary?.pendingPoints ?? 0).toLocaleString()} <span className="text-[10px] text-black/40">P</span></span>
+                            </div>
+                            <div className="flex items-center justify-between">
+                                <span className="text-xs font-bold text-[#1A1A1A]">당월 소멸예정</span>
+                                <span className="font-display text-lg text-[#B91C1C]">{(summary?.expiringPointsThisMonth ?? 0).toLocaleString()} <span className="text-[10px] text-black/40">P</span></span>
+                            </div>
+                        </div>
+                    </button>
+
+                    <button
+                        type="button"
+                        className="bg-[#FDFDFD] border border-black/5 rounded-sm p-6 text-left transition-all hover:shadow-lg hover:border-black/10 group flex flex-col"
+                        onClick={() => moveMenu("/mypage/profile/preferences")}
+                    >
+                        <div className="mb-6 flex items-center justify-between">
+                            <span className="text-[10px] font-bold uppercase tracking-widest text-black/40 group-hover:text-[#B91C1C] transition-colors">Preferred Theater</span>
+                            <ChevronRight className="h-4 w-4 text-black/20 group-hover:text-[#B91C1C] transition-colors" />
+                        </div>
+                        <div className="flex-1 flex flex-col justify-center items-center text-center py-2">
+                            {preferredTheaterName ? (
+                                <span className="font-display text-2xl tracking-tight text-[#1A1A1A]">{preferredTheaterName}</span>
+                            ) : (
+                                <span className="text-xs font-bold text-black/40 uppercase tracking-widest">선호극장을<br/>설정해주세요</span>
+                            )}
+                        </div>
+                    </button>
+
+                    <button
+                        type="button"
+                        className="bg-[#FDFDFD] border border-black/5 rounded-sm p-6 text-left transition-all hover:shadow-lg hover:border-black/10 group"
+                        onClick={() => moveMenu("/mypage/vouchers/movie")}
+                    >
+                        <div className="mb-6 flex items-center justify-between">
+                            <span className="text-[10px] font-bold uppercase tracking-widest text-black/40 group-hover:text-[#B91C1C] transition-colors">Vouchers & Coupons</span>
+                            <ChevronRight className="h-4 w-4 text-black/20 group-hover:text-[#B91C1C] transition-colors" />
+                        </div>
+                        <div className="space-y-3">
+                            <div className="flex items-center justify-between border-b border-black/5 pb-2">
+                                <span className="text-xs font-bold text-[#1A1A1A]">영화 관람권</span>
+                                <span className="font-display text-lg">{availableMovieVoucherCount} <span className="text-[10px] text-black/40">매</span></span>
+                            </div>
+                            <div className="flex items-center justify-between">
+                                <span className="text-xs font-bold text-[#1A1A1A]">할인/제휴 쿠폰</span>
+                                <span className="font-display text-lg">{availableCouponCount} <span className="text-[10px] text-black/40">매</span></span>
+                            </div>
+                        </div>
+                    </button>
+                </div>
+
+                {/* ===================== [3] 무비 스토리 ===================== */}
+                <section className="bg-[#FDFDFD] border border-black/5 rounded-sm shadow-xl p-8 mb-10">
+                    <div className="flex items-center justify-between mb-8 pb-4 border-b border-black/5">
+                        <div className="flex items-center gap-3 text-[#B91C1C] font-bold tracking-[0.4em] uppercase text-xs">
+                            <div className="w-8 h-px bg-[#B91C1C]"></div>
+                            <span>Movie Story</span>
+                        </div>
+                        <button
+                            className="text-[10px] font-bold uppercase tracking-widest px-6 py-2 border border-black/10 rounded-sm hover:bg-[#1A1A1A] hover:text-white transition-colors"
+                            onClick={() => moveMenu("/mypage/movie-story")}
+                        >
+                            본 영화 등록
+                        </button>
+                    </div>
+                    <div className="grid grid-cols-3 divide-x divide-black/5">
+                        <div className="flex flex-col items-center justify-center gap-2 py-4">
+                            <p className="font-display text-5xl text-[#1A1A1A]">{summary?.paidReservationCount ?? 0}</p>
+                            <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-black/40">Watched</p>
+                        </div>
+                        <div className="flex flex-col items-center justify-center gap-2 py-4">
+                            <p className="font-display text-5xl text-[#1A1A1A]">{summary?.reviewCount ?? 0}</p>
+                            <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-black/40">Reviews</p>
+                        </div>
+                        <div className="flex flex-col items-center justify-center gap-2 py-4">
+                            <p className="font-display text-5xl text-[#1A1A1A]">{summary?.likedMovieCount ?? 0}</p>
+                            <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-black/40">Want to Watch</p>
+                        </div>
+                    </div>
+                </section>
+
+                {/* ===================== [4] 예매 내역 ===================== */}
+                <section className="bg-[#FDFDFD] border border-black/5 rounded-sm shadow-xl p-8 mb-10">
+                    <div className="flex items-center justify-between mb-6 pb-4 border-b border-black/5">
+                        <div className="flex items-center gap-3 text-[#B91C1C] font-bold tracking-[0.4em] uppercase text-xs">
+                            <div className="w-8 h-px bg-[#B91C1C]"></div>
+                            <span>My Reservations</span>
+                        </div>
+                        <button 
+                            className="flex items-center gap-1 text-[10px] font-bold uppercase tracking-widest text-black/40 hover:text-[#B91C1C] transition-colors" 
+                            onClick={() => moveMenu("/mypage/reservations")}
+                        >
+                            View All <ChevronRight className="h-4 w-4" />
+                        </button>
+                    </div>
+                    
+                    {activeReservations.length === 0 ? (
+                        <div className="py-10 text-center text-[10px] font-bold uppercase tracking-widest text-black/20">
+                            <EmptyLine message="예매 내역이 없습니다." />
+                        </div>
+                    ) : (
+                        <div className="flex flex-col">
+                            {activeReservations.slice(0, 2).map((item) => (
+                                <div key={item.reservationId} className="flex flex-col lg:flex-row lg:items-center justify-between py-6 border-b border-black/5 last:border-0 hover:bg-black/[0.02] transition-colors px-4 group">
+                                    <div className="flex flex-col gap-2">
+                                        <p className="font-display text-2xl uppercase tracking-tight text-[#1A1A1A] group-hover:text-[#B91C1C] transition-colors">{item.movieTitle}</p>
+                                        <p className="text-[10px] font-bold uppercase tracking-widest text-black/40">
+                                            {item.theaterName} <span className="mx-2">|</span> {formatDateTime(item.startTime)} <span className="mx-2">|</span> 좌석 {item.seatNames.join(", ") || "-"}
+                                        </p>
+                                    </div>
+                                    <p className="font-display text-xl text-[#1A1A1A] mt-4 lg:mt-0">{formatMoney(item.finalAmount)}</p>
                                 </div>
                             ))}
                         </div>
                     )}
                 </section>
 
-                <section className="mt-7 rounded-sm border border-gray-200 bg-white p-4">
-                    <div className="mb-2 flex items-center justify-between border-b border-gray-300 pb-3">
-                        <h3 className="text-2xl font-semibold text-[#eb4d32]">나의 구매내역</h3>
+                {/* ===================== [5] 구매 내역 ===================== */}
+                <section className="bg-[#FDFDFD] border border-black/5 rounded-sm shadow-xl p-8 mb-10">
+                    <div className="flex items-center justify-between mb-6 pb-4 border-b border-black/5">
+                        <div className="flex items-center gap-3 text-[#B91C1C] font-bold tracking-[0.4em] uppercase text-xs">
+                            <div className="w-8 h-px bg-[#B91C1C]"></div>
+                            <span>My Purchases</span>
+                        </div>
                         <button
-                            className="flex items-center gap-1 text-base text-gray-600"
+                            className="flex items-center gap-1 text-[10px] font-bold uppercase tracking-widest text-black/40 hover:text-[#B91C1C] transition-colors"
                             onClick={() => {
                                 const params = new URLSearchParams(location.search);
                                 params.set("tab", "purchase");
                                 navigate(`/mypage/reservations?${params.toString()}`);
                             }}
                         >
-                            더보기 <ChevronRight className="h-5 w-5" />
+                            View All <ChevronRight className="h-4 w-4" />
                         </button>
                     </div>
-                    {recentPaidPurchases.length === 0 ? <EmptyLine message="구매내역이 없습니다." /> : (
-                        <div className="divide-y">
+
+                    {recentPaidPurchases.length === 0 ? (
+                        <div className="py-10 text-center text-[10px] font-bold uppercase tracking-widest text-black/20">
+                            <EmptyLine message="구매 내역이 없습니다." />
+                        </div>
+                    ) : (
+                        <div className="flex flex-col">
                             {recentPaidPurchases.map((item) => (
-                                <div key={item.reservationId} className="flex flex-col gap-3 py-4 lg:flex-row lg:items-center lg:justify-between">
-                                    <div>
-                                        <p className="text-lg font-semibold">{item.movieTitle}</p>
-                                        <p className="text-sm text-gray-600">{item.theaterName} · 결제일시 {formatDateTime(item.paidAt ?? item.startTime)}</p>
+                                <div key={item.reservationId} className="flex flex-col lg:flex-row lg:items-center justify-between py-6 border-b border-black/5 last:border-0 hover:bg-black/[0.02] transition-colors px-4 group">
+                                    <div className="flex flex-col gap-2">
+                                        <p className="font-display text-2xl uppercase tracking-tight text-[#1A1A1A] group-hover:text-[#B91C1C] transition-colors">{item.movieTitle}</p>
+                                        <p className="text-[10px] font-bold uppercase tracking-widest text-black/40">
+                                            {item.theaterName} <span className="mx-2">|</span> 결제일시 {formatDateTime(item.paidAt ?? item.startTime)}
+                                        </p>
                                     </div>
-                                    <p className="font-semibold">{formatMoney(item.finalAmount)}</p>
+                                    <p className="font-display text-xl text-[#1A1A1A] mt-4 lg:mt-0">{formatMoney(item.finalAmount)}</p>
                                 </div>
                             ))}
                         </div>
                     )}
                 </section>
-
             </>
         );
-    };
+    }; //#1
 
     const renderReservations = () => (
         <ReservationsSection
@@ -1316,116 +1380,170 @@ export default function MyPage() {
     );
 
     const renderPointPassword = () => (
-        <section>
-            <h1 className="text-4xl font-semibold text-[#000000]">포인트 비밀번호 설정</h1>
-            <p className="mt-5 text-xl text-[#000000]">· 키노 극장에서 멤버십 포인트를 사용하시려면 비밀번호가 필요합니다.</p>
-            <p className="text-xl text-[#000000]">· 사용하실 비밀번호 4자리를 입력해주세요.</p>
+        <section className="max-w-3xl mx-auto py-8">
+            {/* 헤더 영역 */}
+            <div className="mb-10">
+                <div className="flex items-center gap-3 text-[#B91C1C] font-bold tracking-[0.4em] uppercase text-xs mb-4">
+                    <div className="w-8 h-px bg-[#B91C1C]"></div>
+                    <span>Point Password</span>
+                </div>
+                <h1 className="font-display text-4xl md:text-5xl uppercase tracking-tighter text-[#1A1A1A] mb-4">
+                    포인트 비밀번호 설정
+                </h1>
+                <p className="text-xs font-bold tracking-widest text-black/40 leading-relaxed">
+                    키노 극장에서 멤버십 포인트를 사용하시려면 비밀번호가 필요합니다.<br/>
+                    결제 시 사용할 안전한 비밀번호 4자리를 입력해주세요.
+                </p>
+            </div>
 
-            <div className="mt-6 overflow-hidden rounded-sm border border-gray-200 bg-[#ffffff]">
-                <div className="grid grid-cols-[220px_1fr] border-b border-gray-200">
-                    <div className="bg-[#fdf4e3] px-5 py-4 text-xl font-semibold text-[#000000]">새 비밀번호</div>
-                    <div className="px-5 py-3">
+            {/* 입력 폼 영역 */}
+            <div className="bg-[#FDFDFD] border border-black/5 rounded-sm p-8 md:p-10 shadow-xl mb-10">
+                <div className="flex flex-col gap-8">
+                    {/* 새 비밀번호 */}
+                    <div>
+                        <label className="block text-[10px] font-bold uppercase tracking-widest text-black/40 mb-3">
+                            New Password
+                        </label>
                         <input
                             type="password"
                             maxLength={4}
                             inputMode="numeric"
                             value={pointPasswordInput}
                             onChange={(e) => setPointPasswordInput(e.target.value.replace(/\D/g, ""))}
-                            className="h-12 w-[220px] border border-gray-200 px-3 text-lg outline-none focus:border-[#eb4d32]"
+                            className="w-full sm:w-64 border border-black/10 rounded-sm p-4 text-2xl font-mono tracking-[0.5em] text-[#1A1A1A] focus:border-[#B91C1C] focus:ring-1 focus:ring-[#B91C1C] outline-none transition-all placeholder:text-black/20 placeholder:tracking-normal placeholder:text-sm placeholder:font-sans bg-white"
                             placeholder="숫자 4자리"
                         />
                     </div>
-                </div>
-                <div className="grid grid-cols-[220px_1fr]">
-                    <div className="bg-[#fdf4e3] px-5 py-4 text-xl font-semibold text-[#000000]">새 비밀번호 재입력</div>
-                    <div className="px-5 py-3">
+                    
+                    {/* 새 비밀번호 확인 */}
+                    <div>
+                        <label className="block text-[10px] font-bold uppercase tracking-widest text-black/40 mb-3">
+                            Confirm Password
+                        </label>
                         <input
                             type="password"
                             maxLength={4}
                             inputMode="numeric"
                             value={pointPasswordConfirmInput}
                             onChange={(e) => setPointPasswordConfirmInput(e.target.value.replace(/\D/g, ""))}
-                            className="h-12 w-[220px] border border-gray-200 px-3 text-lg outline-none focus:border-[#eb4d32]"
-                            placeholder="숫자 4자리"
+                            className="w-full sm:w-64 border border-black/10 rounded-sm p-4 text-2xl font-mono tracking-[0.5em] text-[#1A1A1A] focus:border-[#B91C1C] focus:ring-1 focus:ring-[#B91C1C] outline-none transition-all placeholder:text-black/20 placeholder:tracking-normal placeholder:text-sm placeholder:font-sans bg-white"
+                            placeholder="숫자 4자리 재입력"
                         />
                     </div>
                 </div>
             </div>
 
-            <div className="mt-8 rounded-sm border border-gray-200 bg-[#ffffff] p-5 text-base text-[#000000]">
-                <p className="mb-2 text-2xl font-semibold">이용안내</p>
-                <p>· 비밀번호는 숫자 4자리로 설정 가능하며, 연속된 숫자는 등록하실 수 없습니다.</p>
-                <p>· 비밀번호 찾기는 불가하며, 해당 페이지를 통해 재설정 후 이용하실 수 있습니다.</p>
-                <p>· 키노 극장 매표소 및 매점에서 포인트 사용 시 비밀번호가 일치하지 않을 경우 사용이 제한되오니 주의하여 등록바랍니다.</p>
+            {/* 이용안내 (Notice) */}
+            <div className="bg-black/5 border border-black/10 rounded-sm p-8 mb-10">
+                <h3 className="text-[10px] font-bold uppercase tracking-[0.3em] text-[#B91C1C] mb-4">Notice</h3>
+                <ul className="space-y-3 text-[10px] font-bold tracking-widest text-black/60 leading-relaxed list-disc list-inside marker:text-black/20">
+                    <li>비밀번호는 숫자 4자리로 설정 가능하며, 연속된 숫자는 등록하실 수 없습니다.</li>
+                    <li>비밀번호 찾기는 불가하며, 해당 페이지를 통해 재설정 후 이용하실 수 있습니다.</li>
+                    <li>키노 극장 매표소 및 매점에서 포인트 사용 시 비밀번호가 일치하지 않을 경우 사용이 제한되오니 주의하여 등록 바랍니다.</li>
+                </ul>
             </div>
 
-            <div className="mt-8 flex justify-center gap-3">
+            {/* 버튼 영역 */}
+            <div className="flex flex-col sm:flex-row justify-center gap-3 border-t border-black/5 pt-10">
                 <button
-                    className="rounded border border-[#eb4d32] px-10 py-3 text-lg font-semibold text-[#eb4d32]"
+                    className="w-full sm:w-[200px] py-4 bg-white border border-black/10 text-[10px] font-bold tracking-[0.2em] uppercase text-black/60 hover:bg-black/5 hover:text-black hover:border-black/20 transition-colors rounded-sm"
                     onClick={() => navigate(`/mypage/points?memberId=${memberId}`)}
                 >
-                    취소
+                    Cancel
                 </button>
                 <button
-                    className="rounded bg-[#eb4d32] px-10 py-3 text-lg font-semibold text-[#ffffff]"
+                    className="w-full sm:w-[200px] py-4 bg-[#1A1A1A] text-white text-[10px] font-bold tracking-[0.2em] uppercase shadow-lg hover:bg-[#B91C1C] hover:shadow-xl hover:-translate-y-0.5 transition-all duration-300 rounded-sm"
                     onClick={submitPointPassword}
                 >
-                    수정
+                    Confirm
                 </button>
             </div>
         </section>
-    );
+    ); //#2
 
     const renderCards = () => (
-        <section>
-            <div className="flex flex-wrap items-start justify-between gap-4">
+        <section className="py-8">
+            {/* ===================== [1] 헤더 및 액션 버튼 ===================== */}
+            <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-12">
                 <div>
-                    <h1 className="text-4xl font-semibold text-[#000000]">멤버십 카드관리</h1>
-                    <p className="mt-5 text-sm text-gray-600">· 키노 계정에 등록된 멤버십 카드를 관리할 수 있습니다.</p>
+                    <div className="flex items-center gap-3 text-[#B91C1C] font-bold tracking-[0.4em] uppercase text-xs mb-4">
+                        <div className="w-8 h-px bg-[#B91C1C]"></div>
+                        <span>Membership Cards</span>
+                    </div>
+                    <h1 className="font-display text-4xl md:text-5xl uppercase tracking-tighter text-[#1A1A1A] mb-4">
+                        멤버십 카드관리
+                    </h1>
+                    <p className="text-xs font-bold tracking-widest text-black/40 leading-relaxed">
+                        키노 계정에 등록된 멤버십 카드를 확인하고 관리할 수 있습니다.
+                    </p>
                 </div>
                 <button
-                    className="rounded border border-[#eb4d32] px-5 py-3 text-sm text-[#eb4d32]"
+                    className="px-8 py-4 bg-[#1A1A1A] text-white text-[10px] font-bold tracking-[0.2em] uppercase shadow-lg hover:bg-[#B91C1C] hover:shadow-xl hover:-translate-y-0.5 transition-all duration-300 rounded-sm whitespace-nowrap"
                     onClick={openCardRegisterModal}
                 >
-                    멤버십 카드 등록
+                    Register New Card
                 </button>
             </div>
 
-            <div className="mt-6 overflow-hidden rounded-sm border border-gray-200 bg-white">
-                <div className="grid grid-cols-5 bg-[#ffffff] px-4 py-3 text-center text-sm font-semibold">
-                    <span>구분</span>
-                    <span>카드번호</span>
-                    <span>카드명</span>
-                    <span>발급처</span>
-                    <span>발급일</span>
-                </div>
+            {/* ===================== [2] 멤버십 카드 목록 (카드형 UI) ===================== */}
+            <div className="mb-12">
                 {membershipCardLoading ? (
-                    <div className="border-t px-4 py-8 text-center text-sm text-gray-500">불러오는 중...</div>
+                    <div className="py-20 flex flex-col items-center justify-center border border-dashed border-black/10 rounded-sm bg-[#FDFDFD]">
+                        <span className="text-[10px] font-bold uppercase tracking-[0.3em] text-[#B91C1C] animate-pulse">Loading Cards...</span>
+                    </div>
                 ) : membershipCards.length === 0 ? (
-                    <div className="border-t px-4 py-8 text-center text-sm text-gray-500">등록된 멤버십 카드가 없습니다.</div>
+                    <div className="py-20 flex flex-col items-center justify-center border border-dashed border-black/10 rounded-sm bg-[#FDFDFD]">
+                        <span className="text-xs font-bold uppercase tracking-widest text-black/20 mb-2">등록된 카드가 없습니다</span>
+                        <span className="text-[10px] font-bold uppercase tracking-widest text-black/40">우측 상단의 버튼을 눌러 카드를 등록해주세요</span>
+                    </div>
                 ) : (
-                    membershipCards.map((card) => (
-                        <div key={card.cardId} className="grid grid-cols-5 border-t border-gray-200 px-4 py-4 text-center text-sm">
-                            <span>{card.channelName}</span>
-                            <span>{card.cardNumber}</span>
-                            <span>{card.cardName}</span>
-                            <span>{card.issuerName}</span>
-                            <span>{formatDateDot(card.issuedDate)}</span>
-                        </div>
-                    ))
+                    <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+                        {membershipCards.map((card) => (
+                            <div 
+                                key={card.cardId} 
+                                className="relative bg-[#1A1A1A] text-white p-6 md:p-8 rounded-md shadow-xl overflow-hidden group hover:-translate-y-1 hover:shadow-2xl transition-all duration-300 border border-black/5"
+                            >
+                                {/* 카드 내부 디자인 (은은한 빛 반사 효과) */}
+                                <div className="absolute top-0 right-0 w-32 h-32 bg-white/5 rounded-full blur-2xl -mr-10 -mt-10 group-hover:bg-[#B91C1C]/20 transition-colors"></div>
+                                <div className="absolute bottom-0 left-0 w-24 h-24 bg-white/5 rounded-full blur-xl -ml-10 -mb-10"></div>
+                                
+                                <div className="relative z-10 flex flex-col h-full justify-between gap-10">
+                                    <div className="flex justify-between items-start">
+                                        <div className="flex flex-col gap-1">
+                                            <p className="text-[10px] font-bold uppercase tracking-widest text-white/40">{card.issuerName}</p>
+                                            <p className="font-display text-2xl tracking-tight text-white">{card.cardName}</p>
+                                        </div>
+                                        <span className="text-[9px] font-bold uppercase tracking-[0.2em] px-3 py-1.5 bg-[#B91C1C]/10 text-[#B91C1C] border border-[#B91C1C]/30 rounded-sm">
+                                            {card.channelName}
+                                        </span>
+                                    </div>
+                                    
+                                    <div className="flex flex-col gap-3">
+                                        <p className="font-mono text-xl tracking-[0.15em] text-white/90 drop-shadow-sm">
+                                            {card.cardNumber}
+                                        </p>
+                                        <p className="text-[9px] font-bold uppercase tracking-widest text-white/40">
+                                            Issued: {formatDateDot(card.issuedDate)}
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
                 )}
             </div>
 
-            <div className="mt-8 rounded-sm border border-gray-200 bg-white">
-                <div className="border-b bg-[#ffffff] px-4 py-3 font-semibold">이용안내</div>
-                <div className="p-4 text-base text-gray-600">
-                    <p>· 앞 혹은 뒷면의 카드 번호와 CVC코드가 있는 카드로만 온라인 등록이 가능합니다.</p>
-                    <p>· 등록된 멤버십 카드는 온라인 및 극장에서 사용하실 수 있습니다.</p>
-                    <p>· 한 번 삭제하신 카드번호는 재등록이 불가합니다.</p>
-                </div>
+            {/* ===================== [3] 이용안내 (Notice) ===================== */}
+            <div className="bg-black/5 border border-black/10 rounded-sm p-8">
+                <h3 className="text-[10px] font-bold uppercase tracking-[0.3em] text-[#B91C1C] mb-4">Notice</h3>
+                <ul className="space-y-3 text-[10px] font-bold tracking-widest text-black/60 leading-relaxed list-disc list-inside marker:text-black/20">
+                    <li>앞 혹은 뒷면의 카드 번호와 CVC코드가 있는 카드로만 온라인 등록이 가능합니다.</li>
+                    <li>등록된 멤버십 카드는 온라인 및 극장에서 사용하실 수 있습니다.</li>
+                    <li>한 번 삭제하신 카드번호는 재등록이 불가합니다.</li>
+                </ul>
             </div>
         </section>
-    );
+    ); //#3
 
     const renderProfile = () => (
         <ProfileSection

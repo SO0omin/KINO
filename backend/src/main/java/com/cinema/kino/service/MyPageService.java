@@ -245,6 +245,9 @@ public class MyPageService {
                 holdExpiresAt = seats.get(0).getHoldExpiresAt();
             }
 
+            log.info("자리: {}", seats);
+            log.info("시간: {}", holdExpiresAt);
+
             // 상영 시작 전이고, 아직 취소되지 않은 예약이면 모두 취소 가능 (결제 대기 상태 포함)
             boolean cancellable = reservation.getScreening().getStartTime().isAfter(LocalDateTime.now())
                     && reservation.getStatus() != ReservationStatus.CANCELED;
