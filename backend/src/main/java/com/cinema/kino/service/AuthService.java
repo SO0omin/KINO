@@ -231,4 +231,16 @@ public class AuthService {
         mailService.sendPasswordResetEmail(member, token);
     }
 
+    @Transactional(readOnly = true)
+    public boolean checkPointPassword(Long memberId, String inputPassword) {
+        Member member = memberRepository.findById(memberId)
+                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 회원입니다."));
+
+        if (member.getPointPassword() == null || member.getPointPassword().isEmpty()) {
+            throw new IllegalStateException("포인트 비밀번호가 설정되어 있지 않습니다.");
+        }
+
+        return passwordEncoder.matches(inputPassword, member.getPointPassword());
+    }
+
 }

@@ -536,11 +536,13 @@ public class MyPageService {
                 .toList();
     }
 
+
     @Transactional
     public MyPageDTO.MessageResponse sendPointPasswordSms(MyPageDTO.PointPasswordSmsSendRequest request) {
         if (request == null || request.getMemberId() == null) {
             throw new IllegalArgumentException("memberId는 필수입니다.");
         }
+
         String phoneNumber = normalizePhoneNumber(request.getPhoneNumber());
         if (!phoneNumber.matches("^01\\d{8,9}$")) {
             throw new IllegalArgumentException("휴대폰 번호 형식이 올바르지 않습니다.");
@@ -556,9 +558,12 @@ public class MyPageService {
             }
         }
 
+        // 인증번호 생성
         String authCode = smsMockEnabled
                 ? normalizeMockAuthCode(smsMockAuthCode)
                 : String.valueOf(ThreadLocalRandom.current().nextInt(100000, 1000000));
+
+        // DB에 인증 정보 저장
         PointPasswordVerification verification = PointPasswordVerification.builder()
                 .member(member)
                 .phoneNumber(phoneNumber)
@@ -569,11 +574,15 @@ public class MyPageService {
                 .build();
         pointPasswordVerificationRepository.save(verification);
 
-        smsService.sendPointPasswordCode(phoneNumber, authCode);
+        // 실제 솔라피 SMS 발송 호출 (mock 모드가 아닐 때만 실행)
+        if (!smsMockEnabled) {
+            smsService.sendPointPasswordCode(phoneNumber, authCode);
+        }
 
         String message = smsMockEnabled
                 ? "인증번호가 발송되었습니다. (개발모드 인증번호: " + authCode + ")"
                 : "인증번호가 발송되었습니다.";
+
         return MyPageDTO.MessageResponse.builder()
                 .message(message)
                 .build();

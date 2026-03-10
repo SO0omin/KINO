@@ -9,6 +9,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.HashMap;
@@ -122,6 +124,28 @@ public class AuthController {
         }
     }
 
+    @PostMapping("/verify-point-password")
+    public ResponseEntity<?> verifyPointPassword(
+            @AuthenticationPrincipal Object principal, // 💡 우선 Object로 받아서 체크
+            @RequestBody Map<String, String> request) {
+
+        // 1. 인증 정보가 없거나 비회원(String)인 경우 컷
+        if (!(principal instanceof Long)) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("회원만 이용 가능합니다.");
+        }
+
+        Long memberId = (Long) principal; // 💡 JwtFilter에서 넣은 memberId 추출
+        String inputPassword = request.get("pointPassword");
+
+        // 2. 서비스 호출 (memberId를 직접 전달)
+        boolean isValid = authService.checkPointPassword(memberId, inputPassword);
+
+        if (isValid) {
+            return ResponseEntity.ok().build();
+        } else {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("비밀번호가 일치하지 않습니다.");
+        }
+    }
     // 💡 소셜(카카오) 로그인 엔드포인트
     @PostMapping("/kakao")
     public ResponseEntity<?> kakaoLogin(@RequestBody KakaoDTO.LoginRequest request) {

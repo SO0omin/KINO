@@ -187,111 +187,111 @@ export function ReservationsSection({
     }
 
     const html = `
-<!doctype html>
-<html lang="ko">
-  <head>
-    <meta charset="utf-8" />
-    <title>${bookingNo} 입장권</title>
-    <style>
-      * { box-sizing: border-box; }
-      body { margin: 0; padding: 32px; background: linear-gradient(180deg, #f7f7f7 0%, #efefef 100%); font-family: "Inter", "Apple SD Gothic Neo", "Noto Sans KR", sans-serif; color: #1a1a1a; }
-      .frame { max-width: 860px; margin: 0 auto; }
-      .ticket { position: relative; overflow: hidden; border: 1px solid rgba(26, 26, 26, 0.08); border-radius: 22px; background: #fdfdfd; box-shadow: 0 28px 80px rgba(0, 0, 0, 0.12); }
-      .ticket::before { content: ""; position: absolute; inset: 0; background:
-        radial-gradient(circle at top right, rgba(185, 28, 28, 0.12), transparent 32%),
-        radial-gradient(circle at bottom left, rgba(185, 28, 28, 0.08), transparent 28%);
-        pointer-events: none; }
-      .head { position: relative; padding: 26px 30px 24px; background: #1a1a1a; color: #fff; border-bottom: 1px solid rgba(255,255,255,0.08); }
-      .eyebrow { display: inline-flex; align-items: center; gap: 10px; color: #b91c1c; font-size: 10px; font-weight: 800; letter-spacing: 0.38em; text-transform: uppercase; }
-      .eyebrow::before, .eyebrow::after { content: ""; width: 34px; height: 1px; background: rgba(185, 28, 28, 0.9); }
-      .head h1 { margin: 14px 0 0; font-size: 44px; line-height: 0.95; letter-spacing: -0.04em; font-weight: 800; text-transform: uppercase; }
-      .head p { margin: 10px 0 0; font-size: 14px; color: rgba(255,255,255,0.72); }
-      .body { position: relative; padding: 30px; }
-      .booking-row { display: flex; align-items: flex-end; justify-content: space-between; gap: 20px; padding-bottom: 24px; border-bottom: 1px dashed rgba(26, 26, 26, 0.15); }
-      .booking .label { font-size: 11px; font-weight: 800; letter-spacing: 0.24em; text-transform: uppercase; color: rgba(26,26,26,0.38); }
-      .booking .no { margin-top: 10px; font-size: 42px; font-weight: 800; letter-spacing: -0.04em; color: #b91c1c; }
-      
-      /* ✨ 추가된 QR 코드 섹션 스타일 */
-      .qr-section { padding: 30px 0; border-bottom: 1px dashed rgba(26, 26, 26, 0.15); text-align: center; }
-      .qr-title { font-size: 12px; font-weight: 800; letter-spacing: 0.2em; text-transform: uppercase; color: #1a1a1a; margin-bottom: 20px; }
-      .qr-container { display: flex; flex-wrap: wrap; justify-content: center; gap: 24px; }
-      .qr-box { padding: 16px; border: 1px solid rgba(26, 26, 26, 0.1); border-radius: 12px; background: #fff; display: flex; flex-direction: column; items-center; width: 140px; }
-      .qr-seat { font-size: 13px; font-weight: 800; color: #b91c1c; margin: 0 0 12px 0; text-align: center; }
-      .qr-img { width: 100px; height: 100px; margin: 0 auto; display: block; }
-      .qr-code-text { font-family: monospace; font-size: 10px; color: rgba(26,26,26,0.4); margin: 10px 0 0 0; text-align: center; }
-      .qr-empty { font-size: 12px; color: rgba(26,26,26,0.4); }
+      <!doctype html>
+      <html lang="ko">
+        <head>
+          <meta charset="utf-8" />
+          <title>${bookingNo} 입장권</title>
+          <style>
+            * { box-sizing: border-box; }
+            body { margin: 0; padding: 32px; background: linear-gradient(180deg, #f7f7f7 0%, #efefef 100%); font-family: "Inter", "Apple SD Gothic Neo", "Noto Sans KR", sans-serif; color: #1a1a1a; }
+            .frame { max-width: 860px; margin: 0 auto; }
+            .ticket { position: relative; overflow: hidden; border: 1px solid rgba(26, 26, 26, 0.08); border-radius: 22px; background: #fdfdfd; box-shadow: 0 28px 80px rgba(0, 0, 0, 0.12); }
+            .ticket::before { content: ""; position: absolute; inset: 0; background:
+              radial-gradient(circle at top right, rgba(185, 28, 28, 0.12), transparent 32%),
+              radial-gradient(circle at bottom left, rgba(185, 28, 28, 0.08), transparent 28%);
+              pointer-events: none; }
+            .head { position: relative; padding: 26px 30px 24px; background: #1a1a1a; color: #fff; border-bottom: 1px solid rgba(255,255,255,0.08); }
+            .eyebrow { display: inline-flex; align-items: center; gap: 10px; color: #b91c1c; font-size: 10px; font-weight: 800; letter-spacing: 0.38em; text-transform: uppercase; }
+            .eyebrow::before, .eyebrow::after { content: ""; width: 34px; height: 1px; background: rgba(185, 28, 28, 0.9); }
+            .head h1 { margin: 14px 0 0; font-size: 44px; line-height: 0.95; letter-spacing: -0.04em; font-weight: 800; text-transform: uppercase; }
+            .head p { margin: 10px 0 0; font-size: 14px; color: rgba(255,255,255,0.72); }
+            .body { position: relative; padding: 30px; }
+            .booking-row { display: flex; align-items: flex-end; justify-content: space-between; gap: 20px; padding-bottom: 24px; border-bottom: 1px dashed rgba(26, 26, 26, 0.15); }
+            .booking .label { font-size: 11px; font-weight: 800; letter-spacing: 0.24em; text-transform: uppercase; color: rgba(26,26,26,0.38); }
+            .booking .no { margin-top: 10px; font-size: 42px; font-weight: 800; letter-spacing: -0.04em; color: #b91c1c; }
+            
+            /* ✨ 추가된 QR 코드 섹션 스타일 */
+            .qr-section { padding: 30px 0; border-bottom: 1px dashed rgba(26, 26, 26, 0.15); text-align: center; }
+            .qr-title { font-size: 12px; font-weight: 800; letter-spacing: 0.2em; text-transform: uppercase; color: #1a1a1a; margin-bottom: 20px; }
+            .qr-container { display: flex; flex-wrap: wrap; justify-content: center; gap: 24px; }
+            .qr-box { padding: 16px; border: 1px solid rgba(26, 26, 26, 0.1); border-radius: 12px; background: #fff; display: flex; flex-direction: column; items-center; width: 140px; }
+            .qr-seat { font-size: 13px; font-weight: 800; color: #b91c1c; margin: 0 0 12px 0; text-align: center; }
+            .qr-img { width: 100px; height: 100px; margin: 0 auto; display: block; }
+            .qr-code-text { font-family: monospace; font-size: 10px; color: rgba(26,26,26,0.4); margin: 10px 0 0 0; text-align: center; }
+            .qr-empty { font-size: 12px; color: rgba(26,26,26,0.4); }
 
-      .grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px 26px; margin-top: 24px; }
-      .item { padding: 14px 16px; border-radius: 14px; background: #ffffff; border: 1px solid rgba(26, 26, 26, 0.06); }
-      .item .k { display: block; margin-bottom: 6px; font-size: 11px; font-weight: 800; letter-spacing: 0.22em; text-transform: uppercase; color: rgba(26,26,26,0.38); }
-      .item .v { display: block; font-size: 16px; font-weight: 700; line-height: 1.45; color: #1a1a1a; }
-      .price { margin-top: 24px; padding: 18px 20px; border-radius: 18px; background: #1a1a1a; color: #fff; display: flex; align-items: center; justify-content: space-between; gap: 18px; }
-      .price .label { font-size: 11px; font-weight: 800; letter-spacing: 0.26em; text-transform: uppercase; color: rgba(255,255,255,0.5); }
-      .price .value { font-size: 34px; font-weight: 800; letter-spacing: -0.04em; color: #b91c1c; }
-      .foot { margin-top: 20px; padding-top: 18px; border-top: 1px solid rgba(26,26,26,0.08); font-size: 12px; line-height: 1.7; color: rgba(26,26,26,0.56); text-align: center; }
-      .actions { margin: 20px auto 0; max-width: 860px; display: flex; gap: 10px; justify-content: flex-end; }
-      .btn { border: 1px solid rgba(26, 26, 26, 0.12); background: #fff; color: #1a1a1a; padding: 13px 18px; border-radius: 14px; font-size: 12px; font-weight: 800; letter-spacing: 0.16em; text-transform: uppercase; cursor: pointer; }
-      .btn.primary { border-color: #b91c1c; background: #b91c1c; color: #fff; }
-      .mono { font-family: "JetBrains Mono", monospace; }
-      @media print {
-        body { background: #fff; padding: 0; }
-        .actions { display: none; }
-        .ticket { box-shadow: none; border-color: rgba(26, 26, 26, 0.2); }
-        .frame { max-width: none; }
-      }
-    </style>
-  </head>
-  <body>
-    <div class="frame">
-      <section class="ticket">
-        <header class="head">
-          <div class="eyebrow">Kino Cinema</div>
-          <h1>E-Ticket</h1>
-          <p>입장 시 직원에게 아래의 QR 코드를 스캔해 주세요.</p>
-        </header>
-        <div class="body">
-          <div class="booking-row">
-            <div class="booking">
-              <div class="label">예매번호</div>
-              <div class="no mono">${bookingNo}</div>
-            </div>
-          </div>
-          
-          <div class="qr-section">
-            <div class="qr-title">Scan to Enter</div>
-            <div class="qr-container">
-              ${qrCodesHtml}
-            </div>
+            .grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px 26px; margin-top: 24px; }
+            .item { padding: 14px 16px; border-radius: 14px; background: #ffffff; border: 1px solid rgba(26, 26, 26, 0.06); }
+            .item .k { display: block; margin-bottom: 6px; font-size: 11px; font-weight: 800; letter-spacing: 0.22em; text-transform: uppercase; color: rgba(26,26,26,0.38); }
+            .item .v { display: block; font-size: 16px; font-weight: 700; line-height: 1.45; color: #1a1a1a; }
+            .price { margin-top: 24px; padding: 18px 20px; border-radius: 18px; background: #1a1a1a; color: #fff; display: flex; align-items: center; justify-content: space-between; gap: 18px; }
+            .price .label { font-size: 11px; font-weight: 800; letter-spacing: 0.26em; text-transform: uppercase; color: rgba(255,255,255,0.5); }
+            .price .value { font-size: 34px; font-weight: 800; letter-spacing: -0.04em; color: #b91c1c; }
+            .foot { margin-top: 20px; padding-top: 18px; border-top: 1px solid rgba(26,26,26,0.08); font-size: 12px; line-height: 1.7; color: rgba(26,26,26,0.56); text-align: center; }
+            .actions { margin: 20px auto 0; max-width: 860px; display: flex; gap: 10px; justify-content: flex-end; }
+            .btn { border: 1px solid rgba(26, 26, 26, 0.12); background: #fff; color: #1a1a1a; padding: 13px 18px; border-radius: 14px; font-size: 12px; font-weight: 800; letter-spacing: 0.16em; text-transform: uppercase; cursor: pointer; }
+            .btn.primary { border-color: #b91c1c; background: #b91c1c; color: #fff; }
+            .mono { font-family: "JetBrains Mono", monospace; }
+            @media print {
+              body { background: #fff; padding: 0; }
+              .actions { display: none; }
+              .ticket { box-shadow: none; border-color: rgba(26, 26, 26, 0.2); }
+              .frame { max-width: none; }
+            }
+          </style>
+        </head>
+        <body>
+          <div class="frame">
+            <section class="ticket">
+              <header class="head">
+                <div class="eyebrow">Kino Cinema</div>
+                <h1>E-Ticket</h1>
+                <p>입장 시 직원에게 아래의 QR 코드를 스캔해 주세요.</p>
+              </header>
+              <div class="body">
+                <div class="booking-row">
+                  <div class="booking">
+                    <div class="label">예매번호</div>
+                    <div class="no mono">${bookingNo}</div>
+                  </div>
+                </div>
+                
+                <div class="qr-section">
+                  <div class="qr-title">Scan to Enter</div>
+                  <div class="qr-container">
+                    ${qrCodesHtml}
+                  </div>
+                </div>
+
+                <div class="grid">
+                  <div class="item"><span class="k">영화명</span><span class="v">${movieTitle}</span></div>
+                  <div class="item"><span class="k">관람인원</span><span class="v">${peopleText}</span></div>
+                  <div class="item"><span class="k">극장 / 상영관</span><span class="v">${theaterText}</span></div>
+                  <div class="item"><span class="k">관람좌석</span><span class="v">${seatsText}</span></div>
+                  <div class="item"><span class="k">관람일시</span><span class="v">${startTimeText}</span></div>
+                  <div class="item"><span class="k">결제일시</span><span class="v">${paidAtText}</span></div>
+                </div>
+                <div class="price">
+                  <div>
+                    <div class="label">결제금액</div>
+                    <div class="value">${amountText}</div>
+                  </div>
+                </div>
+                <div class="foot">
+                  <div>발행시각: ${issueAtText}</div>
+                  <div>본 E-Ticket(교환권)은 입장 확인 용도로 사용되며, 캡처된 이미지는 사용이 제한될 수 있습니다.</div>
+                </div>
+              </div>
+            </section>
           </div>
 
-          <div class="grid">
-            <div class="item"><span class="k">영화명</span><span class="v">${movieTitle}</span></div>
-            <div class="item"><span class="k">관람인원</span><span class="v">${peopleText}</span></div>
-            <div class="item"><span class="k">극장 / 상영관</span><span class="v">${theaterText}</span></div>
-            <div class="item"><span class="k">관람좌석</span><span class="v">${seatsText}</span></div>
-            <div class="item"><span class="k">관람일시</span><span class="v">${startTimeText}</span></div>
-            <div class="item"><span class="k">결제일시</span><span class="v">${paidAtText}</span></div>
+          <div class="actions">
+            <button class="btn" onclick="window.close()">닫기</button>
+            <button class="btn primary" onclick="window.print()">인쇄하기</button>
           </div>
-          <div class="price">
-            <div>
-              <div class="label">결제금액</div>
-              <div class="value">${amountText}</div>
-            </div>
-          </div>
-          <div class="foot">
-            <div>발행시각: ${issueAtText}</div>
-            <div>본 E-Ticket(교환권)은 입장 확인 용도로 사용되며, 캡처된 이미지는 사용이 제한될 수 있습니다.</div>
-          </div>
-        </div>
-      </section>
-    </div>
-
-    <div class="actions">
-      <button class="btn" onclick="window.close()">닫기</button>
-      <button class="btn primary" onclick="window.print()">인쇄하기</button>
-    </div>
-  </body>
-</html>`;
+        </body>
+      </html>`;
 
     printWindow.document.open();
     printWindow.document.write(html);
@@ -704,7 +704,7 @@ export function ReservationsSection({
                 ) : (
                   purchaseRows.map((row) => (
                     <div key={row.id} className="grid grid-cols-6 border-b border-black/5 px-4 py-4 text-center text-sm text-[#1A1A1A]">
-                      <span>{row.reservationNumber}</span>
+                      <span>{row.reservationNumber != null ? row.reservationNumber : "-"}</span>
                       <span>{formatDateTime(row.paymentDate.toISOString())}</span>
                       <span>{row.category}</span>
                       <span>{row.productName}</span>

@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { RotateCcw } from 'lucide-react';
 import type { DiscountTab } from '../../types/models/payment';
 import type { MyCouponResponse } from '../../api/paymentApi';
+import { api } from '../../api/api';
 
 interface DiscountSectionProps {
   discountTab: DiscountTab;
@@ -36,6 +37,9 @@ export function DiscountSection({
   const [activeMemberCouponId, setActiveMemberCouponId] = useState<number | null>(null);
   const [couponCode, setCouponCode] = useState('');
   const [redeemBusy, setRedeemBusy] = useState(false);
+  const [isPointVerified, setIsPointVerified] = useState(false); // 검증 완료 여부
+  const [pointPwInput, setPointPwInput] = useState(""); // 입력한 비번
+  const [isVerifying, setIsVerifying] = useState(false); // 로딩 상태
 
   const normalizePoint = (raw: string) => {
     const num = parseInt(raw.replace(/[^0-9]/g, ''), 10) || 0;
@@ -86,6 +90,20 @@ export function DiscountSection({
       alert(e?.message ?? '쿠폰 등록 실패');
     } finally {
       setRedeemBusy(false);
+    }
+  };
+
+  const handleVerifyPointPassword = async () => {
+    if (!pointPwInput) return;
+    setIsVerifying(true);
+    try {
+      await api.post('/api/auth/verify-point-password', { pointPassword: pointPwInput });
+      setIsPointVerified(true); // 통과!
+    } catch (error) {
+      alert("포인트 비밀번호가 틀렸습니다.");
+      setPointPwInput("");
+    } finally {
+      setIsVerifying(false);
     }
   };
 
@@ -194,7 +212,35 @@ export function DiscountSection({
             )}
 
             {discountTab === 'point' && (
-              <div className="animate-in fade-in space-y-6">
+              <div className="relative animate-in fade-in space-y-6"> {/* 💡 relative 추가 */}
+                
+                {/* 🔒 포인트 비밀번호 오버레이 (미검증 시에만 표시) */}
+                {!isPointVerified && (
+                  <div className="absolute inset-0 z-10 flex flex-col items-center justify-center bg-white/90 backdrop-blur-[2px] rounded-sm transition-all">
+                    <div className="w-full max-w-[240px] text-center space-y-4">
+                      <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#B91C1C]">Point Security</p>
+                      <div className="space-y-2">
+                        <input
+                          type="password"
+                          value={pointPwInput}
+                          onChange={(e) => setPointPwInput(e.target.value)}
+                          placeholder="비밀번호 4자리"
+                          maxLength={4}
+                          className="w-full py-3 px-4 border border-black/10 rounded-sm text-center font-mono tracking-[0.5em] focus:border-[#B91C1C] outline-none transition-all"
+                        />
+                        <button
+                          onClick={handleVerifyPointPassword}
+                          disabled={isVerifying || pointPwInput.length < 4}
+                          className="w-full py-3 bg-[#1A1A1A] text-white text-[10px] font-bold uppercase tracking-widest rounded-sm hover:bg-[#B91C1C] transition-colors disabled:bg-black/20"
+                        >
+                          {isVerifying ? 'Verifying...' : 'Unlock Points'}
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* ---------------- 기존 포인트 입력 UI (오버레이 아래 깔림) ---------------- */}
                 <div className="border-b border-black/5 pb-2">
                   <p className="text-[10px] font-bold uppercase tracking-widest text-black/60">Available Points</p>
                 </div>
@@ -206,28 +252,22 @@ export function DiscountSection({
                     onChange={(e) => handlePointInput(e.target.value)}
                     onBlur={syncPointInputToAppliedUnit}
                     placeholder="0"
-                    disabled={Math.min(availablePoints, maxUsablePoints) <= 0}
+                    disabled={!isPointVerified || Math.min(availablePoints, maxUsablePoints) <= 0} // 💡 미검증 시 비활성화
                     className="flex-1 py-3 px-4 bg-white border border-black/10 rounded-sm text-right font-mono text-sm focus:border-[#B91C1C] focus:ring-1 focus:ring-[#B91C1C] outline-none transition-all placeholder:text-black/20 disabled:bg-black/[0.03]"
                   />
                   <span className="text-black/50 font-semibold">P</span>
                   <button
                     className="px-6 py-3 bg-[#1A1A1A] text-white rounded-sm text-xs font-bold tracking-widest uppercase hover:bg-[#B91C1C] transition-colors disabled:opacity-50"
                     onClick={() => handlePointInput(String(Math.max(0, Math.min(availablePoints, maxUsablePoints))))}
-                    disabled={Math.min(availablePoints, maxUsablePoints) <= 0}
+                    disabled={!isPointVerified || Math.min(availablePoints, maxUsablePoints) <= 0} // 💡 미검증 시 비활성화
                   >
                     전액사용
                   </button>
                 </div>
 
                 <p className="text-xs text-black/50">
-                  보유 포인트:{' '}
-                  <span className="text-black font-bold">{availablePoints.toLocaleString()}</span> P
-                  {pointUnit > 1 ? ` (${pointUnit.toLocaleString()}P 단위로 사용 가능)` : ''}
+                  보유 포인트: <span className="text-black font-bold">{availablePoints.toLocaleString()}</span> P
                 </p>
-
-                {Math.min(availablePoints, maxUsablePoints) <= 0 && (
-                  <p className="text-xs text-[#B91C1C]">사용 가능한 포인트가 없습니다.</p>
-                )}
               </div>
             )}
 

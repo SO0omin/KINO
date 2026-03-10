@@ -83,12 +83,13 @@ export function useMovieStory({ memberId, isLoggedIn, reservations }: UseMovieSt
 
   const reservationWatchedMovies = useMemo(() => {
     return reservations
-      .filter((item) => item.paymentStatus !== "CANCELLED")
+      .filter((item) => item.paymentStatus !== "CANCELLED" && item.paymentStatus !== "FAILED")
       .map((item) => ({
         id: `r-${item.reservationId}`,
         movieTitle: item.movieTitle,
         watchedAt: item.startTime,
         theaterName: item.theaterName,
+        reservationNumber: item.reservationNumber,
         screenName: item.screenName,
       }));
   }, [reservations]);

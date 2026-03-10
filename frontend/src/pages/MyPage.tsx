@@ -550,7 +550,7 @@ export default function MyPage() {
             timelineYears={timelineYears}
             selectedTimelineYear={selectedTimelineYear}
             setSelectedTimelineYear={setSelectedTimelineYear}
-            timelineRows={timelineRows}
+            timelineRows={timelineRows} //오류는 나는데 실행은됨
             formatDateSimple={formatDateSimple}
             reviewCount={reviewCount}
             setShowReviewModal={setShowVerifyModal}
