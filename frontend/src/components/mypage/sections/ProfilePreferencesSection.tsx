@@ -64,17 +64,17 @@ export function ProfilePreferencesSection({
 
   return (
     <section>
-      <h1 className="text-4xl font-semibold text-[#000000]">선호정보 수정</h1>
+      <h1 className="text-5xl font-semibold tracking-tight text-[#1A1A1A]">선호정보 수정</h1>
 
-      <div className="mt-6 overflow-hidden rounded-sm border border-gray-200 bg-[#ffffff]">
-        <div className="flex items-center justify-between border-b border-gray-200 px-6 py-4">
-          <h3 className="text-xl font-semibold">마케팅 활용을 위한 개인정보 수집 이용 안내</h3>
+      <div className="mt-6 overflow-hidden rounded-sm border border-black/10 bg-[#FDFDFD] shadow-[0_24px_80px_rgba(15,23,42,0.08)]">
+        <div className="flex items-center justify-between border-b border-black/10 px-6 py-5">
+          <h3 className="text-xl font-semibold text-[#1A1A1A]">마케팅 활용을 위한 개인정보 수집 이용 안내</h3>
           <div className="flex items-center gap-4 text-sm">
             <label className="flex items-center gap-1"><input type="radio" checked={!marketingPolicyAgreed} onChange={() => setMarketingPolicyAgreed(false)} />미동의</label>
             <label className="flex items-center gap-1"><input type="radio" checked={marketingPolicyAgreed} onChange={() => setMarketingPolicyAgreed(true)} />동의</label>
           </div>
         </div>
-        <div className="px-6 py-5 text-sm leading-7 text-gray-700">
+        <div className="px-6 py-5 text-sm leading-7 text-black/65">
           <p>[수집 목적]</p>
           <p>고객 맞춤형 상품 및 서비스 추천, 이벤트/사은/할인 정보 안내</p>
           <p className="mt-2">[수집 항목]</p>
@@ -84,9 +84,9 @@ export function ProfilePreferencesSection({
         </div>
       </div>
 
-      <div className="mt-6 overflow-hidden rounded-sm border border-gray-200 bg-[#ffffff]">
-        <div className="border-b border-gray-200 px-6 py-4 text-xl font-semibold">마케팅정보 수신동의</div>
-        <div className="px-6 py-5 text-sm text-gray-700">
+      <div className="mt-6 overflow-hidden rounded-sm border border-black/10 bg-[#FDFDFD] shadow-[0_24px_80px_rgba(15,23,42,0.08)]">
+        <div className="border-b border-black/10 px-6 py-5 text-xl font-semibold text-[#1A1A1A]">마케팅정보 수신동의</div>
+        <div className="px-6 py-5 text-sm text-black/65">
           <p>거래정보와 관련된 내용(예매완료/취소)과 소멸포인트 안내는 수신동의 여부와 관계없이 발송됩니다.</p>
           <p className="mt-1">· 수신동의 여부를 선택해 주세요.</p>
           <div className="mt-4 space-y-3">
@@ -109,14 +109,14 @@ export function ProfilePreferencesSection({
         </div>
       </div>
 
-      <h2 className="mt-8 text-4xl font-semibold text-[#eb4d32]">부가정보</h2>
-      <div className="mt-3 overflow-hidden rounded-sm border border-gray-200 bg-[#ffffff]">
-        <div className="grid grid-cols-[170px_1fr] border-b border-gray-200">
-          <div className="bg-[#ffffff] px-5 py-4 text-base font-semibold">선호극장</div>
+      <h2 className="mt-10 text-4xl font-semibold tracking-tight text-[#B91C1C]">부가정보</h2>
+      <div className="mt-4 overflow-hidden rounded-sm border border-black/10 bg-[#FDFDFD] shadow-[0_24px_80px_rgba(15,23,42,0.08)]">
+        <div className="grid grid-cols-[170px_1fr] border-b border-black/10">
+          <div className="px-6 py-4 text-base font-semibold text-[#1A1A1A]">선호극장</div>
           <div className="space-y-3 px-4 py-4">
-            <p className="text-sm text-gray-500">선호 극장은 1개만 선택할 수 있습니다.</p>
+            <p className="text-sm text-black/50">선호 극장은 1개만 선택할 수 있습니다.</p>
             <select
-              className="h-10 w-[320px] border border-gray-300 px-3 text-sm"
+              className="h-11 w-[320px] rounded-sm border border-black/10 bg-white px-4 text-sm text-[#1A1A1A] outline-none transition-colors focus:border-[#B91C1C]"
               value={preferredTheaterId}
               onChange={(e) => setPreferredTheaterId(e.target.value)}
               disabled={theaterLoading}
@@ -128,21 +128,20 @@ export function ProfilePreferencesSection({
                 </option>
               ))}
             </select>
-            {theaterLoading && <p className="text-xs text-gray-400">극장 목록을 불러오는 중...</p>}
+            {theaterLoading && <p className="text-xs text-black/35">극장 목록을 불러오는 중...</p>}
           </div>
         </div>
-
       </div>
 
       <div className="mt-8 flex justify-center gap-3">
         <button
-          className="rounded border border-[#eb4d32] px-8 py-3 text-base font-semibold text-[#eb4d32]"
+          className="rounded-sm border border-[#B91C1C] px-8 py-3 text-base font-semibold text-[#B91C1C] transition-colors hover:bg-[#B91C1C] hover:text-white"
           onClick={onReset}
         >
           취소
         </button>
         <button
-          className="rounded bg-[#eb4d32] px-8 py-3 text-base font-semibold text-[#ffffff]"
+          className="rounded-sm bg-[#B91C1C] px-8 py-3 text-base font-semibold text-white shadow-[0_16px_40px_rgba(185,28,28,0.18)] transition-colors hover:bg-[#991B1B]"
           onClick={onSubmit}
         >
           수정
