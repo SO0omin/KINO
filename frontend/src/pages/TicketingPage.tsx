@@ -1,11 +1,10 @@
-import React, { useRef } from 'react';
+import React, { useEffect, useRef } from 'react';
 import { useLocation } from 'react-router-dom';
 import { useTicketing } from '../hooks/useTicketing';
 import { generateDateList } from '../utils/dateUtils';
 import { mapRatingToStyle } from '../mappers/ticketingMapper';
 import type { Screening } from '../types/ticketing';
 import SeatPreviewModal from '../components/ticketing/SeatPreviewModal';
-import FilmStrip from '../components/ticketing/FilmStrip';
 import ratingImages, { type AgeRatingType } from "../utils/getRatingImage";
 import { ChevronLeft, ChevronRight, Calendar, MapPin, Film, Clock, Search } from 'lucide-react';
 
@@ -14,6 +13,7 @@ const VISIBLE_HOUR_COUNT = 10;
 
 const TicketingPage: React.FC = () => {
     const location = useLocation();
+    
     const preSelectedMovieId = location.state?.movieId || location.state?.preSelectedMovieId;
     const preSelectedTheaterId = location.state?.theaterId || location.state?.preSelectedTheaterId || null;
     const preSelectedRegionId = location.state?.regionId || null;
@@ -27,29 +27,29 @@ const TicketingPage: React.FC = () => {
         <div className="bg-white text-[#1A1A1A] min-h-screen font-sans selection:bg-[#B91C1C] selection:text-white">
             
             {/* Header Area */}
-            <div className="bg-[#1A1A1A] text-white pt-15 pb-3 relative overflow-hidden">
+            <div className="bg-[#1A1A1A] text-white pt-24 pb-12 relative overflow-hidden">
                 <div className="absolute inset-0 opacity-10 pointer-events-none">
                     <div className="absolute top-0 left-0 w-full h-full bg-[radial-gradient(circle_at_50%_50%,#B91C1C_0%,transparent_70%)]"></div>
                 </div>
                 
-                <div className="max-w-5xl mx-auto px-6 md:px-10 relative z-10">
+                <div className="max-w-7xl mx-auto px-6 md:px-10 relative z-10">
                     <div className="flex flex-col items-center text-center space-y-6">
                         <div className="flex items-center gap-4">
                             <div className="h-px w-12 bg-[#B91C1C]"></div>
-                            <p className="font-mono text-[10px] font-bold tracking-[0.5em] text-[#B91C1C] uppercase">Kino Cinema</p>
+                            <p className="font-mono text-[10px] font-bold tracking-[0.5em] text-[#B91C1C] uppercase">Kino Cinema Archive</p>
                             <div className="h-px w-12 bg-[#B91C1C]"></div>
                         </div>
-                        <h1 className="font-display text-2xl md:text-7xl uppercase tracking-tighter leading-none">
-                            예매<span className="text-white/20"></span>
+                        <h1 className="font-display text-4xl md:text-4xl uppercase tracking-tighter leading-none">
+                            영화 <span className="text-white/20">예매</span>
                         </h1>
-                        <FilmStrip />
+                        <p className="text-white/20">원하시는 날짜와 장소, 영화를 선택하세요.</p>
                     </div>
                 </div>
             </div>
 
             <div className="max-w-7xl mx-auto px-6 md:px-10 py-20">
                 
-                {/* Date Selector */}
+                {/* Date Selector: 가로 스크롤형 날짜 선택기 */}
                 <div className="mb-16">
                     <div className="flex items-center justify-between mb-8">
                         <div className="flex items-center gap-3 text-[#B91C1C] font-bold tracking-[0.4em] uppercase text-xs">
@@ -62,7 +62,13 @@ const TicketingPage: React.FC = () => {
                         >
                             <Calendar size={16} />
                             <span>Calendar View</span>
-                            <input ref={dateInputRef} type="date" className="absolute opacity-0 pointer-events-none" value={states.selectedDate} onChange={(e) => setters.onCalendarChange(e.target.value)} />
+                            <input 
+                                ref={dateInputRef} 
+                                type="date" 
+                                className="absolute opacity-0 pointer-events-none" 
+                                value={states.selectedDate} 
+                                onChange={(e) => setters.onCalendarChange(e.target.value)} 
+                            />
                         </button>
                     </div>
 
@@ -102,10 +108,10 @@ const TicketingPage: React.FC = () => {
                     </div>
                 </div>
 
-                {/* Main Selection Grid */}
+                {/* Main Selection Grid: 극장, 영화, 시간표 3단 구성 */}
                 <div className="grid grid-cols-1 lg:grid-cols-4 gap-12">
                     
-                    {/* Theater Selection */}
+                    {/* 1. Theater Selection */}
                     <div className="lg:col-span-1 space-y-8">
                         <div className="flex items-center gap-3 text-[#B91C1C] font-bold tracking-[0.4em] uppercase text-xs">
                             <div className="w-8 h-px bg-[#B91C1C]"></div>
@@ -165,18 +171,17 @@ const TicketingPage: React.FC = () => {
                                 </div>
                             </div>
 
-                            {/* Selected Theaters Summary */}
-                            <div className="p-6 bg-[#F8F8F8] border-t border-black/5">
-                                <div className="flex flex-wrap gap-2">
+                            <div className="p-6 bg-[#F8F8F8] border-t border-black/5 h-[160px]">
+                                <div className="grid grid-cols-2 gap-2">
                                     {states.selectedTheatersInfo.length === 0 ? (
-                                        <div className="w-full py-4 border border-dashed border-black/10 rounded-sm flex items-center justify-center">
+                                        <div className="col-span-2 h-[112px] border border-dashed border-black/10 rounded-sm flex items-center justify-center">
                                             <span className="text-[10px] font-bold text-black/20 uppercase tracking-widest">Select Venue (Max 4)</span>
                                         </div>
                                     ) : (
                                         states.selectedTheatersInfo.map((t) => (
-                                            <div key={t.id} className="bg-white border border-black/5 px-3 py-2 rounded-sm flex items-center gap-2 shadow-sm">
-                                                <span className="text-[10px] font-bold uppercase tracking-tight truncate max-w-[80px]">{t.name}</span>
-                                                <button onClick={() => handlers.toggleTheater(t.id)} className="text-[#B91C1C] hover:scale-125 transition-transform">×</button>
+                                            <div key={t.id} className="bg-white border border-black/5 px-3 py-2 rounded-sm flex items-center justify-between shadow-sm">
+                                                <span className="text-[10px] font-bold uppercase tracking-tight truncate flex-1">{t.name}</span>
+                                                <button onClick={() => handlers.toggleTheater(t.id)} className="text-[#B91C1C] hover:scale-125 transition-transform ml-1">×</button>
                                             </div>
                                         ))
                                     )}
@@ -185,7 +190,7 @@ const TicketingPage: React.FC = () => {
                         </div>
                     </div>
 
-                    {/* Movie Selection */}
+                    {/* 2. Movie Selection */}
                     <div className="lg:col-span-1 space-y-8">
                         <div className="flex items-center gap-3 text-[#B91C1C] font-bold tracking-[0.4em] uppercase text-xs">
                             <div className="w-8 h-px bg-[#B91C1C]"></div>
@@ -207,18 +212,17 @@ const TicketingPage: React.FC = () => {
                                         <img 
                                             src={ratingImages[m.ageRating as AgeRatingType] || ratingImages.ALL} 
                                             alt={m.ageRating}
-                                            className="w-6 h-6 object-contain transition-all" 
+                                            className="w-6 h-6 object-contain grayscale group-hover:grayscale-0 transition-all" 
                                         />
                                         <span className="text-xs font-bold uppercase tracking-tight truncate group-hover:text-[#B91C1C] transition-colors">{m.title}</span>
                                     </button>
                                 ))}
                             </div>
 
-                            {/* Selected Movies Summary */}
-                            <div className="p-6 bg-[#F8F8F8] border-t border-black/5">
+                            <div className="p-6 bg-[#F8F8F8] border-t border-black/5 h-[160px]">
                                 <div className="grid grid-cols-3 gap-3">
                                     {states.selectedMovies.length === 0 ? (
-                                        <div className="col-span-3 py-8 border border-dashed border-black/10 rounded-sm flex items-center justify-center">
+                                        <div className="col-span-3 h-[112px] border border-dashed border-black/10 rounded-sm flex items-center justify-center">
                                             <span className="text-[10px] font-bold text-black/20 uppercase tracking-widest">Select Movie (Max 3)</span>
                                         </div>
                                     ) : (
@@ -229,16 +233,9 @@ const TicketingPage: React.FC = () => {
                                                     {movie?.posterUrl ? (
                                                         <img src={movie.posterUrl} alt={movie.title} className="w-full h-full object-cover" />
                                                     ) : (
-                                                        <div className="w-full h-full flex items-center justify-center p-2 text-center">
-                                                            <span className="text-[8px] font-bold uppercase leading-tight">{movie?.title}</span>
-                                                        </div>
+                                                        <div className="w-full h-full flex items-center justify-center p-2 text-center text-[8px] font-bold uppercase leading-tight">{movie?.title}</div>
                                                     )}
-                                                    <button 
-                                                        onClick={() => handlers.toggleMovie(mId)}
-                                                        className="absolute top-1 right-1 w-5 h-5 bg-[#B91C1C] text-white rounded-full flex items-center justify-center text-xs shadow-lg opacity-0 group-hover:opacity-100 transition-opacity"
-                                                    >
-                                                        ×
-                                                    </button>
+                                                    <button onClick={() => handlers.toggleMovie(mId)} className="absolute top-1 right-1 w-5 h-5 bg-[#B91C1C] text-white rounded-full flex items-center justify-center text-xs shadow-lg opacity-0 group-hover:opacity-100 transition-opacity">×</button>
                                                 </div>
                                             );
                                         })
@@ -248,7 +245,7 @@ const TicketingPage: React.FC = () => {
                         </div>
                     </div>
 
-                    {/* Schedule Selection */}
+                    {/* 3. Schedule Selection */}
                     <div className="lg:col-span-2 space-y-8">
                         <div className="flex items-center gap-3 text-[#B91C1C] font-bold tracking-[0.4em] uppercase text-xs">
                             <div className="w-8 h-px bg-[#B91C1C]"></div>
@@ -256,38 +253,33 @@ const TicketingPage: React.FC = () => {
                         </div>
 
                         <div className="bg-[#FDFDFD] border border-black/5 rounded-sm overflow-hidden shadow-xl flex flex-col h-[600px]">
-                            {/* Time Filter */}
-                            <div className="flex items-center bg-white border-b border-black/5 p-4 gap-4">
-                                <button onClick={() => setters.setHourStartIndex(Math.max(0, states.startHourIndex - 1))} disabled={states.startHourIndex === 0} className="p-2 hover:bg-black hover:text-white transition-all disabled:opacity-10 rounded-sm">
-                                    <ChevronLeft size={20} />
-                                </button>
-                                <div className="flex-1 flex items-center justify-around overflow-hidden">
-                                    {Array.from({ length: 24 }).slice(states.startHourIndex, states.startHourIndex + VISIBLE_HOUR_COUNT).map((_, idx) => {
-                                        const hour = states.startHourIndex + idx;
-                                        const hasMovie = memos.availableHours.has(hour);
-                                        return (
-                                            <button 
-                                                key={hour} 
-                                                disabled={!hasMovie} 
-                                                onClick={() => setters.setSelectedHour(hour)} 
-                                                className={`w-10 h-10 flex flex-col items-center justify-center rounded-sm transition-all border ${
-                                                    states.selectedHour === hour 
-                                                        ? 'bg-[#1A1A1A] border-[#1A1A1A] text-white shadow-lg scale-110' 
-                                                        : 'border-transparent text-black/40 hover:border-black/20 hover:text-black' 
-                                                } ${!hasMovie && 'opacity-10 cursor-not-allowed'}`}
-                                            >
-                                                <span className="font-mono text-xs font-bold leading-none">{String(hour).padStart(2, '0')}</span>
-                                                <span className="text-[7px] uppercase mt-0.5 tracking-tighter font-bold">HR</span>
-                                            </button>
-                                        );
-                                    })}
-                                </div>
-                                <button onClick={() => setters.setHourStartIndex(Math.min(14, states.startHourIndex + 1))} disabled={states.startHourIndex + VISIBLE_HOUR_COUNT >= 24} className="p-2 hover:bg-black hover:text-white transition-all disabled:opacity-10 rounded-sm">
-                                    <ChevronRight size={20} />
-                                </button>
+                            {/* Time Filter Tabs */}
+                            <div className="flex items-center bg-white border-b border-black/5 p-4 gap-4 shadow-sm z-10 shrink-0">
+                            <button onClick={() => setters.setHourStartIndex(Math.max(0, states.startHourIndex - 1))} disabled={states.startHourIndex === 0} className="p-2 hover:bg-black hover:text-white transition-all disabled:opacity-10 rounded-sm">
+                                <ChevronLeft size={20} />
+                            </button>
+                            <div className="flex-1 flex items-center justify-around overflow-hidden px-4">
+                                {Array.from({ length: 24 }).slice(states.startHourIndex, states.startHourIndex + VISIBLE_HOUR_COUNT).map((_, idx) => {
+                                    const hour = states.startHourIndex + idx;
+                                    const hasMovie = memos.availableHours.has(hour);
+                                    return (
+                                        <button key={hour} disabled={!hasMovie} onClick={() => setters.setSelectedHour(hour)} 
+                                            className={`w-12 h-12 flex flex-col items-center justify-center font-mono text-xs font-bold transition-all border 
+                                            ${states.selectedHour === hour 
+                                                ? 'bg-[#1A1A1A] border-[#1A1A1A] text-white shadow-lg scale-110' 
+                                                : 'border-transparent text-black/60 hover:border-black/20 hover:text-black' 
+                                            } ${!hasMovie && 'opacity-30 grayscale cursor-not-allowed'}`}>
+                                            {String(hour).padStart(2, '0')}<span className="text-[7px] uppercase mt-0.5 tracking-tighter">HR</span>
+                                        </button>
+                                    );
+                                })}
                             </div>
+                            <button onClick={() => setters.setHourStartIndex(Math.min(14, states.startHourIndex + 1))} disabled={states.startHourIndex + VISIBLE_HOUR_COUNT >= 24} className="p-2 hover:bg-black hover:text-white transition-all disabled:opacity-10 rounded-sm">
+                                <ChevronRight size={20} />
+                            </button>
+                        </div>
 
-                            {/* Screenings List */}
+                            {/* Screenings List: 영화별, 극장별 그룹화된 리스트 */}
                             <div className="flex-1 overflow-y-auto p-8 bg-white/50 custom-scrollbar">
                                 {Object.keys(memos.groupedScreenings).length > 0 ? (
                                     Object.entries(memos.groupedScreenings).map(([title, items]) => {
@@ -328,7 +320,7 @@ const TicketingPage: React.FC = () => {
                                                                             className={`group relative p-4 bg-white border border-black/5 rounded-sm transition-all duration-300 flex flex-col gap-2 text-left shadow-sm hover:shadow-xl hover:border-[#B91C1C]/30 ${isSoldOut ? 'opacity-40 cursor-not-allowed grayscale' : ''}`}
                                                                         >
                                                                             <div className="font-display text-2xl group-hover:text-[#B91C1C] transition-colors">{time}</div>
-                                                                            <div className="flex flex-col items-center pt-2 border-t border-black/5">
+                                                                            <div className="flex justify-between items-end pt-2 border-t border-black/5">
                                                                                 <div className="text-[10px] font-bold">
                                                                                     <span className="text-[#B91C1C]">{s.availableSeats}</span>
                                                                                     <span className="text-black/20"> / {s.totalSeats}</span>
@@ -352,12 +344,10 @@ const TicketingPage: React.FC = () => {
                                     })
                                 ) : (
                                     <div className="h-full flex flex-col items-center justify-center text-center space-y-6 opacity-20">
-                                        <div className="w-24 h-24 border-2 border-dashed border-black rounded-full flex items-center justify-center">
-                                            <Clock size={40} />
-                                        </div>
+                                        <Clock size={40} className="text-black" />
                                         <div className="space-y-2">
                                             <p className="font-display text-2xl uppercase tracking-tight">Awaiting Selection</p>
-                                            <p className="text-[10px] font-bold uppercase tracking-[0.3em] max-w-[200px] leading-relaxed">Select venue and movie to view available sessions</p>
+                                            <p className="text-[10px] font-bold uppercase tracking-[0.3em] max-w-[200px] leading-relaxed">Select venue and movie to view sessions</p>
                                         </div>
                                     </div>
                                 )}
@@ -367,7 +357,14 @@ const TicketingPage: React.FC = () => {
                 </div>
             </div>
 
-            <SeatPreviewModal key={states.selectedScreeningData?.id} isOpen={states.isModalOpen} onClose={() => setters.setIsModalOpen(false)} screening={states.selectedScreeningData} seats={states.currentSeats} />
+            {/* Seat Preview Modal */}
+            <SeatPreviewModal 
+                key={states.selectedScreeningData?.id} 
+                isOpen={states.isModalOpen} 
+                onClose={() => setters.setIsModalOpen(false)} 
+                screening={states.selectedScreeningData} 
+                seats={states.currentSeats} 
+            />
         </div>
     );
 };

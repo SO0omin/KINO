@@ -16,10 +16,6 @@ const Main = () => {
   // AI 스튜디오 제안 모던 스타일 정의
   const modernStyles = `
     @import url('https://fonts.googleapis.com/css2?family=Anton&family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap');
-    
-    .font-display { font-family: 'Anton', sans-serif; }
-    .font-sans { font-family: 'Inter', sans-serif; }
-    .font-mono { font-family: 'JetBrains+Mono', monospace; }
 
     .btn-primary {
       background-color: #B91C1C;

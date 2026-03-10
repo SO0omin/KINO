@@ -87,21 +87,23 @@ const LoginPage: React.FC = () => {
         </div>
         
         <div className="max-w-7xl mx-auto px-6 md:px-10 relative z-10 flex flex-col items-center">
-          <div className="flex items-center gap-4 mb-6">
-            <div className="h-px w-12 bg-[#B91C1C]"></div>
-            <p className="font-sans text-[10px] font-bold tracking-[0.5em] text-[#B91C1C] uppercase">Kino Cinema</p>
-            <div className="h-px w-12 bg-[#B91C1C]"></div>
+          <div className="flex flex-col items-center text-center space-y-6">
+            <div className="flex items-center gap-4">
+              <div className="h-px w-12 bg-[#B91C1C]"></div>
+              <p className="font-sans text-[10px] font-bold tracking-[0.5em] text-[#B91C1C] uppercase">Kino Cinema</p>
+              <div className="h-px w-12 bg-[#B91C1C]"></div>
+            </div>
+            <h1 className="font-display text-4xl md:text-4xl uppercase tracking-tighter leading-none">
+              {isBookingFlow ? (
+                <>Ticket <span className="text-white/20">Booking</span></>
+              ) : (
+                <>로그인 <span className="text-white/20"></span></>
+              )}
+            </h1>
+            <p className="text-xs font-bold uppercase tracking-widest text-white/40">
+              {isBookingFlow ? '예매 진행을 위해 로그인해주세요' : '서비스 이용을 위해 로그인해주세요'}
+            </p>
           </div>
-          <h1 className="font-display text-5xl md:text-6xl uppercase tracking-tighter leading-none mb-4">
-            {isBookingFlow ? (
-              <>Ticket <span className="text-white/20">Booking</span></>
-            ) : (
-              <>로그인 <span className="text-white/20"></span></>
-            )}
-          </h1>
-          <p className="text-xs font-bold uppercase tracking-widest text-white/40">
-            {isBookingFlow ? '예매 진행을 위해 로그인해주세요' : '서비스 이용을 위해 로그인해주세요'}
-          </p>
         </div>
       </div>
 
