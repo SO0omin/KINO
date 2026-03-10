@@ -7,6 +7,7 @@ import ReviewTab from '../components/detail/ReviewTab';
 import MediaTab from '../components/detail/MediaTab';
 import ReviewWriteModal from '../components/common/review/ReviewWriteModal';
 import ReviewVerifyModal from '../components/common/review/ReviewVerifyModal';
+import { Heart, Film, Star, Play, Clock, Info } from 'lucide-react';
 
 const MovieDetail = () => {
   const { id } = useParams();
@@ -34,6 +35,23 @@ const MovieDetail = () => {
     scoreOst: 10,
   });
 
+  // 💡 [해결책] useEffect를 사용해 head에 스타일을 딱 한 번만 주입합니다!
+  // 이렇게 하면 리렌더링 시 스타일이 덮어씌워지지 않아 깜빡임이 사라집니다.
+  useEffect(() => {
+    const styleId = 'kino-modern-styles';
+    if (!document.getElementById(styleId)) {
+      const style = document.createElement('style');
+      style.id = styleId;
+      style.innerHTML = `
+        @import url('https://fonts.googleapis.com/css2?family=Anton&family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap');
+        .font-display { font-family: 'Anton', sans-serif; }
+        .font-sans { font-family: 'Inter', sans-serif; }
+        body { scrollbar-gutter: stable; }
+      `;
+      document.head.appendChild(style);
+    }
+  }, []);
+
   // 모달 리셋 로직 (두 모달이 다 닫혔을 때 초기화)
   useEffect(() => {
     if (!isVerifyModalOpen && !isWriteModalOpen) {
@@ -43,51 +61,39 @@ const MovieDetail = () => {
     }
   }, [isVerifyModalOpen, isWriteModalOpen]);
 
-  // --- 1. 데이터 연동 (백엔드) ---
+  // --- 1. 데이터 연동 ---
   const fetchMovieData = useCallback(() => {
-  if (!id) return;
-  const memberParam = isLoggedIn && memberId ? `&memberId=${memberId}` : '';
-
-  axios
-    .get(`http://localhost:8080/api/movies/${id}/detail?page=${currentPage}&sort=${currentSort}${memberParam}`)
-    .then((res) => {
-      setMovie(res.data);
-      setIsLiked(res.data.isLiked);
-    })
-    .catch((err) => console.error('KINO 데이터 로딩 실패!', err));
-}, [id, currentPage, currentSort, isLoggedIn, memberId]);
-
-useEffect(() => {
-  let isLatest = true;
-
-  const loadData = async () => {
-    const storedMemberId = localStorage.getItem('memberId');
-    const effectiveMemberId = memberId || (storedMemberId ? Number(storedMemberId) : null);
-    
-    const memberParam = (isLoggedIn || storedMemberId) && effectiveMemberId 
-      ? `&memberId=${effectiveMemberId}` 
-      : '';
-
-    try {
-      const res = await axios.get(
-        `http://localhost:8080/api/movies/${id}/detail?page=${currentPage}&sort=${currentSort}${memberParam}`
-      );
-      
-      if (isLatest) {
+    if (!id) return;
+    const memberParam = isLoggedIn && memberId ? `&memberId=${memberId}` : '';
+    axios
+      .get(`http://localhost:8080/api/movies/${id}/detail?page=${currentPage}&sort=${currentSort}${memberParam}`)
+      .then((res) => {
         setMovie(res.data);
-        setIsLiked(res.data.isLiked ?? res.data.liked);
+        setIsLiked(res.data.isLiked);
+      })
+      .catch((err) => console.error('KINO 데이터 로딩 실패!', err));
+  }, [id, currentPage, currentSort, isLoggedIn, memberId]);
+
+  useEffect(() => {
+    let isLatest = true;
+    const loadData = async () => {
+      const storedMemberId = localStorage.getItem('memberId');
+      const effectiveMemberId = memberId || (storedMemberId ? Number(storedMemberId) : null);
+      const memberParam = (isLoggedIn || storedMemberId) && effectiveMemberId ? `&memberId=${effectiveMemberId}` : '';
+
+      try {
+        const res = await axios.get(`http://localhost:8080/api/movies/${id}/detail?page=${currentPage}&sort=${currentSort}${memberParam}`);
+        if (isLatest) {
+          setMovie(res.data);
+          setIsLiked(res.data.isLiked ?? res.data.liked);
+        }
+      } catch (err) {
+        console.error('KINO 데이터 로딩 실패!', err);
       }
-    } catch (err) {
-      console.error('KINO 데이터 로딩 실패!', err);
-    }
-  };
-
-  loadData();
-
-  return () => {
-    isLatest = false; // 이전 요청 무시
-  };
-}, [id, currentPage, currentSort, isLoggedIn, memberId]);
+    };
+    loadData();
+    return () => { isLatest = false; };
+  }, [id, currentPage, currentSort, isLoggedIn, memberId]);
 
   useEffect(() => {
     setIsPlaying(false);
@@ -121,107 +127,75 @@ useEffect(() => {
 
   const handleLikeToggle = async () => {
     if (!isLoggedIn) {
-      if (window.confirm('로그인이 필요한 서비스입니다. 로그인 페이지로 이동하시겠습니까?')) {
-        navigate('/login');
-      }
+      if (window.confirm('로그인이 필요한 서비스입니다. 로그인 페이지로 이동하시겠습니까?')) navigate('/login');
       return;
     }
-
     try {
-      const res = await axios.post(`http://localhost:8080/api/movies/${id}/likes`, {
-        memberId: memberId 
-      });
+      const res = await axios.post(`http://localhost:8080/api/movies/${id}/likes`, { memberId: memberId });
       setIsLiked(res.data);
-    } catch (err) {
-      console.error('좋아요 실패', err);
-    }
+    } catch (err) { console.error('좋아요 실패', err); }
   };
 
   const handleTabChange = (tabId: string) => {
     setActiveTab(tabId);
-    setCurrentPage(0); // 페이지를 첫 페이지(0)로 초기화
+    setCurrentPage(0);
   };
 
   const handleVerifyReservation = async (resNum: string) => {
-  try {
-    // 1. 예매 번호 유효성 및 해당 영화 티켓 여부 확인
-    const response = await axios.get(`http://localhost:8080/api/reservations/verify/${resNum}`);
-    
-    if (Number(response.data.movieId) !== Number(id)) { 
-      alert("해당 영화의 예매 내역이 아닙니다. 영화를 다시 확인해주세요.");
-      setIsVerifyModalOpen(false); // 💡 잘못된 번호 입력 시 창 닫기
+    try {
+      const response = await axios.get(`http://localhost:8080/api/reservations/verify/${resNum}`);
+      if (Number(response.data.movieId) !== Number(id)) { 
+        alert("해당 영화의 예매 내역이 아닙니다. 영화를 다시 확인해주세요.");
+        setIsVerifyModalOpen(false);
+        return;
+      }
+      await axios.get(`http://localhost:8080/api/reviews/check-availability/${resNum}`);
+      setVerifiedResNum(resNum); 
+      setIsVerifyModalOpen(false); 
+      setIsWriteModalOpen(true); 
+    } catch (error: any) {
+      alert(error.response?.data?.error || "유효하지 않은 예매 번호입니다.");
+      setIsVerifyModalOpen(false); 
+    }
+  };
+
+  const handleReviewSubmit = async () => {
+    if (!reviewContent.trim()) { alert("관람평 내용을 입력해 주세요."); return; }
+    try {
+      const finalData = { movieId: Number(id), reservationNumber: verifiedResNum, content: reviewContent, ...scores, memberId: memberId };
+      await axios.post('http://localhost:8080/api/reviews', finalData);
+      alert("리뷰가 성공적으로 등록되었습니다!");
+      setIsWriteModalOpen(false); 
+      fetchMovieData(); 
+    } catch (err: any) {
+      alert(err.response?.data?.error || "리뷰 등록 중 오류가 발생했습니다.");
+    }
+  };
+
+  const handleWriteReviewClick = () => {
+    if (!isLoggedIn) {
+      if (window.confirm('로그인이 필요한 서비스입니다. 로그인 페이지로 이동하시겠습니까?')) navigate('/login');
       return;
     }
+    setIsVerifyModalOpen(true); 
+  };
 
-    // 2. 중복 리뷰 체크 (추가된 API 호출)
-    // 이미 리뷰가 있다면 서버에서 던지는 "이미 관람평을 작성한 예매 번호입니다." 메시지를 catch문으로 보냄
-    await axios.get(`http://localhost:8080/api/reviews/check-availability/${resNum}`);
-
-    // 3. 모든 검사 통과 시
-    setVerifiedResNum(resNum); 
-    setIsVerifyModalOpen(false); 
-    setIsWriteModalOpen(true); 
-
-  } catch (error: any) {
-    // 4. 에러 처리 (중복 리뷰 혹은 유효하지 않은 번호)
-    const errorMessage = error.response?.data?.error || "유효하지 않은 예매 번호입니다.";
-    
-    alert(errorMessage);         // 경고 알림창 띄우기
-    setIsVerifyModalOpen(false); // 알림창 확인 누르면 모달 닫기
-  }
-};
-
-const handleReviewSubmit = async () => {
-  if (!reviewContent.trim()) {
-      alert("관람평 내용을 입력해 주세요.");
-      return;
-  }
-
-  try {
-    // 서버에 보낼 데이터(finalData)를 현재 부모가 가진 상태값들로 채움
-    const finalData = {
-      movieId: Number(id),
-      reservationNumber: verifiedResNum,
-      content: reviewContent,   // 부모의 State
-      ...scores,               // 부모의 State (5가지 점수)
-      memberId: memberId 
-    };
-
-    await axios.post('http://localhost:8080/api/reviews', finalData);
-    
-    alert("리뷰가 성공적으로 등록되었습니다!");
-    setIsWriteModalOpen(false); // 작성 모달 닫기
-    fetchMovieData();           // 목록 새로고침
-    
-  } catch (err: any) {
-    console.error('리뷰 등록 실패:', err);
-    alert(err.response?.data?.error || "리뷰 등록 중 오류가 발생했습니다.");
-  }
-};
-
-// 3. 버튼 클릭 핸들러 수정
-const handleWriteReviewClick = () => {
-  if (!isLoggedIn) {
-    if (window.confirm('로그인이 필요한 서비스입니다. 로그인 페이지로 이동하시겠습니까?')) {
-      navigate('/login');
-    }
-    return;
-  }
-  setIsVerifyModalOpen(true); // 바로 리뷰창이 아니라 검증창
-};
-
-
-  if (!movie) return <div className="pt-40 text-center text-zinc-500 font-mono italic">KINO LOADING...</div>;
+  if (!movie) return (
+    <div className="min-h-screen bg-white flex flex-col items-center justify-center gap-8">
+      <div className="w-16 h-16 border-4 border-[#B91C1C] border-t-transparent rounded-full animate-spin"></div>
+      <p className="font-display text-2xl text-[#1A1A1A] uppercase tracking-[0.4em] animate-pulse">Loading Archive...</p>
+    </div>
+  );
 
   return (
-    <div className="min-h-screen bg-[#F5F2ED] text-black">
+    <div className="min-h-screen bg-white text-[#1A1A1A] font-sans selection:bg-[#B91C1C] selection:text-white">
       
-      <div className="bg-black text-white">
+      <div className="bg-[#1A1A1A] text-white">
         {/* Cinematic Trailer Area */}
-        <section className="relative w-full h-[65vh] overflow-hidden bg-black group">
+        <section className="relative w-full h-[75vh] overflow-hidden bg-black group">
           <div className="absolute inset-0 z-0 pointer-events-none">
             {movie.trailerUrl ? (
-              <div className="absolute min-w-full min-h-full w-[300%] h-[300%] top-[-100%] left-[-100%] opacity-80">
+              <div className="absolute min-w-full min-h-full w-[300%] h-[300%] top-[-100%] left-[-100%] opacity-60">
                 <iframe
                   key={`${videoId}-${isPlaying ? 'play' : 'stop'}-${isSoundOn ? 'sound' : 'mute'}`}
                   src={videoSrc}
@@ -232,122 +206,97 @@ const handleWriteReviewClick = () => {
                 />
               </div>
             ) : (
-              <img src={movie.stillCutUrls?.[0]} className="w-full h-full object-cover opacity-60" alt="backdrop" />
+              <img src={movie.stillCutUrls?.[0]} className="w-full h-full object-cover opacity-50" alt="backdrop" />
             )}
           </div>
-
-          {/* Vignette Overlay */}
           <div className="absolute inset-0 z-10 pointer-events-none">
-            <div
-              className="absolute inset-0"
-              style={{
-                background: `
-                  linear-gradient(
-                    to bottom,
-                    rgba(10,10,10,1) 0%,
-                    rgba(10,10,10,0.4) 15%,
-                    rgba(10,10,10,0) 40%,
-                    rgba(10,10,10,0) 60%,
-                    rgba(10,10,10,0.4) 85%,
-                    rgba(10,10,10,1) 100%
-                  )
-                `,
-              }}
-            />
+            <div className="absolute inset-0" style={{ background: `linear-gradient(to bottom, rgba(26,26,26,1) 0%, rgba(26,26,26,0.4) 15%, rgba(26,26,26,0) 40%, rgba(26,26,26,0) 60%, rgba(26,26,26,0.4) 85%, rgba(26,26,26,1) 100%)` }} />
           </div>
-
-          {/* Trailer Controls */}
           {!isPlaying && movie.trailerUrl && (
             <div className="absolute inset-0 z-20 flex items-center justify-center">
-              <button onClick={handlePlay} className="w-24 h-24 bg-white/10 backdrop-blur-md border border-white/30 rounded-full flex items-center justify-center hover:scale-110 transition-all duration-500">
-                <div className="w-0 h-0 border-t-[15px] border-t-transparent border-l-[25px] border-l-white border-b-[15px] border-b-transparent ml-2" />
+              <button onClick={handlePlay} className="group/play flex flex-col items-center gap-6">
+                <div className="w-24 h-24 bg-[#B91C1C] rounded-full flex items-center justify-center hover:scale-110 transition-all duration-500 shadow-2xl">
+                  <div className="w-0 h-0 border-t-[15px] border-t-transparent border-l-[25px] border-l-white border-b-[15px] border-b-transparent ml-2" />
+                </div>
+                <span className="font-display text-2xl uppercase tracking-widest text-white group-hover/play:text-[#B91C1C] transition-colors">Play Trailer</span>
               </button>
             </div>
           )}
           {isPlaying && (
-            <button onClick={handlePause} className="absolute top-10 right-10 z-30 px-6 py-2 border border-white/30 text-white font-mono text-[10px] uppercase tracking-widest hover:bg-white hover:text-black transition-all">
-              Stop Trailer
+            <button onClick={handlePause} className="absolute top-10 right-10 z-30 px-6 py-2 border border-white/20 text-white font-mono text-[9px] uppercase tracking-[0.4em] hover:bg-[#B91C1C] hover:border-[#B91C1C] transition-all">
+              Stop Reel
             </button>
           )}
         </section>
 
         {/* Movie Info Area */}
-        <section className="relative z-20 -mt-20 pb-20">
-          <div className="max-w-7xl mx-auto px-6 flex flex-col md:flex-row gap-16 items-start">
+        <section className="relative z-20 -mt-32 pb-24">
+          <div className="max-w-7xl mx-auto px-6 md:px-10 flex flex-col md:flex-row gap-16 items-start">
             <div className="w-full md:w-80 shrink-0">
-              <div className="relative aspect-[2/3] border-[8px] border-white bg-white shadow-[0_30px_60px_-15px_rgba(0,0,0,0.5)] overflow-hidden rounded-sm">
+              <div className="relative aspect-[2/3] border-[12px] border-white bg-white shadow-2xl overflow-hidden rounded-sm">
                 <img src={movie.posterUrl} alt={movie.title} className="w-full h-full object-cover" />
+                <div className="absolute top-0 left-0 bg-[#B91C1C] text-white font-display text-2xl px-4 py-1">{movie.ageRating}</div>
               </div>
-              <div className="flex items-center gap-4 mt-8">
-                <button 
-                  onClick={() => navigate('/ticketing', { state: { movieId: movie.id } })}
-                  className="flex-1 py-4 bg-white text-black font-serif italic text-xl hover:bg-zinc-200 transition-all shadow-[8px_8px_0_0_rgba(255,255,255,0.2)] active:translate-x-1 active:translate-y-1 active:shadow-none"
-                >
+              <div className="flex flex-col gap-4 mt-10">
+                <button onClick={() => navigate('/ticketing', { state: { movieId: movie.id } })} className="w-full py-5 bg-[#B91C1C] text-white font-display text-3xl uppercase tracking-tight hover:bg-white hover:text-[#B91C1C] transition-all shadow-xl active:scale-[0.98]">
                   Book Ticket
                 </button>
-                {/* Heart Button */}
-                <button onClick={handleLikeToggle} className={`w-16 h-16 border-2 border-white flex items-center justify-center transition-all ${isLiked ? 'bg-white text-red-600' : 'bg-transparent text-white hover:border-white'}`}>
-                  <svg width="28" height="28" viewBox="0 0 24 24" fill={isLiked ? "currentColor" : "none"} stroke="currentColor" strokeWidth="2" className={isLiked ? "animate-bounce" : ""}>
-                    <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
-                  </svg>
+                <button onClick={handleLikeToggle} className={`w-full py-4 border-2 flex items-center justify-center gap-3 font-bold uppercase tracking-[0.3em] text-[10px] transition-all ${isLiked ? 'bg-white text-[#B91C1C] border-white' : 'bg-transparent text-white border-white/20 hover:border-white'}`}>
+                  <Heart size={18} className={isLiked ? "fill-[#B91C1C]" : ""} /> {isLiked ? 'In Your Collection' : 'Add to Collection'}
                 </button>
               </div>
             </div>
 
-            {/* Info Text */}
-            <div className="flex-1 space-y-8">
-              <div className="space-y-4">
-                <div className="flex items-center gap-4">
-                  <span className="px-3 py-1 bg-white text-black font-mono text-[10px] uppercase tracking-widest">{movie.dDay}</span>
-                  <span className="text-white/50 font-mono text-[10px] uppercase tracking-[0.3em]">{movie.releaseDate} • {movie.durationMin}m</span>
+            <div className="flex-1 space-y-12">
+              <div className="space-y-6">
+                <div className="flex items-center gap-6">
+                  <div className="h-px w-12 bg-[#B91C1C]"></div>
+                  <span className="text-[#B91C1C] font-mono text-[10px] font-bold uppercase tracking-[0.5em]">{movie.dDay}</span>
+                  <span className="text-white/40 font-mono text-[10px] font-bold uppercase tracking-[0.3em]">{movie.releaseDate} • {movie.durationMin}M</span>
                 </div>
-                <h1 className="font-serif text-6xl md:text-7xl font-black italic tracking-tighter uppercase leading-none">{movie.title}</h1>
+                <h1 className="font-display text-7xl md:text-9xl uppercase tracking-tighter leading-[0.85]">{movie.title}</h1>
               </div>
-              <div className="flex flex-col md:flex-row gap-x-16 gap-y-8 border-y border-white/10 py-8">
-                <div className="md:min-w-[140px]">
-                  <p className="font-typewriter text-[10px] uppercase tracking-[0.4em] text-white/40 mb-3">Direction</p>
-                  <p className="font-serif text-2xl italic text-white whitespace-nowrap">
-                    {movie.director}
-                  </p>
+              
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-12 border-y border-white/10 py-12">
+                <div className="space-y-4">
+                  <p className="font-mono text-[9px] font-bold uppercase tracking-[0.5em] text-[#B91C1C]">Director</p>
+                  <p className="font-display text-3xl uppercase tracking-tight text-white">{movie.director}</p>
                 </div>
-                <div className="flex-1">
-                  <p className="font-typewriter text-[10px] uppercase tracking-[0.4em] text-white/40 mb-3">Featuring</p>
-                  <p className="font-serif text-xl italic leading-relaxed text-white">
-                    {movie.actor}
-                  </p>
+                <div className="md:col-span-2 space-y-4">
+                  <p className="font-mono text-[9px] font-bold uppercase tracking-[0.5em] text-[#B91C1C]">Starring</p>
+                  <p className="font-display text-2xl uppercase tracking-tight text-white/80 leading-tight">{movie.actor}</p>
                 </div>
               </div>
-              <p className="font-serif text-xl text-white/70 leading-relaxed italic max-w-2xl">"{movie.description}"</p>
+
+              <div className="space-y-6">
+                <p className="font-mono text-[9px] font-bold uppercase tracking-[0.5em] text-[#B91C1C]">Archival Summary</p>
+                <p className="text-xl text-white/60 leading-relaxed font-medium max-w-3xl italic">"{movie.description}"</p>
+              </div>
             </div>
           </div>
         </section>
       </div>
 
-
-      <div className="bg-[#F5F2ED]">
+      <div className="bg-white">
         {/* Sticky Navigation */}
-        <div className="sticky top-0 z-40 bg-[#F5F2ED] border-b-[6px] border-black">
-          <div className="max-w-7xl mx-auto px-6 flex justify-center">
+        <div className="sticky top-0 z-40 bg-white border-b border-black/5 shadow-sm">
+          <div className="max-w-7xl mx-auto px-6 md:px-10 flex justify-center">
             {[
-              { id: 'info', label: 'Archive Info' },
+              { id: 'info', label: 'Catalog Info' },
               { id: 'review', label: 'Patron Reviews' },
               { id: 'media', label: 'Visual Records' }
             ].map((tab) => (
-              <button
-                key={tab.id}
-                onClick={() => handleTabChange(tab.id)}
-                className={`px-12 py-8 font-serif italic text-xl tracking-tight transition-all relative group ${activeTab === tab.id ? 'text-black' : 'text-black/30 hover:text-black'}`}
-              >
+              <button key={tab.id} onClick={() => handleTabChange(tab.id)} className={`px-10 py-8 font-display text-xl uppercase tracking-tight transition-colors relative group ${activeTab === tab.id ? 'text-[#B91C1C]' : 'text-black/30 hover:text-black'}`}>
                 {tab.label}
-                {activeTab === tab.id && <div className="absolute bottom-0 left-0 right-0 h-2 bg-black" />}
-                <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-0 h-2 bg-black transition-all duration-300 group-hover:w-full" />
+                {activeTab === tab.id && <div className="absolute bottom-0 left-0 right-0 h-1 bg-[#B91C1C]" />}
+                <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-0 h-1 bg-[#B91C1C] transition-all duration-300 group-hover:w-full" />
               </button>
             ))}
           </div>
         </div>
 
         {/* Tab Content */}
-        <div className="py-20 px-6 max-w-7xl mx-auto">
+        <div className="py-24 px-6 md:px-10 max-w-7xl mx-auto">
           {activeTab === 'info' && <InfoTab data={movie} />}
           {activeTab === 'review' && (
             <ReviewTab 
@@ -363,16 +312,9 @@ const handleWriteReviewClick = () => {
           {activeTab === 'media' && <MediaTab data={movie} />}
         </div>
 
-        {/* Decorative Footer */}
-        <div className="py-24 border-t border-black/5 flex flex-col items-center gap-8 opacity-20">
-          <div className="flex gap-4">
-            {[1,2,3,4,5].map(i => <div key={i} className="w-2 h-2 bg-black rounded-full" />)}
-          </div>
-          <p className="font-typewriter text-[10px] uppercase tracking-[1em]">End of Record</p>
-        </div>
       </div>
 
-      {/* 검증 모달 호출  */}
+      {/* 모달 호출부 */}
       <ReviewVerifyModal 
         isOpen={isVerifyModalOpen}
         onClose={() => setIsVerifyModalOpen(false)}
@@ -380,8 +322,6 @@ const handleWriteReviewClick = () => {
         reservationNumber={verifiedResNum}
         setReservationNumber={setVerifiedResNum}
       />
-
-      {/* 작성 모달 호출 */}
       <ReviewWriteModal 
         isOpen={isWriteModalOpen}
         onClose={() => setIsWriteModalOpen(false)}

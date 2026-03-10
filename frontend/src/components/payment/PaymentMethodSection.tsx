@@ -1,14 +1,26 @@
 import { Plus } from 'lucide-react';
-import type { TossPaymentType } from '../../types/models/payment';
+import type { MyMembershipCardItem } from '../../api/myPageApi';
+
+export type TossPaymentType =
+  | 'CARD'
+  | 'TRANSFER'
+  | 'VIRTUAL_ACCOUNT'
+  | 'MOBILE_PHONE';
 
 interface PaymentMethodSectionProps {
   selectedPaymentMethod: TossPaymentType;
   setSelectedPaymentMethod: (method: TossPaymentType) => void;
+  membershipCards?: MyMembershipCardItem[];
+  selectedMembershipCardId?: number | null;
+  setSelectedMembershipCardId?: (cardId: number | null) => void;
 }
 
 export function PaymentMethodSection({
   selectedPaymentMethod,
-  setSelectedPaymentMethod
+  setSelectedPaymentMethod,
+  membershipCards = [],
+  selectedMembershipCardId = null,
+  setSelectedMembershipCardId
 }: PaymentMethodSectionProps) {
 
   const paymentMethods: { label: string; type: TossPaymentType }[] = [
@@ -26,15 +38,45 @@ export function PaymentMethodSection({
       </div>
 
       <div className="bg-[#FDFDFD] border border-black/5 rounded-sm p-8 shadow-xl">
-
-        <div className="border border-dashed border-black/10 bg-black/[0.02] rounded-sm p-12 flex flex-col items-center justify-center min-h-[200px] mb-8 group cursor-pointer hover:border-[#B91C1C]/50 hover:bg-white transition-all">
-          <div className="w-12 h-12 rounded-full bg-white shadow-sm flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
-            <Plus size={24} className="text-black/40 group-hover:text-[#B91C1C]" />
+        {selectedPaymentMethod === 'CARD' && membershipCards.length > 0 ? (
+          <div className="grid gap-4 md:grid-cols-2 mb-6">
+            {membershipCards.map((card) => {
+              const isSelected = selectedMembershipCardId === card.cardId;
+              return (
+                <button
+                  key={card.cardId}
+                  type="button"
+                  onClick={() => setSelectedMembershipCardId?.(card.cardId)}
+                  className={`rounded-xl border p-5 text-left transition-all ${
+                    isSelected
+                      ? 'border-[#B91C1C] bg-[#B91C1C]/5 shadow-sm'
+                      : 'border-black/10 bg-white hover:border-black/30'
+                  }`}
+                >
+                  <p className="text-[10px] font-bold uppercase tracking-widest text-black/40">{card.issuerName}</p>
+                  <p className="mt-4 text-2xl font-bold text-[#1A1A1A]">{card.cardNumber}</p>
+                  <div className="mt-6 flex items-end justify-between gap-4">
+                    <div>
+                      <p className="text-sm font-semibold text-[#1A1A1A]">{card.cardName}</p>
+                      <p className="mt-1 text-xs text-black/40">{card.channelName}</p>
+                    </div>
+                    {isSelected ? <span className="text-sm font-semibold text-[#B91C1C]">선택됨</span> : null}
+                  </div>
+                </button>
+              );
+            })}
           </div>
-          <p className="text-xs font-bold uppercase tracking-widest text-black/40 group-hover:text-black/60 transition-colors text-center leading-relaxed">
-            자주 사용하는 카드 등록하고<br />더욱 빠르게 결제하세요
-          </p>
-        </div>
+        ) : (
+          <div className="border-2 border-dashed border-gray-300 rounded-lg p-12 flex flex-col items-center justify-center min-h-[200px] mb-6">
+            <Plus size={48} className="text-gray-400 mb-4" />
+            <p className="text-gray-500 mb-1">
+              자주 사용하는 카드 등록하고
+            </p>
+            <p className="text-gray-500">
+              더욱 빠르게 결제하세요!
+            </p>
+          </div>
+        )}
 
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
           {paymentMethods.map((method) => (

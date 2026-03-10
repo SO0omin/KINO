@@ -2,10 +2,12 @@ import { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import ratingImages, { type AgeRatingType } from "../utils/getRatingImage";
 import axios from 'axios';
-import { Heart, Search } from 'lucide-react'; // 💡 하트 아이콘 추가
-import { useAuth } from '../contexts/AuthContext'; // 로그인 상태 가져오기
+import { Heart, Search, Film, Clock, Star, ChevronRight } from 'lucide-react';
+import { useAuth } from '../contexts/AuthContext';
+import FilmStrip from '../components/ticketing/FilmStrip';
+import { motion, AnimatePresence } from 'framer-motion';
 
-// 영화 데이터 타입 정의
+// 영화 데이터 타입 정의 (원본 유지)
 interface Movie {
   id: number;
   title: string;
@@ -24,22 +26,30 @@ export default function MovieListPage() {
   const location = useLocation();
   const stateKeyword = location.state?.keyword || "";
   const { isLoggedIn, isGuest, memberId } = useAuth();
+  
   const [activeTab, setActiveTab] = useState<'ALL' | 'UPCOMING'>('ALL');
   const [movies, setMovies] = useState<Movie[]>([]);
   const [isLoading, setIsLoading] = useState(false);
 
-  const [searchQuery, setSearchQuery] = useState(stateKeyword); // 입력창 초기화
-  const [appliedSearch, setAppliedSearch] = useState(stateKeyword); // 실제 검색에 사용될 값 (엔터/버튼 클릭 시 업데이트)
+  const [searchQuery, setSearchQuery] = useState(stateKeyword);
+  const [appliedSearch, setAppliedSearch] = useState(stateKeyword);
   const [sortOrder, setSortOrder] = useState<'RELEASE_DATE' | 'TITLE_ASC'>('RELEASE_DATE');
 
+  // --- 모던 스타일 정의 ---
+  const modernStyles = `
+    @import url('https://fonts.googleapis.com/css2?family=Anton&family=Inter:wght@400;500;600;700;800&display=swap');
+    .font-display { font-family: 'Anton', sans-serif; }
+    .font-sans { font-family: 'Inter', sans-serif; }
+  `;
+
+  // 💡 기존 검색 상태 초기화 로직 유지
   useEffect(() => {
     if (location.state?.keyword) {
-      // 검색 로직이 실행된 후, 현재 주소의 state를 초기화합니다.
       navigate(location.pathname, { replace: true, state: {} });
     }
   }, [location.pathname, navigate]);
   
-  // 탭이 바뀔 때마다 백엔드 API 호출
+  // 💡 원본 데이터 패칭 로직 (Axios 방식 유지)
   useEffect(() => {
     const fetchMovies = async () => {
       const storedMemberId = localStorage.getItem('memberId');
@@ -51,8 +61,8 @@ export default function MovieListPage() {
           params: { 
             type: activeTab, 
             memberId: effectiveMemberId,
-            keyword: appliedSearch, // 💡 백엔드로 검색어 전송!
-            sort: activeTab === 'UPCOMING' ? sortOrder : undefined // 💡 백엔드로 정렬 방식 전송!
+            keyword: appliedSearch,
+            sort: activeTab === 'UPCOMING' ? sortOrder : undefined
           }
         });
         setMovies(response.data);
@@ -62,12 +72,11 @@ export default function MovieListPage() {
         setIsLoading(false);
       }
     };
-
     fetchMovies();
   }, [activeTab, memberId, appliedSearch, sortOrder]);
 
   const handleSearch = (e: React.FormEvent) => {
-    e.preventDefault(); // 폼 제출 시 새로고침 방지
+    e.preventDefault();
     setAppliedSearch(searchQuery); 
   };
 
@@ -78,14 +87,13 @@ export default function MovieListPage() {
     setSortOrder('RELEASE_DATE');
   };
 
+  // 💡 원본의 Optimistic UI 찜하기 로직 유지
   const handleLikeToggle = async (movieId: number, currentIsLiked: boolean) => {
-    // 1. 방어 로직: 비회원이거나 로그인 안 한 경우
     if (!isLoggedIn || isGuest || !memberId) {
       alert("로그인 상태의 회원만 사용 가능한 기능입니다.");
       return;
     }
 
-    // 2. 화면 먼저 업데이트 (빠른 반응속도를 위해 Optimistic UI 적용)
     setMovies(prevMovies => 
       prevMovies.map(movie => {
         if (movie.id === movieId) {
@@ -102,169 +110,203 @@ export default function MovieListPage() {
       await axios.post(`/api/movies/${movieId}/likes`, { memberId });
     } catch (error) {
       alert("찜하기 처리에 실패했습니다.");
-      // 실패 시 원래 상태로 복구 (생략 가능하지만 넣으면 안전함)
     }
   };
 
-  const handleMovieClick = (movieId: number) => {
-    // 영화 ID가 1이라면 '/movies/1' 경로로 이동합니다.
-    navigate(`/movies/${movieId}`); 
-  };
-
   return (
-      <div className="max-w-[1200px] mx-auto px-6 py-12">
-        <h1 className="text-3xl font-bold text-gray-800 mb-8">영화</h1>
+    <div className="bg-white text-[#1A1A1A] min-h-screen font-sans selection:bg-[#B91C1C] selection:text-white">
+      <style dangerouslySetInnerHTML={{ __html: modernStyles }} />
+      
+      {/* 1. 헤더 영역 (AI 스튜디오 스타일) */}
+      <div className="bg-[#1A1A1A] text-white pt-24 pb-12 relative overflow-hidden">
+        <div className="absolute inset-0 opacity-10 pointer-events-none">
+          <div className="absolute top-0 left-0 w-full h-full bg-[radial-gradient(circle_at_50%_50%,#B91C1C_0%,transparent_70%)]"></div>
+        </div>
+        
+        <div className="max-w-7xl mx-auto px-6 md:px-10 relative z-10 font-sans">
+          <div className="flex flex-col items-center text-center space-y-6">
+            <div className="flex items-center gap-4">
+              <div className="h-px w-12 bg-[#B91C1C]"></div>
+              <p className="font-mono text-[10px] font-bold tracking-[0.5em] text-[#B91C1C] uppercase font-sans">Film Archive</p>
+              <div className="h-px w-12 bg-[#B91C1C]"></div>
+            </div>
+            <h1 className="font-display text-4xl md:text-4xl uppercase tracking-tighter leading-none">
+              영화 <span className="text-white/20">라이브러리</span>
+            </h1>
+          </div>
+        </div>
+      </div>
 
-        {/* 탭 메뉴 */}
-        <div className="flex border-b border-gray-300 mb-6">
+
+      <div className="max-w-7xl mx-auto px-6 md:px-10 py-20 font-sans">
+        
+        {/* 2. 탭 메뉴 */}
+        <div className="flex w-full mb-16 bg-[#FDFDFD] border border-black/5 rounded-sm overflow-hidden shadow-xl">
           <button
             onClick={() => handleTabChange('ALL')}
-            className={`py-3 px-6 text-lg font-bold transition-colors ${
-              activeTab === 'ALL' ? 'border-b-2 border-[#eb4d32] text-[#eb4d32]' : 'text-gray-500 hover:text-gray-800'
+            className={`flex-1 py-6 text-xs font-bold uppercase tracking-[0.4em] transition-all ${
+              activeTab === 'ALL' ? 'bg-[#1A1A1A] text-white' : 'hover:bg-black/5 text-black/40'
             }`}
           >
             전체 영화
           </button>
           <button
             onClick={() => handleTabChange('UPCOMING')}
-            className={`py-3 px-6 text-lg font-bold transition-colors ${
-              activeTab === 'UPCOMING' ? 'border-b-2 border-[#eb4d32] text-[#eb4d32]' : 'text-gray-500 hover:text-gray-800'
+            className={`flex-1 py-6 text-xs font-bold uppercase tracking-[0.4em] transition-all ${
+              activeTab === 'UPCOMING' ? 'bg-[#1A1A1A] text-white' : 'hover:bg-black/5 text-black/40'
             }`}
           >
             상영 예정작
           </button>
-      </div>
+        </div>
 
-        {/* 툴바 영역: 검색 결과 개수, 검색창, 정렬 셀렉트 박스 */}
-        <div className="flex flex-col sm:flex-row justify-between items-center mb-8 gap-4">
-        
-        <div className="flex gap-4 w-full sm:w-auto">
-          {/* (3) 상영 예정작일 때만 보이는 정렬 옵션 */}
+        {/* 3. 툴바 (검색 및 정렬) */}
+        <div className="flex flex-col md:flex-row justify-between items-center mb-12 gap-8 border-b border-black/5 pb-8">
+          <div className="flex items-center gap-8">
             {activeTab === 'UPCOMING' && (
-              <div className="flex items-center gap-3 text-sm font-medium">
+              <div className="flex items-center gap-4 bg-black/5 p-1 rounded-sm">
                 <button 
                   onClick={() => setSortOrder('RELEASE_DATE')}
-                  className={`transition-colors ${sortOrder === 'RELEASE_DATE' ? 'text-[#eb4d32] font-bold' : 'text-gray-400 hover:text-gray-700'}`}
+                  className={`px-4 py-2 text-[10px] font-bold uppercase tracking-widest rounded-sm transition-all ${
+                    sortOrder === 'RELEASE_DATE' ? 'bg-white text-[#B91C1C] shadow-sm' : 'text-black/40 hover:text-black'
+                  }`}
                 >
                   개봉일순
                 </button>
-                <span className="text-gray-300 text-xs">|</span>
                 <button 
                   onClick={() => setSortOrder('TITLE_ASC')}
-                  className={`transition-colors ${sortOrder === 'TITLE_ASC' ? 'text-[#eb4d32] font-bold' : 'text-gray-400 hover:text-gray-700'}`}
+                  className={`px-4 py-2 text-[10px] font-bold uppercase tracking-widest rounded-sm transition-all ${
+                    sortOrder === 'TITLE_ASC' ? 'bg-white text-[#B91C1C] shadow-sm' : 'text-black/40 hover:text-black'
+                  }`}
                 >
                   가나다순
                 </button>
               </div>
             )}
-          
-
-          {/* (4) 총 개수 표시 */}
-          <div className="text-gray-700 font-bold">
-            <span className="text-[#eb4d32]">{movies.length}</span>개의 영화가 검색되었습니다.
+            
+            <div className="text-[10px] font-bold uppercase tracking-widest text-black/40">
+              총 <span className="text-[#B91C1C] text-lg font-display mr-1">{movies.length}</span>개의 영화가 검색되었습니다.
+            </div>
           </div>
-        </div>
-       <div className="flex gap-4 w-full sm:w-auto items-center">
-          {/* (2) 검색창 */}
-          <form onSubmit={handleSearch} className="relative flex-1 sm:w-64">
+
+          <form onSubmit={handleSearch} className="relative w-full md:w-80">
             <input 
               type="text" 
-              placeholder="영화 제목을 입력하세요" 
+              placeholder="영화 제목을 입력하세요..." 
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full border border-gray-300 rounded-full px-4 py-2 pr-10 text-sm focus:outline-none focus:border-[#eb4d32] transition-colors"
+              className="w-full bg-[#FDFDFD] border border-black/10 rounded-sm px-6 py-4 pr-12 text-[11px] font-bold focus:outline-none focus:border-[#B91C1C] transition-all shadow-sm"
             />
-            {/* 💡 수정됨: [transform:translateX(-50%)] -> -translate-y-1/2 로 변경! */}
-            <button type="submit" className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-[#eb4d32]">
+            <button type="submit" className="absolute right-4 top-1/2 -translate-y-1/2 text-black/20 hover:text-[#B91C1C] transition-colors">
               <Search size={18} />
             </button>
           </form>
         </div>
-      </div>
 
-        {/* 영화 그리드 영역 */}
-        {isLoading ? (
-          <div className="py-20 text-center text-gray-500 font-bold">영화를 불러오는 중입니다...</div>
-        ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8">
-            {movies.map((movie, index) => (
-              <div key={movie.id} className="flex flex-col">
-                {/* 포스터 영역 (호버 시 예매 버튼 등장) */}
-                <div className="relative overflow-hidden rounded-lg shadow-md aspect-[2/3] mb-4 group">
-                  <button onClick={() => handleMovieClick(movie.id)}>
+        {/* 4. 영화 그리드 영역 */}
+        <AnimatePresence mode="wait">
+          {isLoading ? (
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="py-40 flex flex-col items-center justify-center gap-6 opacity-20">
+              <div className="w-16 h-16 border-2 border-dashed border-black rounded-full animate-spin"></div>
+              <p className="font-display text-2xl uppercase tracking-tight">Accessing Reels...</p>
+            </motion.div>
+          ) : (
+            <motion.div 
+              initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
+              className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-10"
+            >
+              {movies.map((movie, index) => (
+                <div key={movie.id} className="group flex flex-col">
+                  {/* 포스터 영역 */}
+                  <div className="relative overflow-hidden rounded-sm shadow-2xl aspect-[2/3] mb-6 bg-black cursor-pointer" onClick={() => navigate(`/movies/${movie.id}`)}>
                     <img 
                       src={movie.posterUrl} 
                       alt={movie.title} 
-                      className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                      className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110 opacity-90 group-hover:opacity-100"
                     />
                     
                     {/* 순위 뱃지 */}
                     {activeTab === 'ALL' && (
-                      <div className="absolute top-0 bg-[#696969] left-0 text-white font-bold text-xl px-4 py-2 opacity-90 rounded-br-lg">
-                        {index + 1}
+                      <div className="absolute top-0 left-0 bg-[#B91C1C] text-white font-display text-4xl px-4 py-2 shadow-xl">
+                        {String(index + 1).padStart(2, '0')}
                       </div>
                     )}
 
-                    {/* 호버 오버레이 (포스터 위에만 나타남) */}
-                    <div className="absolute inset-0 bg-black/80 opacity-0 group-hover:opacity-100 transition-opacity duration-300 p-5 flex flex-col">
-                      <div className="text-white text-sm leading-relaxed line-clamp-6 text-justify">
-                        {movie.description || "등록된 소개글이 없습니다."}
-                      </div>
-                      <div className="mt-auto">
-                        <hr className="border-[#696969] opacity-50 mb-3" />
-                        <div className="text-white text-center font-bold text-sm flex items-center justify-center gap-2">
-                          <span>관람평</span>
-                          <span className="text-lg text-[#eb4d32]">
-                            {movie.avgRating > 0 ? movie.avgRating.toFixed(1) : "0.0"}
-                          </span>
-                          <span>점</span>
+                    {/* 호버 오버레이 (Synopsis & Rating) */}
+                    <div className="absolute inset-0 bg-black/90 opacity-0 group-hover:opacity-100 transition-all duration-500 p-8 flex flex-col justify-between border-4 border-[#B91C1C]/0 group-hover:border-[#B91C1C]/20">
+                      <div className="space-y-4">
+                        <div className="flex items-center gap-2 text-[9px] font-bold uppercase tracking-[0.3em] text-[#B91C1C]">
+                          <Film size={12} />
+                          <span>줄거리</span>
                         </div>
+                        <p className="text-white/70 text-[11px] leading-relaxed font-medium text-justify line-clamp-6">
+                          {movie.description || "등록된 소개글이 없습니다."}
+                        </p>
+                      </div>
+                      
+                      <div className="space-y-6">
+                        <div className="h-px w-full bg-white/10"></div>
+                        <div className="flex flex-col items-center gap-2">
+                          <span className="text-[9px] font-bold uppercase tracking-[0.4em] text-white/40 font-sans">Patron Rating</span>
+                          <div className="flex items-center gap-3">
+                            <Star size={16} className="text-[#B91C1C] fill-[#B91C1C]" />
+                            <span className="font-display text-4xl text-white">
+                              {movie.avgRating > 0 ? movie.avgRating.toFixed(1) : "0.0"}
+                            </span>
+                          </div>
+                        </div>
+                        <button className="w-full py-3 border border-white/20 text-white text-[10px] font-bold uppercase tracking-[0.3em] hover:bg-white hover:text-black transition-all font-sans">
+                          상세보기
+                        </button>
                       </div>
                     </div>
-                  </button>
-                </div>
+                  </div>
 
-                {/* 영화 정보 영역 */}
-                <div className="flex items-center gap-2 mb-1">
-                  <img 
-                    src={ratingImages[movie.ageRating as AgeRatingType] || ratingImages.ALL} 
-                    alt={`관람등급 ${movie.ageRating}`}
-                    className="w-5 h-5 object-contain"
-                  />
-                  <h3 className="text-lg font-bold text-gray-800 truncate">{movie.title}</h3>
-                </div>
-                
-                <div className="text-sm text-gray-500 flex justify-between mb-2">
-                  <span>예매율 {movie.bookingRate}%</span>
-                  <span>{movie.releaseDate} 개봉</span>
-                </div>
+                  {/* 영화 상세 정보 */}
+                  <div className="space-y-4">
+                    <div className="flex items-start justify-between gap-4">
+                      <div className="flex items-center gap-3">
+                        <img 
+                          src={ratingImages[movie.ageRating as AgeRatingType] || ratingImages.ALL} 
+                          alt={movie.ageRating}
+                          className="w-6 h-6 object-contain"
+                        />
+                        <h3 className="font-display text-2xl uppercase tracking-tight text-[#1A1A1A] group-hover:text-[#B91C1C] transition-colors line-clamp-1">{movie.title}</h3>
+                      </div>
+                      <button 
+                        onClick={() => handleLikeToggle(movie.id, movie.isLiked)}
+                        className="flex items-center gap-2 text-black/20 hover:text-[#B91C1C] transition-colors"
+                      >
+                        <Heart 
+                          size={20} 
+                          className={movie.isLiked ? "fill-[#B91C1C] text-[#B91C1C]" : ""} 
+                        />
+                        <span className="text-[10px] font-bold">{movie.likeCount}</span>
+                      </button>
+                    </div>
+                    
+                    <div className="flex items-center justify-between text-[10px] font-bold uppercase tracking-widest text-black/40 border-t border-black/5 pt-4 font-sans">
+                      <div className="flex items-center gap-2">
+                        <Clock size={12} />
+                        <span>예매율 {movie.bookingRate}%</span>
+                      </div>
+                      <span>{movie.releaseDate} 개봉</span>
+                    </div>
 
-                {/* 버튼 영역 */}
-                <div className="text-sm text-gray-500 flex justify-between items-center mt-auto">
-                  {/* 찜 버튼 */}
-                  <button 
-                    onClick={() => handleLikeToggle(movie.id, movie.isLiked)}
-                    className="flex items-center gap-1.5 text-gray-500 hover:text-[#eb4d32] transition-colors"
-                  >
-                    <Heart 
-                      size={18} 
-                      className={movie.isLiked ? "fill-[#eb4d32] text-[#eb4d32]" : ""} 
-                    />
-                    <span className="text-sm font-bold">{movie.likeCount}</span>
-                  </button>
-
-                  {/* 예매 버튼 */}
-                  <button 
-                    onClick={() => navigate('/ticketing', { state: { preSelectedMovieId: movie.id } })}
-                    className="bg-gray-100 text-gray-700 text-xs font-bold py-2 px-6 rounded hover:bg-[#eb4d32] hover:text-white transition-colors"
-                  >
-                    예매하기
-                  </button>
+                    <button 
+                      onClick={() => navigate('/ticketing', { state: { preSelectedMovieId: movie.id } })}
+                      className="w-full py-4 bg-[#1A1A1A] text-white text-[10px] font-bold uppercase tracking-[0.4em] rounded-sm hover:bg-[#B91C1C] transition-all flex items-center justify-center gap-2 group/btn shadow-lg"
+                    >
+                      예매하기
+                      <ChevronRight size={14} className="group-hover/btn:translate-x-1 transition-transform" />
+                    </button>
+                  </div>
                 </div>
-              </div>
-            ))}
-          </div>
-        )}
+              ))}
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
     </div>
   );
 }

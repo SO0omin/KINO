@@ -10,10 +10,10 @@ type SidebarMenuProps = {
 
 export function SidebarMenu({ currentPath, pageKey, onMoveMenu }: SidebarMenuProps) {
   return (
-    <aside className="w-[220px] shrink-0 overflow-hidden rounded-xl border border-gray-300 bg-white">
+    <aside className="sticky top-8 w-[240px] shrink-0 self-start overflow-hidden rounded-sm border border-black/5 bg-[#FDFDFD] shadow-xl">
       <button
         type="button"
-        className="w-full bg-[#000000] px-6 py-8 text-center text-xl font-semibold text-white"
+        className="w-full bg-[#1A1A1A] px-6 py-8 text-center text-[10px] font-bold uppercase tracking-[0.35em] text-white transition-colors hover:bg-[#B91C1C]"
         onClick={() => onMoveMenu("/mypage")}
       >
         나의 키노
@@ -26,10 +26,10 @@ export function SidebarMenu({ currentPath, pageKey, onMoveMenu }: SidebarMenuPro
             : item.key === pageKey;
 
         return (
-          <div key={item.key} className="border-t border-gray-200">
+          <div key={item.key} className="border-t border-black/5">
             <button
-              className={`flex w-full items-center justify-between px-4 py-3 text-left text-base ${
-                active ? "font-semibold text-[#eb4d32]" : "text-gray-700"
+              className={`flex w-full items-center justify-between px-5 py-3 text-left text-sm font-semibold tracking-tight transition-colors ${
+                active ? "text-[#B91C1C]" : "text-[#1A1A1A] hover:text-[#B91C1C]"
               }`}
               onClick={() => onMoveMenu(item.path)}
             >
@@ -37,12 +37,12 @@ export function SidebarMenu({ currentPath, pageKey, onMoveMenu }: SidebarMenuPro
               {active ? <ChevronRight className="h-5 w-5" /> : null}
             </button>
             {item.children ? (
-              <div className="space-y-1 px-5 pb-3 text-sm text-gray-500">
+              <div className="space-y-1 px-6 pb-4 text-[11px] font-bold uppercase tracking-[0.18em] text-black/35">
                 {item.children.map((child) => (
                   <button
                     key={child.label}
                     className={`block w-full text-left ${
-                      currentPath === child.path ? "font-semibold text-[#eb4d32]" : "text-gray-500"
+                      currentPath === child.path ? "text-[#B91C1C]" : "text-black/35 hover:text-[#B91C1C]"
                     }`}
                     onClick={() => onMoveMenu(child.path)}
                   >
@@ -55,17 +55,17 @@ export function SidebarMenu({ currentPath, pageKey, onMoveMenu }: SidebarMenuPro
         );
       })}
 
-      <div className="border-t border-gray-200 bg-[#ffffff] px-4 py-3 text-base text-gray-700">회원정보</div>
-      <div className="px-5 pb-4 pt-2 text-sm text-gray-500">
+      <div className="border-t border-black/5 bg-white/80 px-5 py-3 text-[11px] font-bold uppercase tracking-[0.22em] text-black/35">회원정보</div>
+      <div className="px-6 pb-5 pt-2 text-[11px] font-bold uppercase tracking-[0.18em] text-black/35">
         <button
-          className={`block w-full text-left ${pageKey === "profile" ? "font-semibold text-[#eb4d32]" : "text-gray-500"}`}
+          className={`block w-full text-left ${pageKey === "profile" ? "text-[#B91C1C]" : "text-black/35 hover:text-[#B91C1C]"}`}
           onClick={() => onMoveMenu("/mypage/profile")}
         >
           · 개인정보 수정
         </button>
         <button
           className={`mt-1 block w-full text-left ${
-            pageKey === "profile-preferences" ? "font-semibold text-[#eb4d32]" : "text-gray-500"
+            pageKey === "profile-preferences" ? "text-[#B91C1C]" : "text-black/35 hover:text-[#B91C1C]"
           }`}
           onClick={() => onMoveMenu("/mypage/profile/preferences")}
         >

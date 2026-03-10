@@ -2,6 +2,7 @@ package com.cinema.kino.repository;
 
 import com.cinema.kino.entity.MembershipCard;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
@@ -19,4 +20,14 @@ public interface MembershipCardRepository extends JpaRepository<MembershipCard, 
     List<MembershipCard> findByMemberId(@Param("memberId") Long memberId);
 
     Optional<MembershipCard> findByCardNumber(String cardNumber);
+
+    @Modifying(clearAutomatically = true, flushAutomatically = true)
+    @Query("""
+            UPDATE MembershipCard c
+            SET c.cardName = '키노 멤버십',
+                c.issuerName = '키노 멤버십'
+            WHERE c.cardName = '메가박스 멤버십'
+               OR c.issuerName = '메가박스 멤버십'
+            """)
+    int normalizeLegacyMembershipBrand();
 }
