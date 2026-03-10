@@ -1,3 +1,12 @@
+export * from './mypage/types';
+export * from './mypage/profileApi';
+export * from './mypage/reservationApi';
+export * from './mypage/voucherApi';
+export * from './mypage/couponApi';
+export * from './mypage/membershipApi';
+export * from './mypage/pointApi';
+export * from './mypage/movieStoryApi';
+export * from './mypage/socialApi';
 import { api } from './api';
 
 export interface MyPageSummary {
@@ -239,7 +248,7 @@ export async function updateMemberProfile(payload: MemberProfileUpdateRequest) {
 export async function deleteMember() { // 💡 ID를 인자로 받을 필요 없음 (토큰 사용)
   try {
     // 💡 .delete 메서드 사용 & 경로 오타 수정
-    const response = await api.delete(`/api/mypage/profile/delete`); 
+    const response = await api.delete(`/api/mypage/profile/delete`);
     return response.data;
   } catch (error: any) {
     throw new Error(error.response?.data?.message || '회원 탈퇴에 실패했습니다.');

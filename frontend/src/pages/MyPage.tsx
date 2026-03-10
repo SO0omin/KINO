@@ -2,52 +2,28 @@ import { useEffect, useMemo, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { ChevronRight } from "lucide-react";
 import { useAuth } from "../contexts/AuthContext";
-import axios from 'axios';
-import { KAKAO_AUTH_URL, NAVER_AUTH_URL, GOOGLE_AUTH_URL } from "../constants/socialAuth";
-import {
-    cancelReservation,
-    downloadSelectedCoupons,
-    getDownloadableCoupons,
-    redeemCoupon,
-    registerMembershipCard,
-    sendPointPasswordSms,
-    type MyCouponItem,
-    getMyCoupons,
-    getMyVouchers,
-    updatePointPassword,
-    updateMemberProfile,
-    updateMemberPassword,
-    verifyPointPasswordSms,
-    registerVoucher,
-    removeMovieLike,
-    getMyReviews,
-    type MyReviewItem,
-    linkSocialAccountApi, 
-    unlinkSocialAccountApi
-} from "../api/myPageApi";
-import { ticketingApi } from "../api/ticketingApi";
+import { removeMovieLike } from "../api/myPageApi";
 import { useMyPageData } from "../hooks/useMyPageData";
+import { useCouponSection } from "../hooks/mypage/useCouponSection";
+import { useMovieStory } from "../hooks/mypage/useMovieStory";
+import { useProfileSection } from "../hooks/mypage/useProfileSection";
+import { useReservationSection } from "../hooks/mypage/useReservationSection";
+import { useMembershipSection } from "../hooks/mypage/useMembershipSection";
+import { usePointSection } from "../hooks/mypage/usePointSection";
+import { useSocialLinking } from "../hooks/mypage/useSocialLinking";
+import { usePreferencesSection } from "../hooks/mypage/usePreferencesSection";
+import { useVoucherSection } from "../hooks/mypage/useVoucherSection";
 import {
-    filterCoupons,
     mapCouponStatusLabel,
     mapVoucherStatusLabel,
     toPurchaseRows,
-    type CouponKindFilter,
-    type CouponSourceFilter,
-    type CouponStatusFilter,
-    type UiVoucherStatus,
-} from "../mappers/myPageMapper";
-import {
     formatDateDot,
     formatDateSimple,
     formatDateTime,
     formatMoney,
-    formatYmd,
     monthLabel,
-    shiftDays,
-    splitReservations,
-    toMonthKey,
-} from "../mappers/myPageFormatters";
+    type UiVoucherStatus,
+} from "../mappers/myPageMapper";
 import { PATH_TO_KEY, breadcrumbLabels } from "../types/mypage";
 import { BreadcrumbBar } from "../components/mypage/BreadcrumbBar";
 import { SidebarMenu } from "../components/mypage/SidebarMenu";
@@ -58,23 +34,10 @@ import { PointsSection } from "../components/mypage/sections/PointsSection";
 import { MovieStorySection } from "../components/mypage/sections/MovieStorySection";
 import { VouchersSection } from "../components/mypage/sections/VouchersSection";
 import { ProfileSection } from "../components/mypage/sections/ProfileSection";
+import { DashboardSection } from "../components/mypage/sections/DashboardSection";
+import { PointPasswordSection } from "../components/mypage/sections/PointPasswordSection";
+import { MembershipCardsSection } from "../components/mypage/sections/MembershipCardsSection";
 import { MyPageModals } from "../components/mypage/modals/MyPageModals";
-
-function EmptyLine({ message }: { message: string }) {
-    return <div className="py-10 text-center text-base text-gray-300">{message}</div>;
-}
-
-type PreferenceSnapshot = {
-    marketingPolicyAgreed: boolean;
-    marketingEmailAgreed: boolean;
-    marketingSmsAgreed: boolean;
-    marketingPushAgreed: boolean;
-    preferredTheaterId: string;
-    hasPointPassword: boolean;
-    socialNaverLinked: boolean;
-    socialKakaoLinked: boolean;
-    socialGoogleLinked: boolean;
-};
 
 export default function MyPage() {
     const navigate = useNavigate();
@@ -106,103 +69,28 @@ export default function MyPage() {
     const pageKey = PATH_TO_KEY[location.pathname] ?? "dashboard";
     const isGuestReservationOnly = isGuest && memberId <= 0 && guestId > 0;
     const verificationToken = useMemo(() => new URLSearchParams(location.search).get("verifyToken") ?? "", [location.search]);
-
-    const [isCancelling, setIsCancelling] = useState<number | null>(null);
-    const [showCancelModal, setShowCancelModal] = useState(false);
-    const [cancelTargetId, setCancelTargetId] = useState<number | null>(null);
-    const [cancelReason, setCancelReason] = useState("");
-    const [reservationTab, setReservationTab] = useState<"reservation" | "purchase">("reservation");
-    const [historyType, setHistoryType] = useState<"current" | "past">("current");
-    const [selectedMonth, setSelectedMonth] = useState<string>("");
-    const [appliedHistoryType, setAppliedHistoryType] = useState<"current" | "past">("current");
-    const [appliedMonth, setAppliedMonth] = useState<string>("");
-    const today = useMemo(() => new Date(), []);
-    const [purchaseSelectType, setPurchaseSelectType] = useState<"all" | "movie">("all");
-    const [purchaseStatusType, setPurchaseStatusType] = useState<"all" | "purchase" | "cancel">("all");
-    const [purchaseRange, setPurchaseRange] = useState<"week" | "month1" | "month3" | "month6">("month1");
-    const [purchaseFrom, setPurchaseFrom] = useState(formatYmd(shiftDays(today, -30).toISOString()));
-    const [purchaseTo, setPurchaseTo] = useState(formatYmd(today.toISOString()));
-    const [appliedPurchaseSelectType, setAppliedPurchaseSelectType] = useState<"all" | "movie">("all");
-    const [appliedPurchaseStatusType, setAppliedPurchaseStatusType] = useState<"all" | "purchase" | "cancel">("all");
-    const [appliedPurchaseFrom, setAppliedPurchaseFrom] = useState(formatYmd(shiftDays(today, -30).toISOString()));
-    const [appliedPurchaseTo, setAppliedPurchaseTo] = useState(formatYmd(today.toISOString()));
-    const [pointRange, setPointRange] = useState<"week" | "month1" | "month3" | "month6">("week");
-    const [pointFrom, setPointFrom] = useState(formatYmd(shiftDays(today, -7).toISOString()));
-    const [pointTo, setPointTo] = useState(formatYmd(today.toISOString()));
-    const [appliedPointFrom, setAppliedPointFrom] = useState(formatYmd(shiftDays(today, -7).toISOString()));
-    const [appliedPointTo, setAppliedPointTo] = useState(formatYmd(today.toISOString()));
-    const [showPointPhoneModal, setShowPointPhoneModal] = useState(false);
-    const [pointPhoneNumber, setPointPhoneNumber] = useState("");
-    const [pointAuthCodeInput, setPointAuthCodeInput] = useState("");
-    const [pointAuthSending, setPointAuthSending] = useState(false);
-    const [pointAuthVerifying, setPointAuthVerifying] = useState(false);
-    const [pointPasswordInput, setPointPasswordInput] = useState("");
-    const [pointPasswordConfirmInput, setPointPasswordConfirmInput] = useState("");
     const [voucherStatus, setVoucherStatus] = useState<UiVoucherStatus>("available");
-    const [showVoucherRegisterModal, setShowVoucherRegisterModal] = useState(false);
-    const [voucherRegisterCode, setVoucherRegisterCode] = useState("");
-    const [voucherRegisterError, setVoucherRegisterError] = useState("");
-    const [voucherRegistering, setVoucherRegistering] = useState(false);
-    const [couponTab, setCouponTab] = useState<"megabox" | "partner">("megabox");
-    const [couponKindFilter, setCouponKindFilter] = useState<CouponKindFilter>("전체");
-    const [couponSourceFilter, setCouponSourceFilter] = useState<CouponSourceFilter>("전체");
-    const [couponStatusFilter, setCouponStatusFilter] = useState<CouponStatusFilter>("available");
-    const [couponHiddenOnly, setCouponHiddenOnly] = useState(false);
-    const [appliedCouponKindFilter, setAppliedCouponKindFilter] = useState<CouponKindFilter>("전체");
-    const [appliedCouponSourceFilter, setAppliedCouponSourceFilter] = useState<CouponSourceFilter>("전체");
-    const [appliedCouponStatusFilter, setAppliedCouponStatusFilter] = useState<CouponStatusFilter>("available");
-    const [appliedCouponHiddenOnly, setAppliedCouponHiddenOnly] = useState(false);
-    const [showCouponRegisterModal, setShowCouponRegisterModal] = useState(false);
-    const [couponRegisterCode, setCouponRegisterCode] = useState("");
-    const [couponRegistering, setCouponRegistering] = useState(false);
-    const [couponRegisterError, setCouponRegisterError] = useState("");
-    const [selectedCoupon, setSelectedCoupon] = useState<MyCouponItem | null>(null);
-    const [showCardRegisterModal, setShowCardRegisterModal] = useState(false);
-    const [cardNumberInput, setCardNumberInput] = useState("");
-    const [cardCvcInput, setCardCvcInput] = useState("");
-    const [cardRegistering, setCardRegistering] = useState(false);
-    const [cardRegisterError, setCardRegisterError] = useState("");
-    const [profileSaving, setProfileSaving] = useState(false);
-    const [showPasswordChangeModal, setShowPasswordChangeModal] = useState(false);
-    const [currentPasswordInput, setCurrentPasswordInput] = useState("");
-    const [newPasswordInput, setNewPasswordInput] = useState("");
-    const [newPasswordConfirmInput, setNewPasswordConfirmInput] = useState("");
-    const [passwordChanging, setPasswordChanging] = useState(false);
-    const [profileName, setProfileName] = useState("");
-    const [profileTel, setProfileTel] = useState("");
-    const [profileEmail, setProfileEmail] = useState("");
-    const [profileBirthDate, setProfileBirthDate] = useState("");
-    const [profileImageUrl, setProfileImageUrl] = useState("");
-    const [marketingPolicyAgreed, setMarketingPolicyAgreed] = useState(false);
-    const [marketingEmailAgreed, setMarketingEmailAgreed] = useState(false);
-    const [marketingSmsAgreed, setMarketingSmsAgreed] = useState(false);
-    const [marketingPushAgreed, setMarketingPushAgreed] = useState(false);
-    const [preferredTheaterId, setPreferredTheaterId] = useState("");
-    const [preferredTheaterName, setPreferredTheaterName] = useState("");
-    const [availableMovieVoucherCount, setAvailableMovieVoucherCount] = useState(0);
-    const [availableCouponCount, setAvailableCouponCount] = useState(0);
-    const [savedPreferences, setSavedPreferences] = useState<PreferenceSnapshot | null>(null);
     const [hasPointPassword,] = useState(false);
-    const [socialNaverLinked, setSocialNaverLinked] = useState(false);
-    const [socialKakaoLinked, setSocialKakaoLinked] = useState(false);
-    const [socialGoogleLinked, setSocialGoogleLinked] = useState(false);
-    const [movieStoryTab, setMovieStoryTab] = useState<"timeline" | "review" | "watched" | "wish">("timeline");
-    const [selectedTimelineYear, setSelectedTimelineYear] = useState<number>(new Date().getFullYear());
-    const [showWatchedModal, setShowWatchedModal] = useState(false);
-    const [watchedTicketCodeInput, setWatchedTicketCodeInput] = useState("");
-    const [watchedMovies, setWatchedMovies] = useState<Array<{ id: string; movieTitle: string; watchedAt: string }>>([]);
-    const [showReviewModal, setShowReviewModal] = useState(false);
-    const [reviewMovieTitleInput, setReviewMovieTitleInput] = useState("");
-    const [reviewContentInput, setReviewContentInput] = useState("");
-    const [reviews, setReviews] = useState<MyReviewItem[]>([]);
-    const [showVerifyModal, setShowVerifyModal] = useState(false);
-    const [reviewReservationNumberInput, setReviewReservationNumberInput] = useState("");
-    const [reviewMovieId, setReviewMovieId] = useState<number | null>(null);
-    const [scoreDirection, setScoreDirection] = useState(10);
-    const [scoreStory, setScoreStory] = useState(10);
-    const [scoreVisual, setScoreVisual] = useState(10);
-    const [scoreActor, setScoreActor] = useState(10);
-    const [scoreOst, setScoreOst] = useState(10);
+    const {
+        pointRange,
+        pointFrom,
+        setPointFrom,
+        pointTo,
+        setPointTo,
+        appliedPointFrom,
+        setAppliedPointFrom,
+        appliedPointTo,
+        setAppliedPointTo,
+        pointPasswordInput,
+        setPointPasswordInput,
+        pointPasswordConfirmInput,
+        setPointPasswordConfirmInput,
+        applyPointRange,
+        submitPointPassword,
+    } = usePointSection({
+        memberId,
+        verificationToken,
+    });
     const {
         loading,
         summary,
@@ -234,153 +122,246 @@ export default function MyPage() {
         appliedPointTo,
     });
 
-    useEffect(() => {
-        if (!memberProfile) return;
-        setProfileName(memberProfile.name ?? "");
-        setProfileTel(memberProfile.tel ?? "");
-        setProfileEmail(memberProfile.email ?? "");
-        setProfileBirthDate(memberProfile.birthDate ?? "");
-        setSocialKakaoLinked(memberProfile.socialKakaoLinked);
-        setSocialGoogleLinked(memberProfile.socialGoogleLinked);
-        setSocialNaverLinked(memberProfile.socialNaverLinked);
-        if (memberProfile.profileImage) {
-            setProfileImageUrl(memberProfile.profileImage);
-        }
-    }, [memberProfile]);
+    const {
+        movieStoryTab,
+        setMovieStoryTab,
+        selectedTimelineYear,
+        setSelectedTimelineYear,
+        timelineYears,
+        timelineRows,
+        reviews,
+        reviewCount,
+        watchedCount,
+        allWatchedMovies,
+        showWatchedModal,
+        setShowWatchedModal,
+        watchedTicketCodeInput,
+        setWatchedTicketCodeInput,
+        showReviewModal,
+        setShowReviewModal,
+        showVerifyModal,
+        setShowVerifyModal,
+        reviewReservationNumberInput,
+        setReviewReservationNumberInput,
+        reviewMovieTitleInput,
+        setReviewMovieTitleInput,
+        reviewContentInput,
+        setReviewContentInput,
+        reviewMovieId,
+        setReviewMovieId,
+        scoreDirection,
+        setScoreDirection,
+        scoreStory,
+        setScoreStory,
+        scoreVisual,
+        setScoreVisual,
+        scoreActor,
+        setScoreActor,
+        scoreOst,
+        setScoreOst,
+        handleVerifyAndOpenReview,
+        handleReviewSubmit,
+        handleRegisterWatchedMovie,
+    } = useMovieStory({
+        memberId,
+        isLoggedIn,
+        reservations,
+    });
 
-    useEffect(() => {
-        const savedWatched = localStorage.getItem(`movie-story-watched-${memberId}`);
-        const savedPreferencesRaw = localStorage.getItem(`mypage-preferences-${memberId}`);
-        setWatchedMovies(savedWatched ? JSON.parse(savedWatched) : []);
+    const {
+        couponTab,
+        setCouponTab,
+        couponKindFilter,
+        setCouponKindFilter,
+        couponSourceFilter,
+        setCouponSourceFilter,
+        couponStatusFilter,
+        setCouponStatusFilter,
+        couponHiddenOnly,
+        setCouponHiddenOnly,
+        filteredCoupons,
+        applyCouponFilters,
+        showCouponRegisterModal,
+        couponRegisterCode,
+        setCouponRegisterCode,
+        couponRegistering,
+        couponRegisterError,
+        setCouponRegisterError,
+        selectedCoupon,
+        openCouponRegisterModal,
+        closeCouponRegisterModal,
+        openCouponInfoModal,
+        closeCouponInfoModal,
+        handleCouponRegister,
+        fetchDownloadableCouponsForCurrentTab,
+        downloadSelectedCouponsForCurrentTab,
+        formatCouponCodeForModal,
+    } = useCouponSection({
+        memberId,
+        couponItems,
+        loadCoupons,
+        load,
+    });
 
+    const {
+        profileSaving,
+        showPasswordChangeModal,
+        setShowPasswordChangeModal,
+        currentPasswordInput,
+        setCurrentPasswordInput,
+        newPasswordInput,
+        setNewPasswordInput,
+        newPasswordConfirmInput,
+        setNewPasswordConfirmInput,
+        passwordChanging,
+        profileName,
+        setProfileName,
+        profileTel,
+        setProfileTel,
+        profileEmail,
+        setProfileEmail,
+        profileBirthDate,
+        profileImageUrl,
+        setProfileImageUrl,
+        showPointPhoneModal,
+        pointPhoneNumber,
+        setPointPhoneNumber,
+        pointAuthCodeInput,
+        setPointAuthCodeInput,
+        pointAuthSending,
+        pointAuthVerifying,
+        openPointPhoneModal,
+        closePointPhoneModal,
+        sendPointPhoneAuthCode,
+        verifyPointPhoneAuthCode,
+        handleSaveProfile,
+        handlePhoneChange,
+        handlePasswordChange,
+    } = useProfileSection({
+        memberId,
+        memberProfile,
+        loadMemberProfile,
+    });
 
-        if (savedPreferencesRaw) {
-            try {
-                const savedPreferences = JSON.parse(savedPreferencesRaw);
-                setMarketingPolicyAgreed(Boolean(savedPreferences.marketingPolicyAgreed));
-                setMarketingEmailAgreed(Boolean(savedPreferences.marketingEmailAgreed));
-                setMarketingSmsAgreed(Boolean(savedPreferences.marketingSmsAgreed));
-                setMarketingPushAgreed(Boolean(savedPreferences.marketingPushAgreed));
-                const legacyPreferredCinemas = Array.isArray(savedPreferences.preferredCinemas)
-                    ? savedPreferences.preferredCinemas
-                    : [];
-                const firstLegacyTheater = legacyPreferredCinemas.find((value: unknown) => typeof value === "string" && value.trim()) ?? "";
-                setPreferredTheaterId(String(savedPreferences.preferredTheaterId ?? firstLegacyTheater ?? ""));
-                setSocialNaverLinked(Boolean(savedPreferences.socialNaverLinked));
-                setSocialKakaoLinked(Boolean(savedPreferences.socialKakaoLinked));
-                setSocialGoogleLinked(Boolean(savedPreferences.socialGoogleLinked));
-                setSavedPreferences({
-                    marketingPolicyAgreed: Boolean(savedPreferences.marketingPolicyAgreed),
-                    marketingEmailAgreed: Boolean(savedPreferences.marketingEmailAgreed),
-                    marketingSmsAgreed: Boolean(savedPreferences.marketingSmsAgreed),
-                    marketingPushAgreed: Boolean(savedPreferences.marketingPushAgreed),
-                    preferredTheaterId: String(savedPreferences.preferredTheaterId ?? firstLegacyTheater ?? ""),
-                    hasPointPassword:  Boolean(savedPreferences.hasPointPassword),
-                    socialNaverLinked: Boolean(savedPreferences.socialNaverLinked),
-                    socialKakaoLinked: Boolean(savedPreferences.socialKakaoLinked),
-                    socialGoogleLinked: Boolean(savedPreferences.socialGoogleLinked),
-                });
-            } catch {
-                setSavedPreferences({
-                    marketingPolicyAgreed: false,
-                    marketingEmailAgreed: false,
-                    marketingSmsAgreed: false,
-                    marketingPushAgreed: false,
-                    preferredTheaterId: "",
-                    hasPointPassword: false,
-                    socialNaverLinked: false,
-                    socialKakaoLinked: false,
-                    socialGoogleLinked: false
-                });
-            }
-        } else {
-            setSavedPreferences({
-                marketingPolicyAgreed: false,
-                marketingEmailAgreed: false,
-                marketingSmsAgreed: false,
-                marketingPushAgreed: false,
-                preferredTheaterId: "",
-                hasPointPassword: false,
-                socialNaverLinked: false,
-                socialKakaoLinked: false,
-                socialGoogleLinked: false
-            });
-        }
-    }, [memberId]);
+    const {
+        isCancelling,
+        showCancelModal,
+        cancelTargetId,
+        cancelReason,
+        setCancelReason,
+        setCancelTargetId,
+        setShowCancelModal,
+        reservationTab,
+        setReservationTab,
+        historyType,
+        setHistoryType,
+        selectedMonth,
+        setSelectedMonth,
+        setAppliedHistoryType,
+        setAppliedMonth,
+        purchaseSelectType,
+        setPurchaseSelectType,
+        purchaseStatusType,
+        setPurchaseStatusType,
+        purchaseRange,
+        purchaseFrom,
+        setPurchaseFrom,
+        purchaseTo,
+        setPurchaseTo,
+        setAppliedPurchaseSelectType,
+        setAppliedPurchaseStatusType,
+        setAppliedPurchaseFrom,
+        setAppliedPurchaseTo,
+        activeReservations,
+        cancelledReservations,
+        monthOptions,
+        visibleReservations,
+        purchaseRows,
+        recentPaidPurchases,
+        openCancelModal,
+        handleCancel,
+        applyPurchaseRange,
+    } = useReservationSection({
+        memberId,
+        guestId,
+        pageKey,
+        locationSearch: location.search,
+        reservations,
+        load,
+    });
 
-    useEffect(() => {
-        if (isLoggedIn && memberId) {
-            getMyReviews(memberId)
-                .then((data) => {
-                    // 백엔드에서 가져온 진짜 리뷰 리스트를 상태에 저장
-                    setReviews(data);
-                })
-                .catch((err) => {
-                    console.error("리뷰 목록 로드 실패", err);
-                });
-        }
-    }, [memberId, isLoggedIn]);
+    const {
+        showCardRegisterModal,
+        cardNumberInput,
+        setCardNumberInput,
+        cardCvcInput,
+        setCardCvcInput,
+        cardRegistering,
+        cardRegisterError,
+        setCardRegisterError,
+        openCardRegisterModal,
+        closeCardRegisterModal,
+        handleMembershipCardRegister,
+    } = useMembershipSection({
+        memberId,
+        loadMembershipCards,
+    });
 
-    useEffect(() => {
-        if (!preferredTheaterId) {
-            setPreferredTheaterName("");
-            return;
-        }
+    const {
+        showVoucherRegisterModal,
+        voucherRegisterCode,
+        setVoucherRegisterCode,
+        voucherRegisterError,
+        setVoucherRegisterError,
+        voucherRegistering,
+        openVoucherRegisterModal,
+        closeVoucherRegisterModal,
+        handleVoucherRegister,
+    } = useVoucherSection({
+        memberId,
+        loadVouchers,
+    });
 
-        let mounted = true;
-        ticketingApi
-            .getTheaters()
-            .then((response) => {
-                if (!mounted) return;
-                const target = (response.data ?? []).find(
-                    (theater) => String(theater.id) === String(preferredTheaterId)
-                );
-                setPreferredTheaterName(target?.name ?? "");
-            })
-            .catch(() => {
-                if (!mounted) return;
-                setPreferredTheaterName("");
-            });
+    const {
+        socialNaverLinked,
+        setSocialNaverLinked,
+        socialKakaoLinked,
+        setSocialKakaoLinked,
+        socialGoogleLinked,
+        setSocialGoogleLinked,
+        toggleSocialLink,
+    } = useSocialLinking({
+        memberProfile,
+        loadMemberProfile,
+    });
 
-        return () => {
-            mounted = false;
-        };
-    }, [preferredTheaterId]);
-
-    useEffect(() => {
-        if (pageKey !== "dashboard") return;
-        if (memberId <= 0) {
-            setAvailableMovieVoucherCount(0);
-            setAvailableCouponCount(0);
-            return;
-        }
-
-        let mounted = true;
-        Promise.all([
-            getMyVouchers(memberId, "MOVIE", "AVAILABLE"),
-            getMyCoupons(memberId),
-        ])
-            .then(([movieRows, couponRows]) => {
-                if (!mounted) return;
-                setAvailableMovieVoucherCount(movieRows.length);
-                setAvailableCouponCount(
-                    couponRows.filter((coupon) => String(coupon.status).toUpperCase() === "AVAILABLE").length
-                );
-            })
-            .catch(() => {
-                if (!mounted) return;
-                setAvailableMovieVoucherCount(0);
-                setAvailableCouponCount(0);
-            });
-
-        return () => {
-            mounted = false;
-        };
-    }, [pageKey, memberId]);
-
-    useEffect(() => {
-        localStorage.setItem(`movie-story-watched-${memberId}`, JSON.stringify(watchedMovies));
-    }, [memberId, watchedMovies]);
+    const {
+        marketingPolicyAgreed,
+        setMarketingPolicyAgreed,
+        marketingEmailAgreed,
+        setMarketingEmailAgreed,
+        marketingSmsAgreed,
+        setMarketingSmsAgreed,
+        marketingPushAgreed,
+        setMarketingPushAgreed,
+        preferredTheaterId,
+        setPreferredTheaterId,
+        preferredTheaterName,
+        availableMovieVoucherCount,
+        availableCouponCount,
+        resetPreferences,
+        submitPreferences,
+    } = usePreferencesSection({
+        memberId,
+        pageKey,
+        hasPointPassword,
+        socialNaverLinked,
+        setSocialNaverLinked,
+        socialKakaoLinked,
+        setSocialKakaoLinked,
+        socialGoogleLinked,
+        setSocialGoogleLinked,
+    });
 
     const handleRemoveWishMovie = async (movieId: number) => {
         try {
@@ -391,38 +372,9 @@ export default function MyPage() {
         }
     };
 
-    const handleCancel = async (reservationId: number, reason: string) => {
-        setIsCancelling(reservationId);
-        try {
-            await cancelReservation(
-                {
-                    memberId: memberId > 0 ? memberId : undefined,
-                    guestId: guestId > 0 ? guestId : undefined,
-                },
-                reservationId,
-                reason.trim() || "사용자 요청 취소"
-            );
-            await load();
-            setShowCancelModal(false);
-            setCancelTargetId(null);
-            setCancelReason("");
-            alert("환불(취소) 처리가 완료되었습니다.");
-        } catch (error: any) {
-            alert(error?.message ?? "환불 처리 중 오류가 발생했습니다.");
-        } finally {
-            setIsCancelling(null);
-        }
-    };
-
     const moveMenu = (path: string) => {
         navigate(`${path}${location.search || ""}`);
     };
-
-    useEffect(() => {
-        if (pageKey !== "reservations") return;
-        const tab = new URLSearchParams(location.search).get("tab");
-        setReservationTab(tab === "purchase" ? "purchase" : "reservation");
-    }, [pageKey, location.search]);
 
     useEffect(() => {
         if (pageKey !== "movie-story") return;
@@ -441,797 +393,13 @@ export default function MyPage() {
         }
     }, [guestId, isGuestReservationOnly, location.pathname, navigate]);
 
-    useEffect(() => {
-        // 1단계 검증창이 닫혔고('AND'), 2단계 리뷰창도 닫혀있을 때만 리셋
-        // 이렇게 하면 1단계 -> 2단계로 넘어가는 "사이"에는 데이터가 유지
-        if (!showVerifyModal && !showReviewModal) {
-            setReviewReservationNumberInput("");
-            setReviewMovieId(null);
-            setReviewMovieTitleInput("");
-            
-            // 점수 초기화
-            setScoreDirection(10); 
-            setScoreStory(10); 
-            setScoreVisual(10); 
-            setScoreActor(10); 
-            setScoreOst(10);
-        }
-    }, [showVerifyModal, showReviewModal]);
-
-    const openCancelModal = (reservationId: number) => {
-        setCancelTargetId(reservationId);
-        setCancelReason("");
-        setShowCancelModal(true);
-    };
-
-    const openVoucherRegisterModal = () => {
-        setVoucherRegisterCode("");
-        setVoucherRegisterError("");
-        setShowVoucherRegisterModal(true);
-    };
-
-    const closeVoucherRegisterModal = () => {
-        setShowVoucherRegisterModal(false);
-        setVoucherRegisterCode("");
-        setVoucherRegisterError("");
-    };
-
-    const handleVerifyAndOpenReview = async () => {
-        const resNum = reviewReservationNumberInput.trim();
-        
-        if (!resNum) {
-            alert("예매 번호를 입력해주세요.");
-            return;
-        }
-
-        try {
-            // 1단계: 예매 번호 자체가 유효한지 확인 (기존 API)
-            const response = await axios.get(`http://localhost:8080/api/reservations/verify/${resNum}`);
-            
-            // 2단계: 해당 번호로 이미 리뷰를 썼는지 확인 (새로 만든 중복 체크 API)
-            // 이 API는 이미 리뷰가 있으면 400 에러와 함께 "이미 작성된 리뷰입니다"를 던집니다.
-            await axios.get(`http://localhost:8080/api/reviews/check-availability/${resNum}`);
-            
-           //  데이터 세팅을 먼저 하고
-            setReviewMovieId(response.data.movieId);
-            setReviewMovieTitleInput(response.data.movieTitle);
-            
-            // 그 다음에 모달을 전환
-            setShowVerifyModal(false);
-            setShowReviewModal(true);
-
-        } catch (error: any) {
-            // 에러 처리 (이미 썼거나, 번호가 틀렸을 때)
-            const errorMessage = error.response?.data?.error || "유효하지 않은 예매 번호입니다. 번호를 확인해주세요.";
-            
-            alert(errorMessage);      // 1. 에러 알림창 띄우기
-            setShowVerifyModal(false); // 2. 확인 누르면 검증 모달 닫기
-        }
-    };
-
-    const handleResNumberChange = (value: string) => {
-        // 영문, 숫자, 하이픈만 허용하도록 필터링
-        const filteredValue = value.replace(/[^A-Za-z0-9-]/g, "").toUpperCase();
-        setReviewReservationNumberInput(filteredValue);
-    };
-
-    const handleReviewSubmit = async () => {
-        if (!reviewContentInput.trim()) {
-            alert("관람평 내용을 입력해 주세요.");
-            return;
-        }
-
-        try {
-            const reviewData = {
-                memberId: memberId,
-                movieId: reviewMovieId,
-                reservationNumber: reviewReservationNumberInput,
-                content: reviewContentInput.trim(),
-                // 하드코딩된 10 대신 State 값을 실어 보냄
-                scoreDirection,
-                scoreStory,
-                scoreVisual,
-                scoreActor,
-                scoreOst
-            };
-
-            await axios.post('/api/reviews', reviewData);
-
-            alert("관람평이 성공적으로 등록되었습니다!");
-            
-            setShowReviewModal(false);
-            // 초기화
-            setReviewContentInput("");
-            setScoreDirection(10); setScoreStory(10); setScoreVisual(10); setScoreActor(10); setScoreOst(10);
-            
-            const updatedReviews = await getMyReviews(memberId);
-            setReviews(updatedReviews);
-        } catch (error: any) {
-            alert(error.response?.data?.message || "리뷰 등록 실패");
-        }
-    };
-
-    const handleVoucherRegister = () => {
-        const digits = voucherRegisterCode.replace(/\D/g, "");
-        const valid = digits.length === 12 || digits.length === 16;
-
-        if (!valid) {
-            setVoucherRegisterError("영화관람권 번호는 12자리 또는 16자리 숫자만 가능합니다.");
-            return;
-        }
-
-        setVoucherRegisterError("");
-        setVoucherRegistering(true);
-        registerVoucher({
-            memberId,
-            voucherType: "MOVIE",
-            code: digits,
-        })
-            .then(async (response) => {
-                await loadVouchers();
-                alert(response.message || "등록이 완료되었습니다.");
-                closeVoucherRegisterModal();
-            })
-            .catch((error: any) => {
-                setVoucherRegisterError(error?.message ?? "등록 처리 중 오류가 발생했습니다.");
-            })
-            .finally(() => {
-                setVoucherRegistering(false);
-            });
-    };
-
-    const filteredCoupons = useMemo(() => {
-        return filterCoupons(couponItems, {
-            tab: couponTab,
-            kind: appliedCouponKindFilter,
-            source: appliedCouponSourceFilter,
-            status: appliedCouponStatusFilter,
-            hiddenOnly: appliedCouponHiddenOnly,
-        });
-    }, [couponItems, couponTab, appliedCouponKindFilter, appliedCouponStatusFilter, appliedCouponSourceFilter, appliedCouponHiddenOnly]);
-
-    const applyCouponFilters = () => {
-        setAppliedCouponKindFilter(couponKindFilter);
-        setAppliedCouponSourceFilter(couponSourceFilter);
-        setAppliedCouponStatusFilter(couponStatusFilter);
-        setAppliedCouponHiddenOnly(couponHiddenOnly);
-    };
-
-    const openCouponRegisterModal = () => {
-        setCouponRegisterCode("");
-        setCouponRegisterError("");
-        setShowCouponRegisterModal(true);
-    };
-
-    const closeCouponRegisterModal = () => {
-        setShowCouponRegisterModal(false);
-        setCouponRegisterCode("");
-        setCouponRegisterError("");
-    };
-
-    const openCouponInfoModal = (coupon: MyCouponItem) => {
-        setSelectedCoupon(coupon);
-    };
-
-    const closeCouponInfoModal = () => {
-        setSelectedCoupon(null);
-    };
-
-    const handleCouponRegister = async () => {
-        if (!couponRegisterCode.trim()) {
-            setCouponRegisterError("쿠폰 번호를 입력해 주세요.");
-            return;
-        }
-        setCouponRegistering(true);
-        setCouponRegisterError("");
-        try {
-            await redeemCoupon(memberId, couponRegisterCode);
-            await Promise.all([loadCoupons(), load()]);
-            closeCouponRegisterModal();
-            alert("할인쿠폰 등록이 완료되었습니다.");
-        } catch (error: any) {
-            setCouponRegisterError(error?.message ?? "쿠폰 등록에 실패했습니다.");
-        } finally {
-            setCouponRegistering(false);
-        }
-    };
-
-    const fetchDownloadableCouponsForCurrentTab = async () => {
-        if (memberId <= 0) {
-            throw new Error("회원 로그인 후 이용해 주세요.");
-        }
-        const sourceType = couponTab === "partner" ? "PARTNER" : "KINO";
-        const result = await getDownloadableCoupons(memberId, sourceType);
-        return result.coupons ?? [];
-    };
-
-    const downloadSelectedCouponsForCurrentTab = async (couponIds: number[]) => {
-        if (memberId <= 0) {
-            throw new Error("회원 로그인 후 이용해 주세요.");
-        }
-        const sourceType = couponTab === "partner" ? "PARTNER" : "KINO";
-        const result = await downloadSelectedCoupons(memberId, sourceType, couponIds);
-        await Promise.all([loadCoupons(), load()]);
-        return result;
-    };
-
-    const openCardRegisterModal = () => {
-        setCardNumberInput("");
-        setCardCvcInput("");
-        setCardRegisterError("");
-        setShowCardRegisterModal(true);
-    };
-
-    const closeCardRegisterModal = () => {
-        setShowCardRegisterModal(false);
-        setCardNumberInput("");
-        setCardCvcInput("");
-        setCardRegisterError("");
-    };
-
-    const handleMembershipCardRegister = async () => {
-        const cardNumber = cardNumberInput.replace(/\D/g, "");
-        const cvc = cardCvcInput.replace(/\D/g, "");
-
-        if (cardNumber.length < 12 || cardNumber.length > 19) {
-            setCardRegisterError("카드번호는 12~19자리 숫자만 가능합니다.");
-            return;
-        }
-        if (cvc.length < 3 || cvc.length > 4) {
-            setCardRegisterError("CVC 번호는 3~4자리 숫자만 가능합니다.");
-            return;
-        }
-
-        setCardRegistering(true);
-        setCardRegisterError("");
-        try {
-            const response = await registerMembershipCard({
-                memberId,
-                cardNumber,
-                cvc,
-            });
-            await loadMembershipCards();
-            closeCardRegisterModal();
-            alert(response.message || "멤버십 카드가 등록되었습니다.");
-        } catch (error: any) {
-            setCardRegisterError(error?.message ?? "멤버십 카드 등록에 실패했습니다.");
-        } finally {
-            setCardRegistering(false);
-        }
-    };
-
-    const formatCouponCodeForModal = (code: string) => {
-        const normalized = (code ?? "").trim();
-        return normalized || "-";
-    };
-
-    const { active: activeReservations, cancelled: cancelledReservations } = splitReservations(reservations);
     const crumbs = breadcrumbLabels(pageKey);
-    const reservationWatchedMovies = useMemo(() => {
-        return reservations
-            .filter((item) => item.paymentStatus !== "CANCELLED")
-            .map((item) => ({
-                id: `r-${item.reservationId}`,
-                movieTitle: item.movieTitle,
-                watchedAt: item.startTime,
-                theaterName: item.theaterName,
-                screenName: item.screenName,
-            }));
-    }, [reservations]);
-
-    const allWatchedMovies = useMemo(() => {
-        const manualRows = watchedMovies.map((item) => ({
-            id: item.id,
-            movieTitle: item.movieTitle,
-            watchedAt: item.watchedAt,
-            theaterName: "직접 등록",
-            screenName: "-",
-        }));
-        return [...reservationWatchedMovies, ...manualRows].sort(
-            (a, b) => new Date(b.watchedAt).getTime() - new Date(a.watchedAt).getTime()
-        );
-    }, [reservationWatchedMovies, watchedMovies]);
-
-    const timelineYears = useMemo(() => {
-        const years = Array.from(
-            new Set(allWatchedMovies.map((item) => new Date(item.watchedAt).getFullYear()))
-        ).filter((v) => !Number.isNaN(v));
-        if (years.length === 0) {
-            const nowYear = new Date().getFullYear();
-            return [nowYear - 1, nowYear];
-        }
-        return years.sort((a, b) => a - b);
-    }, [allWatchedMovies]);
-
-    useEffect(() => {
-        if (!timelineYears.includes(selectedTimelineYear)) {
-            setSelectedTimelineYear(timelineYears[timelineYears.length - 1]);
-        }
-    }, [timelineYears, selectedTimelineYear]);
-
-    const timelineRows = useMemo(
-        () => allWatchedMovies.filter((item) => new Date(item.watchedAt).getFullYear() === selectedTimelineYear),
-        [allWatchedMovies, selectedTimelineYear]
-    );
-
-    const watchedCount = allWatchedMovies.length;
-    const reviewCount = reviews.length;
     const wishCount = wishMovies.length;
-    const monthOptions = useMemo(() => {
-        const base = historyType === "past" ? reservations : activeReservations;
-        const keys = Array.from(new Set(base.map((item) => toMonthKey(item.startTime))));
-        keys.sort((a, b) => b.localeCompare(a));
-        return keys;
-    }, [historyType, reservations, activeReservations]);
-
-    useEffect(() => {
-        if (monthOptions.length === 0) {
-            setSelectedMonth("");
-            setAppliedMonth("");
-            return;
-        }
-        const fallback = monthOptions[0];
-        if (!selectedMonth) setSelectedMonth(fallback);
-        if (!appliedMonth) setAppliedMonth(fallback);
-    }, [monthOptions, selectedMonth, appliedMonth]);
-
-    const visibleReservations = useMemo(() => {
-        const now = Date.now();
-        return activeReservations.filter((item) => {
-            const start = new Date(item.startTime).getTime();
-            const historyMatched =
-                appliedHistoryType === "current" ? start >= now : start < now;
-            const monthMatched =
-                appliedHistoryType === "current"
-                    ? true
-                    : (!appliedMonth || toMonthKey(item.startTime) === appliedMonth);
-            return historyMatched && monthMatched;
-        });
-    }, [activeReservations, appliedHistoryType, appliedMonth]);
-
-    const purchaseRows = useMemo(
-        () =>
-            toPurchaseRows(reservations, {
-                selectType: appliedPurchaseSelectType,
-                statusType: appliedPurchaseStatusType,
-                from: appliedPurchaseFrom,
-                to: appliedPurchaseTo,
-            }),
-        [reservations, appliedPurchaseSelectType, appliedPurchaseStatusType, appliedPurchaseFrom, appliedPurchaseTo]
-    );
-
-    const recentPaidPurchases = useMemo(
-        () =>
-            reservations
-                .filter((item) => String(item.paymentStatus).toUpperCase() === "PAID")
-                .sort(
-                    (a, b) =>
-                        new Date(b.paidAt ?? b.startTime).getTime() - new Date(a.paidAt ?? a.startTime).getTime()
-                )
-                .slice(0, 2),
-        [reservations]
-    );
-
-    const applyPurchaseRange = (range: "week" | "month1" | "month3" | "month6") => {
-        setPurchaseRange(range);
-        const to = new Date();
-        const from = new Date(to);
-        if (range === "week") from.setDate(to.getDate() - 7);
-        if (range === "month1") from.setMonth(to.getMonth() - 1);
-        if (range === "month3") from.setMonth(to.getMonth() - 3);
-        if (range === "month6") from.setMonth(to.getMonth() - 6);
-        setPurchaseFrom(formatYmd(from.toISOString()));
-        setPurchaseTo(formatYmd(to.toISOString()));
-    };
-
-    const applyPointRange = (range: "week" | "month1" | "month3" | "month6") => {
-        setPointRange(range);
-        const to = new Date();
-        const from = new Date(to);
-        if (range === "week") from.setDate(to.getDate() - 7);
-        if (range === "month1") from.setMonth(to.getMonth() - 1);
-        if (range === "month3") from.setMonth(to.getMonth() - 3);
-        if (range === "month6") from.setMonth(to.getMonth() - 6);
-        setPointFrom(formatYmd(from.toISOString()));
-        setPointTo(formatYmd(to.toISOString()));
-    };
-
-    const openPointPhoneModal = () => {
-        setPointPhoneNumber("");
-        setPointAuthCodeInput("");
-        setShowPointPhoneModal(true);
-    };
-
-    const closePointPhoneModal = () => {
-        setShowPointPhoneModal(false);
-        setPointPhoneNumber("");
-        setPointAuthCodeInput("");
-    };
-
-    const sendPointPhoneAuthCode = async () => {
-        const phoneDigits = pointPhoneNumber.replace(/\D/g, "");
-        if (!/^01\d{8,9}$/.test(phoneDigits)) {
-            alert("휴대폰 번호를 올바르게 입력해 주세요. (예: 01012345678)");
-            return;
-        }
-        setPointAuthSending(true);
-        try {
-            const response = await sendPointPasswordSms(memberId, phoneDigits);
-            alert(response?.message ?? "인증번호가 발송되었습니다.");
-        } catch (error: any) {
-            alert(error?.message ?? "인증번호 발송에 실패했습니다.");
-        } finally {
-            setPointAuthSending(false);
-        }
-    };
-
-    const verifyPointPhoneAuthCode = async () => {
-        const phoneDigits = pointPhoneNumber.replace(/\D/g, "");
-        const codeDigits = pointAuthCodeInput.replace(/\D/g, "");
-        if (!/^01\d{8,9}$/.test(phoneDigits)) {
-            alert("휴대폰 번호를 올바르게 입력해 주세요.");
-            return;
-        }
-        if (codeDigits.length !== 6) {
-            alert("인증번호 6자리를 입력해 주세요.");
-            return;
-        }
-        setPointAuthVerifying(true);
-        try {
-            const response = await verifyPointPasswordSms(memberId, phoneDigits, codeDigits);
-            closePointPhoneModal();
-            navigate(`/mypage/point-password?memberId=${memberId}&verifyToken=${encodeURIComponent(response.verificationToken)}`);
-        } catch (error: any) {
-            alert(error?.message ?? "휴대폰 인증에 실패했습니다.");
-        } finally {
-            setPointAuthVerifying(false);
-        }
-    };
-
-    const submitPointPassword = async () => {
-        const newPassword = pointPasswordInput.replace(/\D/g, "");
-        const confirmPassword = pointPasswordConfirmInput.replace(/\D/g, "");
-        if (!verificationToken) {
-            alert("휴대폰 인증 정보가 없습니다. 다시 인증해 주세요.");
-            navigate(`/mypage/points?memberId=${memberId}`);
-            return;
-        }
-        try {
-            const response = await updatePointPassword(memberId, verificationToken, newPassword, confirmPassword);
-            alert(response?.message ?? "포인트 비밀번호가 설정되었습니다.");
-            navigate(`/mypage/points?memberId=${memberId}`);
-        } catch (error: any) {
-            alert(error?.message ?? "포인트 비밀번호 설정에 실패했습니다.");
-        }
-    };
-
-    const handleSaveProfile = async () => {
-        if (!profileName.trim()) {
-            alert("이름을 입력해 주세요.");
-            return;
-        }
-        setProfileSaving(true);
-        try {
-            const response = await updateMemberProfile({
-                memberId,
-                name: profileName.trim(),
-                tel: profileTel.trim(),
-                email: profileEmail.trim(),
-                birthDate: profileBirthDate || undefined,
-                profileImage: profileImageUrl,
-                pointPasswordUsing: false,
-            });
-            alert(response?.message ?? "개인정보가 수정되었습니다.");
-            await loadMemberProfile();
-        } catch (error: any) {
-            alert(error?.message ?? "개인정보 수정에 실패했습니다.");
-        } finally {
-            setProfileSaving(false);
-        }
-    };
-
-    const handlePhoneChange = async () => {
-        const digits = profileTel.replace(/\D/g, "");
-        if (!/^01\d{8,9}$/.test(digits)) {
-            alert("휴대폰 번호 형식을 확인해 주세요. (예: 01012345678)");
-            return;
-        }
-        setProfileTel(digits);
-        await handleSaveProfile();
-    };
-
-    const handlePasswordChange = async () => {
-        if (!currentPasswordInput.trim()) {
-            alert("현재 비밀번호를 입력해 주세요.");
-            return;
-        }
-        if (newPasswordInput.length < 8) {
-            alert("새 비밀번호는 8자리 이상 입력해 주세요.");
-            return;
-        }
-        if (newPasswordInput !== newPasswordConfirmInput) {
-            alert("새 비밀번호와 확인 비밀번호가 일치하지 않습니다.");
-            return;
-        }
-        setPasswordChanging(true);
-        try {
-            const response = await updateMemberPassword({
-                memberId,
-                currentPassword: currentPasswordInput,
-                newPassword: newPasswordInput,
-                confirmPassword: newPasswordConfirmInput,
-            });
-            alert(response?.message ?? "비밀번호가 변경되었습니다.");
-            setShowPasswordChangeModal(false);
-            setCurrentPasswordInput("");
-            setNewPasswordInput("");
-            setNewPasswordConfirmInput("");
-        } catch (error: any) {
-            alert(error?.message ?? "비밀번호 변경에 실패했습니다.");
-        } finally {
-            setPasswordChanging(false);
-        }
-    };
-
-    const toggleSocialLink = async (provider: "naver" | "kakao" | "google") => {
-        const isLinked = provider === "naver" ? socialNaverLinked : 
-                        provider === "kakao" ? socialKakaoLinked : socialGoogleLinked;
-        
-        const providerKoName = provider === "naver" ? "네이버" : provider === "kakao" ? "카카오" : "구글";
-
-        if (isLinked) {
-            if (!window.confirm(`${providerKoName} 계정 연동을 해제하시겠습니까?`)) return;
-            try {
-                await unlinkSocialAccountApi(provider.toUpperCase());
-                alert(`${providerKoName} 연동이 해제되었습니다.`);
-                await loadMemberProfile(); // 🔄 서버에서 최신 정보 다시 가져오기
-            } catch (error: any) {
-                alert(error.response?.data?.message || "해제 중 오류 발생");
-            }
-        } else {
-            try {
-                let authCode = "";
-                const authUrl = provider === "naver" ? NAVER_AUTH_URL : 
-                            provider === "kakao" ? KAKAO_AUTH_URL : GOOGLE_AUTH_URL;
-                
-                authCode = await openSocialPopup(provider.toUpperCase(), authUrl);
-                if (!authCode) return;
-
-                await linkSocialAccountApi(provider.toUpperCase(), authCode);
-                alert(`성공적으로 연동되었습니다!`);
-                await loadMemberProfile(); // 🔄 서버에서 최신 정보 다시 가져오기
-            } catch (error: any) {
-                alert(error.response?.data?.message || "연동 중 오류 발생");
-            }
-        }
-    };
-
-    const openSocialPopup = (provider: string, authUrl: string): Promise<string> => {
-
-        
-        return new Promise((resolve, reject) => {
-            // 1. 로그인 버튼 눌렀을 때 이동하던 그 URL을 팝업으로 띄웁니다.
-            const popup = window.open(authUrl, 'socialLoginPopup', 'width=500,height=600');
-
-            // 2. 콜백 페이지가 postMessage로 쏴줄 데이터를 듣고 있는 리스너
-            const messageListener = (event: MessageEvent) => {
-                if (event.origin !== window.location.origin) return;
-
-                // 🚨 1번 CCTV: 일단 뭐가 날아오긴 하는지 무조건 찍어보기!
-                console.log("👀 팝업에서 날아온 데이터 전체:", event.data);
-
-                if (event.data?.type === 'SOCIAL_LINK' && event.data?.provider?.toUpperCase() === provider.toUpperCase()) {
-                    // 🚨 2번 CCTV: 코드를 제대로 낚아챘는지 확인!
-                    console.log("✅ 성공적으로 받은 코드(Code):", event.data.code);
-                    
-                    resolve(event.data.code); 
-                    window.removeEventListener('message', messageListener);
-                }
-            };
-
-            window.addEventListener('message', messageListener);
-
-            // 3. 사용자가 로그인 안 하고 팝업을 그냥 X 눌러서 닫았을 때 무한 대기 방지
-            const timer = setInterval(() => {
-            if (popup?.closed) {
-                clearInterval(timer);
-                window.removeEventListener('message', messageListener);
-                reject(new Error("팝업이 닫혔습니다."));
-            }
-            }, 1000);
-        });
-    };
 
     
 
     const handlePayAgain = (reservationId: number) => {
         navigate(`/payment?reservationId=${reservationId}`);
-    };
-
-    const renderDashboard = () => {
-        const cardClass = "rounded-sm border border-black/5 bg-[#FDFDFD] p-5 shadow-xl";
-        const tierSteps = ["WELCOME", "FRIENDS", "VIP", "VVIP", "MVIP"] as const;
-        const currentTier = (summary?.pointTier ?? "WELCOME").toUpperCase();
-        const currentTierIndex = Math.max(0, tierSteps.indexOf(currentTier as (typeof tierSteps)[number]));
-        const nextTier = summary?.nextPointTier;
-        const pointsToNextTier = summary?.pointsToNextTier ?? 0;
-
-        return (
-            <>
-                <section className="overflow-hidden rounded-sm border border-black/5 bg-[#1A1A1A] text-white shadow-2xl">
-                    <div className="bg-[#1A1A1A] px-8 py-9">
-                        <div className="flex flex-col gap-8 lg:flex-row lg:items-center lg:justify-between">
-                            <div className="flex items-center gap-5">
-                                <div className="flex h-24 w-24 items-center justify-center overflow-hidden rounded-3xl bg-[#B91C1C] text-2xl font-bold text-white">
-                                    {/* 백엔드에서 내려주는 이름(profileImage)으로 정확히 매칭! */}
-                                    {summary?.profileImage && summary.profileImage !== "default" ? (
-                                        <img 
-                                            src={summary.profileImage} 
-                                            alt="profile" 
-                                            className="h-full w-full object-cover" 
-                                        />
-                                    ) : (
-                                        <div className="flex h-full w-full items-center justify-center text-xs text-white-600">K</div>
-                                    )}
-                                </div>
-                                <div>
-                                    <p className="text-[11px] font-bold uppercase tracking-[0.35em] text-[#B91C1C]">Kino Membership</p>
-                                    <h1 className="mt-3 text-4xl font-semibold leading-none tracking-tight">안녕하세요!</h1>
-                                    <p className="mt-3 font-display text-5xl font-semibold leading-none tracking-tight text-[#B91C1C]">{(summary?.availablePoints ?? 0).toLocaleString()} P</p>
-                                    <p className="mt-4 text-base font-semibold text-white/85">{summary?.memberName ?? "회원"}님</p>
-                                </div>
-                            </div>
-                            <div className="text-right">
-                                <p className="text-[11px] font-bold uppercase tracking-[0.22em] text-white/55">현재등급 <span className="font-semibold text-[#B91C1C]">{currentTier}</span></p>
-                                {nextTier ? (
-                                    <div className="mt-3 inline-block rounded-sm bg-[#B91C1C] px-4 py-2 text-sm font-semibold text-white">
-                                        다음 {nextTier} 등급까지 {pointsToNextTier.toLocaleString()} P 남았어요!
-                                    </div>
-                                ) : (
-                                    <div className="mt-3 inline-block rounded-sm bg-[#B91C1C] px-4 py-2 text-sm font-semibold text-white">
-                                        최고 등급을 달성했어요!
-                                    </div>
-                                )}
-                                <div className="mt-5 flex items-center justify-end gap-5 text-sm">
-                                    {tierSteps.map((label, index) => (
-                                        <div key={label} className="flex items-center gap-2 text-white/85">
-                                            <span className={`h-3 w-3 rounded-full ${index === currentTierIndex ? "bg-[#B91C1C]" : "bg-white"}`} />
-                                            <span>{label}</span>
-                                        </div>
-                                    ))}
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <div className="grid grid-cols-1 gap-0 border-t border-white/10 bg-[#FDFDFD] text-[#1A1A1A] lg:grid-cols-3">
-                        <button
-                            type="button"
-                            className="p-5 text-left transition-colors hover:bg-white"
-                            onClick={() => moveMenu("/mypage/points")}
-                        >
-                            <div className="mb-3 flex items-center justify-between text-base font-semibold text-[#B91C1C]">
-                                <span>포인트 이용내역</span>
-                                <ChevronRight className="h-5 w-5 text-black/25" />
-                            </div>
-                            <p className="text-sm text-black/65">적립예정 <span className="float-right font-semibold text-[#1A1A1A]">{(summary?.pendingPoints ?? 0).toLocaleString()} P</span></p>
-                            <p className="mt-2 text-sm text-black/65">당월소멸예정 <span className="float-right font-semibold text-[#1A1A1A]">{(summary?.expiringPointsThisMonth ?? 0).toLocaleString()} P</span></p>
-                        </button>
-                        <button
-                            type="button"
-                            className="p-5 text-left transition-colors hover:bg-white"
-                            onClick={() => moveMenu("/mypage/profile/preferences")}
-                        >
-                            <div className="mb-3 flex items-center justify-between text-base font-semibold text-[#B91C1C]">
-                                <span>선호하는 극장</span>
-                                <ChevronRight className="h-5 w-5 text-black/25" />
-                            </div>
-                            {preferredTheaterName ? (
-                                <p className="font-medium text-[#B91C1C]">{preferredTheaterName}</p>
-                            ) : (
-                                <>
-                                    <p className="font-medium text-[#B91C1C]">선호극장</p>
-                                    <p className="text-black/65">을 설정하세요.</p>
-                                </>
-                            )}
-                        </button>
-                        <button
-                            type="button"
-                            className="p-5 text-left transition-colors hover:bg-white"
-                            onClick={() => moveMenu("/mypage/vouchers/movie")}
-                        >
-                            <div className="mb-3 flex items-center justify-between text-base font-semibold text-[#B91C1C]">
-                                <span>관람권/쿠폰</span>
-                                <ChevronRight className="h-5 w-5 text-black/25" />
-                            </div>
-                            <p className="text-sm text-black/65">영화관람권 <span className="float-right font-semibold text-[#1A1A1A]">{availableMovieVoucherCount} 매</span></p>
-                            <p className="mt-2 text-sm text-black/65">할인/제휴쿠폰 <span className="float-right font-semibold text-[#1A1A1A]">{availableCouponCount} 매</span></p>
-                        </button>
-                    </div>
-                </section>
-
-                <section className="mt-6 grid grid-cols-1 gap-4">
-                    <div className={cardClass}>
-                        <div className="mb-5 flex items-center justify-between">
-                            <h3 className="text-2xl font-semibold tracking-tight text-[#B91C1C]">나의 무비스토리</h3>
-                            <button
-                                className="rounded-sm border border-black/10 px-4 py-2 text-[11px] font-bold uppercase tracking-[0.18em] text-[#1A1A1A] transition-colors hover:border-[#B91C1C] hover:text-[#B91C1C]"
-                                onClick={() => {
-                                    const params = new URLSearchParams(location.search);
-                                    params.set("movieTab", "watched");
-                                    navigate(`/mypage/movie-story?${params.toString()}`);
-                                }}
-                            >
-                                본 영화 등록
-                            </button>
-                        </div>
-                        <div className="grid grid-cols-3 text-center">
-                            <div>
-                                <p className="text-4xl font-semibold tracking-tight text-[#B91C1C]">{summary?.paidReservationCount ?? 0}</p>
-                                <p className="text-sm text-black/65">본 영화</p>
-                            </div>
-                            <div>
-                                <p className="text-4xl font-semibold tracking-tight text-[#B91C1C]">{summary?.reviewCount ?? 0}</p>
-                                <p className="text-sm text-black/65">관람평</p>
-                            </div>
-                            <div>
-                                <p className="text-4xl font-semibold tracking-tight text-[#B91C1C]">{summary?.likedMovieCount ?? 0}</p>
-                                <p className="text-sm text-black/65">보고싶어</p>
-                            </div>
-                        </div>
-                    </div>
-                </section>
-
-                <section className="mt-7 rounded-sm border border-black/5 bg-[#FDFDFD] p-5 shadow-xl">
-                    <div className="mb-2 flex items-center justify-between border-b border-black/10 pb-4">
-                        <h3 className="text-3xl font-semibold tracking-tight text-[#B91C1C]">나의 예매내역</h3>
-                        <button className="flex items-center gap-1 text-sm font-semibold uppercase tracking-[0.16em] text-black/45 transition-colors hover:text-[#B91C1C]" onClick={() => moveMenu("/mypage/reservations")}>더보기 <ChevronRight className="h-5 w-5" /></button>
-                    </div>
-                    {activeReservations.length === 0 ? <EmptyLine message="예매 내역이 없습니다." /> : (
-                        <div className="divide-y">
-                            {activeReservations.slice(0, 2).map((item) => (
-                                <div key={item.reservationId} className="flex flex-col gap-3 py-4 lg:flex-row lg:items-center lg:justify-between">
-                                    <div>
-                                        <p className="text-xl font-semibold tracking-tight text-[#1A1A1A]">{item.movieTitle}</p>
-                                        <p className="text-sm text-black/55">{item.theaterName} · {formatDateTime(item.startTime)} · 좌석 {item.seatNames.join(", ") || "-"}</p>
-                                    </div>
-                                    <p className="text-lg font-semibold text-[#1A1A1A]">{formatMoney(item.finalAmount)}</p>
-                                </div>
-                            ))}
-                        </div>
-                    )}
-                </section>
-
-                <section className="mt-7 rounded-sm border border-black/5 bg-[#FDFDFD] p-5 shadow-xl">
-                    <div className="mb-2 flex items-center justify-between border-b border-black/10 pb-4">
-                        <h3 className="text-3xl font-semibold tracking-tight text-[#B91C1C]">나의 구매내역</h3>
-                        <button
-                            className="flex items-center gap-1 text-sm font-semibold uppercase tracking-[0.16em] text-black/45 transition-colors hover:text-[#B91C1C]"
-                            onClick={() => {
-                                const params = new URLSearchParams(location.search);
-                                params.set("tab", "purchase");
-                                navigate(`/mypage/reservations?${params.toString()}`);
-                            }}
-                        >
-                            더보기 <ChevronRight className="h-5 w-5" />
-                        </button>
-                    </div>
-                    {recentPaidPurchases.length === 0 ? <EmptyLine message="구매내역이 없습니다." /> : (
-                        <div className="divide-y">
-                            {recentPaidPurchases.map((item) => (
-                                <div key={item.reservationId} className="flex flex-col gap-3 py-4 lg:flex-row lg:items-center lg:justify-between">
-                                    <div>
-                                        <p className="text-xl font-semibold tracking-tight text-[#1A1A1A]">{item.movieTitle}</p>
-                                        <p className="text-sm text-black/55">{item.theaterName} · 결제일시 {formatDateTime(item.paidAt ?? item.startTime)}</p>
-                                    </div>
-                                    <p className="text-lg font-semibold text-[#1A1A1A]">{formatMoney(item.finalAmount)}</p>
-                                </div>
-                            ))}
-                        </div>
-                    )}
-                </section>
-
-            </>
-        );
     };
 
     const renderReservations = () => (
@@ -1330,118 +498,6 @@ export default function MyPage() {
         />
     );
 
-    const renderPointPassword = () => (
-        <section>
-            <h1 className="text-4xl font-semibold text-[#000000]">포인트 비밀번호 설정</h1>
-            <p className="mt-5 text-xl text-[#000000]">· 키노 극장에서 멤버십 포인트를 사용하시려면 비밀번호가 필요합니다.</p>
-            <p className="text-xl text-[#000000]">· 사용하실 비밀번호 4자리를 입력해주세요.</p>
-
-            <div className="mt-6 overflow-hidden rounded-sm border border-gray-200 bg-[#ffffff]">
-                <div className="grid grid-cols-[220px_1fr] border-b border-gray-200">
-                    <div className="bg-[#fdf4e3] px-5 py-4 text-xl font-semibold text-[#000000]">새 비밀번호</div>
-                    <div className="px-5 py-3">
-                        <input
-                            type="password"
-                            maxLength={4}
-                            inputMode="numeric"
-                            value={pointPasswordInput}
-                            onChange={(e) => setPointPasswordInput(e.target.value.replace(/\D/g, ""))}
-                            className="h-12 w-[220px] border border-gray-200 px-3 text-lg outline-none focus:border-[#eb4d32]"
-                            placeholder="숫자 4자리"
-                        />
-                    </div>
-                </div>
-                <div className="grid grid-cols-[220px_1fr]">
-                    <div className="bg-[#fdf4e3] px-5 py-4 text-xl font-semibold text-[#000000]">새 비밀번호 재입력</div>
-                    <div className="px-5 py-3">
-                        <input
-                            type="password"
-                            maxLength={4}
-                            inputMode="numeric"
-                            value={pointPasswordConfirmInput}
-                            onChange={(e) => setPointPasswordConfirmInput(e.target.value.replace(/\D/g, ""))}
-                            className="h-12 w-[220px] border border-gray-200 px-3 text-lg outline-none focus:border-[#eb4d32]"
-                            placeholder="숫자 4자리"
-                        />
-                    </div>
-                </div>
-            </div>
-
-            <div className="mt-8 rounded-sm border border-gray-200 bg-[#ffffff] p-5 text-base text-[#000000]">
-                <p className="mb-2 text-2xl font-semibold">이용안내</p>
-                <p>· 비밀번호는 숫자 4자리로 설정 가능하며, 연속된 숫자는 등록하실 수 없습니다.</p>
-                <p>· 비밀번호 찾기는 불가하며, 해당 페이지를 통해 재설정 후 이용하실 수 있습니다.</p>
-                <p>· 키노 극장 매표소 및 매점에서 포인트 사용 시 비밀번호가 일치하지 않을 경우 사용이 제한되오니 주의하여 등록바랍니다.</p>
-            </div>
-
-            <div className="mt-8 flex justify-center gap-3">
-                <button
-                    className="rounded border border-[#eb4d32] px-10 py-3 text-lg font-semibold text-[#eb4d32]"
-                    onClick={() => navigate(`/mypage/points?memberId=${memberId}`)}
-                >
-                    취소
-                </button>
-                <button
-                    className="rounded bg-[#eb4d32] px-10 py-3 text-lg font-semibold text-[#ffffff]"
-                    onClick={submitPointPassword}
-                >
-                    수정
-                </button>
-            </div>
-        </section>
-    );
-
-    const renderCards = () => (
-        <section>
-            <div className="flex flex-wrap items-start justify-between gap-4">
-                <div>
-                    <h1 className="text-5xl font-semibold tracking-tight text-[#1A1A1A]">멤버십 카드관리</h1>
-                    <p className="mt-5 text-sm text-black/55">· 키노 계정에 등록된 멤버십 카드를 관리할 수 있습니다.</p>
-                </div>
-                <button
-                    className="rounded-sm border border-[#B91C1C] bg-white px-5 py-3 text-[11px] font-bold uppercase tracking-[0.18em] text-[#B91C1C] transition-colors hover:bg-[#B91C1C] hover:text-white"
-                    onClick={openCardRegisterModal}
-                >
-                    멤버십 카드 등록
-                </button>
-            </div>
-
-            <div className="mt-6 overflow-hidden rounded-sm border border-black/5 bg-white shadow-xl">
-                <div className="grid grid-cols-5 border-b border-black/5 bg-[#FDFDFD] px-4 py-4 text-center text-[11px] font-bold uppercase tracking-[0.18em] text-black/35">
-                    <span>구분</span>
-                    <span>카드번호</span>
-                    <span>카드명</span>
-                    <span>발급처</span>
-                    <span>발급일</span>
-                </div>
-                {membershipCardLoading ? (
-                    <div className="border-t border-black/5 px-4 py-8 text-center text-sm text-black/45">불러오는 중...</div>
-                ) : membershipCards.length === 0 ? (
-                    <div className="border-t border-black/5 px-4 py-8 text-center text-sm text-black/45">등록된 멤버십 카드가 없습니다.</div>
-                ) : (
-                    membershipCards.map((card) => (
-                        <div key={card.cardId} className="grid grid-cols-5 border-t border-black/5 px-4 py-4 text-center text-sm text-[#1A1A1A]">
-                            <span>{card.channelName}</span>
-                            <span>{card.cardNumber}</span>
-                            <span>{card.cardName}</span>
-                            <span>{card.issuerName}</span>
-                            <span>{formatDateDot(card.issuedDate)}</span>
-                        </div>
-                    ))
-                )}
-            </div>
-
-            <div className="mt-8 rounded-sm border border-black/5 bg-[#FDFDFD] shadow-xl">
-                <div className="border-b border-black/5 bg-[#FDFDFD] px-4 py-4 text-[11px] font-bold uppercase tracking-[0.18em] text-black/35">이용안내</div>
-                <div className="p-4 text-base text-black/55">
-                    <p>· 앞 혹은 뒷면의 카드 번호와 CVC코드가 있는 카드로만 온라인 등록이 가능합니다.</p>
-                    <p>· 등록된 멤버십 카드는 온라인 및 극장에서 사용하실 수 있습니다.</p>
-                    <p>· 한 번 삭제하신 카드번호는 재등록이 불가합니다.</p>
-                </div>
-            </div>
-        </section>
-    );
-
     const renderProfile = () => (
         <ProfileSection
             profileImageUrl={profileImageUrl}
@@ -1482,48 +538,8 @@ export default function MyPage() {
             setMarketingPushAgreed={setMarketingPushAgreed}
             preferredTheaterId={preferredTheaterId}
             setPreferredTheaterId={setPreferredTheaterId}
-            onReset={() => {
-                const snapshot = savedPreferences ?? {
-                    marketingPolicyAgreed: false,
-                    marketingEmailAgreed: false,
-                    marketingSmsAgreed: false,
-                    marketingPushAgreed: false,
-                    preferredTheaterId: "",
-                    socialNaverLinked: false,
-                    socialKakaoLinked: false,
-                    socialGoogleLinked: false
-                };
-                setMarketingPolicyAgreed(snapshot.marketingPolicyAgreed);
-                setMarketingEmailAgreed(snapshot.marketingEmailAgreed);
-                setMarketingSmsAgreed(snapshot.marketingSmsAgreed);
-                setMarketingPushAgreed(snapshot.marketingPushAgreed);
-                setPreferredTheaterId(snapshot.preferredTheaterId);
-                setSocialNaverLinked(snapshot.socialNaverLinked);
-                setSocialKakaoLinked(snapshot.socialKakaoLinked);
-            }}
-            onSubmit={() => {
-                const nextSnapshot: PreferenceSnapshot = {
-                    marketingPolicyAgreed,
-                    marketingEmailAgreed,
-                    marketingSmsAgreed,
-                    marketingPushAgreed,
-                    preferredTheaterId,
-                    hasPointPassword,
-                    socialNaverLinked,
-                    socialKakaoLinked,
-                    socialGoogleLinked
-                };
-                setSavedPreferences(nextSnapshot);
-                localStorage.setItem(
-                    `mypage-preferences-${memberId}`,
-                    JSON.stringify({
-                        ...nextSnapshot,
-                        // Legacy compatibility for previously array-based format.
-                        preferredCinemas: nextSnapshot.preferredTheaterId ? [nextSnapshot.preferredTheaterId] : [],
-                    })
-                );
-                alert("선호정보가 저장되었습니다.");
-            }}
+            onReset={resetPreferences}
+            onSubmit={submitPreferences}
         />
     );
 
@@ -1551,17 +567,61 @@ export default function MyPage() {
 
     const renderContent = () => {
         if (isGuestReservationOnly) return renderReservations();
-        if (pageKey === "dashboard") return renderDashboard();
+        if (pageKey === "dashboard") return (
+            <DashboardSection
+                summary={summary}
+                preferredTheaterName={preferredTheaterName}
+                availableMovieVoucherCount={availableMovieVoucherCount}
+                availableCouponCount={availableCouponCount}
+                activeReservations={activeReservations}
+                recentPaidPurchases={recentPaidPurchases}
+                locationSearch={location.search}
+                moveMenu={moveMenu}
+                navigate={navigate}
+                formatDateTime={formatDateTime}
+                formatMoney={formatMoney}
+            />
+        );
         if (pageKey === "reservations") return renderReservations();
         if (pageKey === "vouchers-movie") return renderVouchers();
         if (pageKey === "coupons") return renderCoupons();
         if (pageKey === "points") return renderPoints();
-        if (pageKey === "point-password") return renderPointPassword();
-        if (pageKey === "cards") return renderCards();
+        if (pageKey === "point-password") return (
+            <PointPasswordSection
+                pointPasswordInput={pointPasswordInput}
+                setPointPasswordInput={setPointPasswordInput}
+                pointPasswordConfirmInput={pointPasswordConfirmInput}
+                setPointPasswordConfirmInput={setPointPasswordConfirmInput}
+                onCancel={() => navigate(`/mypage/points?memberId=${memberId}`)}
+                submitPointPassword={submitPointPassword}
+            />
+        );
+        if (pageKey === "cards") return (
+            <MembershipCardsSection
+                openCardRegisterModal={openCardRegisterModal}
+                membershipCardLoading={membershipCardLoading}
+                membershipCards={membershipCards}
+                formatDateDot={formatDateDot}
+            />
+        );
         if (pageKey === "profile") return renderProfile();
         if (pageKey === "profile-preferences") return renderProfilePreferences();
         if (pageKey === "movie-story") return renderMovieStory();
-        return renderDashboard();
+        return (
+            <DashboardSection
+                summary={summary}
+                preferredTheaterName={preferredTheaterName}
+                availableMovieVoucherCount={availableMovieVoucherCount}
+                availableCouponCount={availableCouponCount}
+                activeReservations={activeReservations}
+                recentPaidPurchases={recentPaidPurchases}
+                locationSearch={location.search}
+                moveMenu={moveMenu}
+                navigate={navigate}
+                formatDateTime={formatDateTime}
+                formatMoney={formatMoney}
+            />
+        );
     };
 
     return (
@@ -1631,8 +691,7 @@ export default function MyPage() {
                 setShowWatchedModal={setShowWatchedModal}
                 watchedTicketCodeInput={watchedTicketCodeInput}
                 setWatchedTicketCodeInput={setWatchedTicketCodeInput}
-                reservations={reservations}
-                setWatchedMovies={setWatchedMovies}
+                handleRegisterWatchedMovie={handleRegisterWatchedMovie}
 
                 showVerifyModal={showVerifyModal} 
                 setShowVerifyModal={setShowVerifyModal}
@@ -1652,7 +711,6 @@ export default function MyPage() {
                 scoreOst={scoreOst} setScoreOst={setScoreOst}
                 handleReviewSubmit={handleReviewSubmit}
 
-                setReviews={setReviews}
                 showCardRegisterModal={showCardRegisterModal}
                 closeCardRegisterModal={closeCardRegisterModal}
                 cardNumberInput={cardNumberInput}
