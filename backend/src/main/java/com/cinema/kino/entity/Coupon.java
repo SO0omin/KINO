@@ -1,6 +1,7 @@
 package com.cinema.kino.entity;
 
 import com.cinema.kino.entity.enums.DiscountType;
+import com.cinema.kino.entity.enums.CouponSourceType;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
@@ -44,5 +45,27 @@ public class Coupon {
 
     @Column(name = "code", nullable = false, unique = true, length = 50)
     private String code;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "source_type", length = 20)
+    @Builder.Default
+    private CouponSourceType sourceType = CouponSourceType.KINO;
+
+    @Column(name = "coupon_kind", length = 30)
+    private String couponKind;
+
+    @Column(name = "downloadable")
+    @Builder.Default
+    private Boolean downloadable = false;
+
+    @Column(name = "is_active")
+    @Builder.Default
+    private Boolean isActive = true;
+
+    @Column(name = "download_start_at")
+    private LocalDateTime downloadStartAt;
+
+    @Column(name = "download_end_at")
+    private LocalDateTime downloadEndAt;
 
 }

@@ -1,5 +1,6 @@
+import { useEffect, useMemo, useState } from "react";
 import { Search } from "lucide-react";
-import type { MyCouponItem } from "../../../api/myPageApi";
+import type { DownloadableCouponItem, DownloadSelectedCouponsResponse, MyCouponItem } from "../../../api/myPageApi";
 
 type CouponsSectionProps = {
   couponTab: "megabox" | "partner";
@@ -10,8 +11,8 @@ type CouponsSectionProps = {
   openCouponRegisterModal: () => void;
   couponKindFilter: "전체" | "매표" | "매점" | "포인트" | "포토카드" | "기타";
   setCouponKindFilter: (value: "전체" | "매표" | "매점" | "포인트" | "포토카드" | "기타") => void;
-  couponSourceFilter: "전체" | "할인쿠폰" | "VIP쿠폰" | "쿠폰패스";
-  setCouponSourceFilter: (value: "전체" | "할인쿠폰" | "VIP쿠폰" | "쿠폰패스") => void;
+  couponSourceFilter: "전체" | "사용가능" | "사용완료" | "기간만료";
+  setCouponSourceFilter: (value: "전체" | "사용가능" | "사용완료" | "기간만료") => void;
   couponStatusFilter: "available" | "used" | "expired";
   setCouponStatusFilter: (value: "available" | "used" | "expired") => void;
   couponHiddenOnly: boolean;
@@ -19,27 +20,120 @@ type CouponsSectionProps = {
   filteredCoupons: MyCouponItem[];
   mapCouponStatusLabel: (status: string) => string;
   openCouponInfoModal: (item: MyCouponItem) => void;
+  fetchDownloadableCouponsForCurrentTab: () => Promise<DownloadableCouponItem[]>;
+  downloadSelectedCouponsForCurrentTab: (couponIds: number[]) => Promise<DownloadSelectedCouponsResponse>;
+  applyCouponFilters: () => void;
 };
 
 export function CouponsSection({
   couponTab,
   setCouponTab,
   couponLoading,
-  couponItems,
+  couponItems: _couponItems,
   formatDateTime,
   openCouponRegisterModal,
   couponKindFilter,
   setCouponKindFilter,
   couponSourceFilter,
   setCouponSourceFilter,
-  couponStatusFilter,
-  setCouponStatusFilter,
-  couponHiddenOnly,
-  setCouponHiddenOnly,
+  couponStatusFilter: _couponStatusFilter,
+  setCouponStatusFilter: _setCouponStatusFilter,
+  couponHiddenOnly: _couponHiddenOnly,
+  setCouponHiddenOnly: _setCouponHiddenOnly,
   filteredCoupons,
   mapCouponStatusLabel,
   openCouponInfoModal,
+  fetchDownloadableCouponsForCurrentTab,
+  downloadSelectedCouponsForCurrentTab,
+  applyCouponFilters,
 }: CouponsSectionProps) {
+  const PAGE_SIZE = 10;
+  const [couponPage, setCouponPage] = useState(1);
+  const [showDownloadModal, setShowDownloadModal] = useState(false);
+  const [downloadLoading, setDownloadLoading] = useState(false);
+  const [downloadSubmitting, setDownloadSubmitting] = useState(false);
+  const [downloadableCoupons, setDownloadableCoupons] = useState<DownloadableCouponItem[]>([]);
+  const [selectedCouponIds, setSelectedCouponIds] = useState<number[]>([]);
+
+  const totalCouponPages = useMemo(
+    () => Math.max(1, Math.ceil(filteredCoupons.length / PAGE_SIZE)),
+    [filteredCoupons.length]
+  );
+
+  const pagedCoupons = useMemo(() => {
+    const start = (couponPage - 1) * PAGE_SIZE;
+    return filteredCoupons.slice(start, start + PAGE_SIZE);
+  }, [couponPage, filteredCoupons]);
+
+  useEffect(() => {
+    if (couponPage > totalCouponPages) {
+      setCouponPage(totalCouponPages);
+      return;
+    }
+    if (couponPage !== 1) {
+      setCouponPage(1);
+    }
+  }, [filteredCoupons, couponTab, totalCouponPages]);
+
+  const openDownloadModal = async () => {
+    setShowDownloadModal(true);
+    setDownloadLoading(true);
+    setSelectedCouponIds([]);
+    try {
+      const rows = await fetchDownloadableCouponsForCurrentTab();
+      const selectable = rows.filter((item) => !item.alreadyOwned);
+      setDownloadableCoupons(rows);
+      setSelectedCouponIds(selectable.map((item) => item.couponId));
+    } catch (error: any) {
+      alert(error?.message ?? "다운로드 가능 쿠폰 조회에 실패했습니다.");
+      setShowDownloadModal(false);
+    } finally {
+      setDownloadLoading(false);
+    }
+  };
+
+  const toggleCoupon = (couponId: number) => {
+    setSelectedCouponIds((prev) =>
+      prev.includes(couponId) ? prev.filter((id) => id !== couponId) : [...prev, couponId]
+    );
+  };
+
+  const selectableIds = useMemo(
+    () => downloadableCoupons.filter((item) => !item.alreadyOwned).map((item) => item.couponId),
+    [downloadableCoupons]
+  );
+
+  const allSelected = selectableIds.length > 0 && selectableIds.every((id) => selectedCouponIds.includes(id));
+
+  const toggleSelectAll = () => {
+    if (allSelected) {
+      setSelectedCouponIds([]);
+      return;
+    }
+    setSelectedCouponIds(selectableIds);
+  };
+
+  const submitSelectedDownload = async () => {
+    if (selectedCouponIds.length === 0) {
+      alert("다운로드할 쿠폰을 선택해 주세요.");
+      return;
+    }
+    setDownloadSubmitting(true);
+    try {
+      const result = await downloadSelectedCouponsForCurrentTab(selectedCouponIds);
+      setShowDownloadModal(false);
+      const pointText =
+        result.pointAppliedCount > 0 ? ` / 포인트 즉시적립 ${result.pointAppliedCount}건` : "";
+      alert(
+        `선택 다운로드 완료: ${result.downloadedCount}건 (중복/제외 ${result.skippedCount}건${pointText})`
+      );
+    } catch (error: any) {
+      alert(error?.message ?? "선택 쿠폰 다운로드에 실패했습니다.");
+    } finally {
+      setDownloadSubmitting(false);
+    }
+  };
+
   return (
     <section>
       <h1 className="text-4xl font-semibold text-[#000000]">키노/제휴쿠폰</h1>
@@ -59,152 +153,215 @@ export function CouponsSection({
         </button>
       </div>
 
-      {couponTab === "partner" ? (
-        <>
-          <div className="mt-5">
-            <p className="text-sm text-[#000000]">· 제휴쿠폰 내역입니다.</p>
-            <p className="text-sm text-[#000000]">· 각 쿠폰 별 사용 방법이 다르니 사용 전 상세 쿠폰정보를 확인바랍니다.</p>
-          </div>
+      <div className="mt-5 flex flex-wrap items-start justify-between gap-4">
+        <div>
+          <p className="text-sm text-[#000000]">· 보유하신 쿠폰 내역입니다.</p>
+          <p className="text-sm text-[#000000]">· 각 쿠폰 별 사용 방법이 다르니 사용 전 상세 쿠폰정보를 확인바랍니다.</p>
+        </div>
+        <div className="flex items-center gap-2">
+          <button
+            className="rounded border border-gray-300 px-5 py-2 text-sm text-[#000000] disabled:opacity-60"
+            onClick={openDownloadModal}
+            disabled={downloadSubmitting}
+          >
+            {downloadSubmitting ? "다운로드 중..." : "전체 다운로드"}
+          </button>
+          <button
+            className="rounded border border-[#eb4d32] px-5 py-2 text-sm text-[#eb4d32]"
+            onClick={openCouponRegisterModal}
+          >
+            {couponTab === "partner" ? "제휴쿠폰 등록" : "할인쿠폰 등록"}
+          </button>
+        </div>
+      </div>
 
-          <div className="mt-6 overflow-hidden rounded-sm border border-gray-200 bg-[#ffffff]">
-            <div className="grid grid-cols-2 border-b border-gray-200 bg-[#ffffff] px-4 py-3 text-center text-sm font-semibold">
-              <span>쿠폰명</span>
-              <span>발급일자</span>
-            </div>
-            {couponLoading ? (
-              <div className="py-10 text-center text-sm text-gray-500">불러오는 중...</div>
-            ) : couponItems.filter((item) => item.sourceType === "PARTNER").length === 0 ? (
-              <div className="py-10 text-center text-sm text-gray-500">쿠폰이 없습니다.</div>
-            ) : (
-              couponItems
-                .filter((item) => item.sourceType === "PARTNER")
-                .map((item) => (
-                  <div key={item.memberCouponId} className="grid grid-cols-2 items-center border-t border-gray-200 px-4 py-4 text-center text-sm text-[#000000]">
-                    <span>{item.couponName}</span>
-                    <span>{item.issuedAt ? formatDateTime(item.issuedAt) : "-"}</span>
-                  </div>
-                ))
-            )}
-          </div>
-
-          <div className="mt-8 rounded border border-gray-200 bg-[#ffffff] px-4 py-3">이용안내</div>
-        </>
-      ) : (
-        <>
-          <div className="mt-5 flex flex-wrap items-start justify-between gap-4">
-            <div>
-              <p className="text-sm text-[#000000]">· 보유하신 쿠폰 내역입니다.</p>
-              <p className="text-sm text-[#000000]">· 각 쿠폰 별 사용 방법이 다르니 사용 전 상세 쿠폰정보를 확인바랍니다.</p>
-            </div>
+      <div className="mt-5 rounded-sm bg-[#ffffff] p-5">
+        <div className="flex flex-wrap items-center gap-3 text-sm">
+          <span className="font-semibold text-[#000000]">유형</span>
+          {(["전체", "매표", "매점", "포인트", "포토카드", "기타"] as const).map((type) => (
             <button
-              className="rounded border border-[#eb4d32] px-5 py-2 text-sm text-[#eb4d32]"
-              onClick={openCouponRegisterModal}
+              key={type}
+              className={`rounded border px-4 py-2 ${couponKindFilter === type ? "border-[#eb4d32] text-[#eb4d32]" : "border-gray-200 text-[#000000]"}`}
+              onClick={() => setCouponKindFilter(type)}
             >
-              할인쿠폰 등록
+              {type}
             </button>
-          </div>
+          ))}
+          <span className="ml-4 font-semibold text-[#000000]">구분</span>
+          <select
+            className="rounded border border-gray-200 bg-[#ffffff] px-3 py-2"
+            value={couponSourceFilter}
+            onChange={(e) => setCouponSourceFilter(e.target.value as "전체" | "사용가능" | "사용완료" | "기간만료")}
+          >
+            <option>전체</option>
+            <option>사용가능</option>
+            <option>사용완료</option>
+            <option>기간만료</option>
+          </select>
+          <button
+            className="flex items-center gap-1 rounded border border-gray-200 bg-[#ffffff] px-4 py-2"
+            onClick={applyCouponFilters}
+          >
+            <Search className="h-4 w-4" /> 조회
+          </button>
+        </div>
+      </div>
 
-          <div className="mt-5 rounded-sm bg-[#ffffff] p-5">
-            <div className="flex flex-wrap items-center gap-3 text-sm">
-              <span className="font-semibold text-[#000000]">유형</span>
-              {(["전체", "매표", "매점", "포인트", "포토카드", "기타"] as const).map((type) => (
-                <button
-                  key={type}
-                  className={`rounded border px-4 py-2 ${couponKindFilter === type ? "border-[#eb4d32] text-[#eb4d32]" : "border-gray-200 text-[#000000]"}`}
-                  onClick={() => setCouponKindFilter(type)}
-                >
-                  {type}
-                </button>
-              ))}
-              <span className="ml-4 font-semibold text-[#000000]">구분</span>
-              <select
-                className="rounded border border-gray-200 bg-[#ffffff] px-3 py-2"
-                value={couponSourceFilter}
-                onChange={(e) => setCouponSourceFilter(e.target.value as "전체" | "할인쿠폰" | "VIP쿠폰" | "쿠폰패스")}
+      <div className="mt-7 flex items-center justify-between">
+        <p className="text-lg font-semibold text-[#000000]">
+          총 <span className="text-[#eb4d32]">{filteredCoupons.length}</span>매
+        </p>
+      </div>
+
+      <div className="mt-3 overflow-hidden rounded-sm border border-gray-200 bg-[#ffffff]">
+        <div className="grid grid-cols-5 border-b border-gray-200 bg-[#ffffff] px-4 py-3 text-center text-sm font-semibold">
+          <span>구분</span>
+          <span>쿠폰명</span>
+          <span>유효기간</span>
+          <span>사용상태</span>
+          <span>정보</span>
+        </div>
+
+        {couponLoading ? (
+          <div className="py-10 text-center text-sm text-gray-500">불러오는 중...</div>
+        ) : filteredCoupons.length === 0 ? (
+          <div className="py-10 text-center text-sm text-gray-500">조회된 쿠폰 내역이 없습니다.</div>
+        ) : (
+          pagedCoupons.map((item) => (
+            <div key={item.memberCouponId} className="grid grid-cols-5 items-center border-t border-gray-200 px-4 py-4 text-center text-sm">
+              <span>{item.couponKind || "기타"}</span>
+              <div>
+                <p>{item.couponName}</p>
+                <p className="text-gray-500">{item.couponCode}</p>
+              </div>
+              <span>{item.expiresAt ? formatDateTime(item.expiresAt) : "-"}</span>
+              <span>{mapCouponStatusLabel(item.status)}</span>
+              <button
+                className="mx-auto rounded border border-gray-200 px-3 py-1 text-sm"
+                onClick={() => openCouponInfoModal(item)}
               >
-                <option>전체</option>
-                <option>할인쿠폰</option>
-                <option>VIP쿠폰</option>
-                <option>쿠폰패스</option>
-              </select>
-              <button className="flex items-center gap-1 rounded border border-gray-200 bg-[#ffffff] px-4 py-2">
-                <Search className="h-4 w-4" /> 조회
+                쿠폰정보
               </button>
             </div>
+          ))
+        )}
+      </div>
 
-            <div className="mt-4 flex flex-wrap items-center justify-between gap-3 text-base">
-              <div className="flex items-center gap-6">
-                <label className="flex items-center gap-2">
-                  <input type="radio" checked={couponStatusFilter === "available"} onChange={() => setCouponStatusFilter("available")} />
-                  사용가능
-                </label>
-                <label className="flex items-center gap-2">
-                  <input type="radio" checked={couponStatusFilter === "used"} onChange={() => setCouponStatusFilter("used")} />
-                  사용완료
-                </label>
-                <label className="flex items-center gap-2">
-                  <input type="radio" checked={couponStatusFilter === "expired"} onChange={() => setCouponStatusFilter("expired")} />
-                  기간만료
-                </label>
-              </div>
-              <label className="flex items-center gap-2 text-sm">
-                <input
-                  type="checkbox"
-                  checked={couponHiddenOnly}
-                  onChange={(e) => setCouponHiddenOnly(e.target.checked)}
-                />
-                숨긴쿠폰
-              </label>
+      {filteredCoupons.length > 0 ? (
+        <div className="mt-6 flex items-center justify-center gap-2">
+          <button
+            className="rounded border border-gray-200 bg-[#ffffff] px-3 py-2 text-sm text-[#000000] transition-colors"
+            disabled={couponPage === 1}
+            onClick={() => setCouponPage((prev) => Math.max(1, prev - 1))}
+          >
+            이전
+          </button>
+          {Array.from({ length: totalCouponPages }, (_, idx) => idx + 1).map((page) => (
+            <button
+              key={page}
+              className={`rounded px-4 py-2 text-sm ${couponPage === page ? "bg-[#eb4d32] text-[#ffffff]" : "border border-gray-200 bg-[#ffffff] text-[#000000]"}`}
+              onClick={() => setCouponPage(page)}
+            >
+              {page}
+            </button>
+          ))}
+          <button
+            className="rounded border border-gray-200 bg-[#ffffff] px-3 py-2 text-sm text-[#000000] transition-colors"
+            disabled={couponPage === totalCouponPages}
+            onClick={() => setCouponPage((prev) => Math.min(totalCouponPages, prev + 1))}
+          >
+            다음
+          </button>
+        </div>
+      ) : null}
+
+      <div className="mt-8 rounded border border-gray-200 bg-[#ffffff] px-4 py-3">이용안내</div>
+
+      {showDownloadModal ? (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#000000]/70 px-4">
+          <div className="max-h-[88vh] w-full max-w-3xl overflow-auto rounded-sm border border-[#000000] bg-[#ffffff]">
+            <div className="flex items-center justify-between bg-[#000000] px-5 py-4">
+              <h3 className="text-3xl font-semibold text-[#ffffff]">다운로드 가능 쿠폰</h3>
+              <button
+                className="text-4xl leading-none text-[#ffffff]"
+                onClick={() => setShowDownloadModal(false)}
+                aria-label="닫기"
+              >
+                ×
+              </button>
             </div>
-          </div>
-
-          <div className="mt-7 flex items-center justify-between">
-            <p className="text-lg font-semibold text-[#000000]">
-              총 <span className="text-[#eb4d32]">{filteredCoupons.length}</span>매
-            </p>
-          </div>
-
-          <div className="mt-3 overflow-hidden rounded-sm border border-gray-200 bg-[#ffffff]">
-            <div className="grid grid-cols-5 border-b border-gray-200 bg-[#ffffff] px-4 py-3 text-center text-sm font-semibold">
-              <span>구분</span>
-              <span>쿠폰명</span>
-              <span>유효기간</span>
-              <span>사용상태</span>
-              <span>액션</span>
-            </div>
-
-            {couponLoading ? (
-              <div className="py-10 text-center text-sm text-gray-500">불러오는 중...</div>
-            ) : filteredCoupons.length === 0 ? (
-              <div className="py-10 text-center text-sm text-gray-500">조회된 쿠폰 내역이 없습니다.</div>
-            ) : (
-              filteredCoupons.map((item) => (
-                <div key={item.memberCouponId} className="grid grid-cols-5 items-center border-t border-gray-200 px-4 py-4 text-center text-sm">
-                  <span>{item.couponKind || "기타"}</span>
-                  <div>
-                    <p>{item.couponName}</p>
-                    <p className="text-gray-500">{item.couponCode}</p>
+            <div className="space-y-4 p-6">
+              {downloadLoading ? (
+                <div className="py-10 text-center text-sm text-gray-500">불러오는 중...</div>
+              ) : downloadableCoupons.length === 0 ? (
+                <div className="py-10 text-center text-sm text-gray-500">다운로드 가능한 쿠폰이 없습니다.</div>
+              ) : (
+                <>
+                  <div className="flex items-center justify-between rounded border border-gray-200 bg-[#fdf4e3] px-4 py-3">
+                    <label className="flex cursor-pointer items-center gap-2 text-sm">
+                      <input type="checkbox" checked={allSelected} onChange={toggleSelectAll} />
+                      전체 선택
+                    </label>
+                    <p className="text-sm text-gray-600">
+                      선택 {selectedCouponIds.length}건 / 전체 {selectableIds.length}건
+                    </p>
                   </div>
-                  <span>{item.expiresAt ? formatDateTime(item.expiresAt) : "-"}</span>
-                  <span>{mapCouponStatusLabel(item.status)}</span>
-                  <button
-                    className="mx-auto rounded border border-gray-200 px-3 py-1 text-sm"
-                    onClick={() => openCouponInfoModal(item)}
-                  >
-                    쿠폰정보
-                  </button>
-                </div>
-              ))
-            )}
-          </div>
 
-          <div className="mt-6 flex items-center justify-center">
-            <button className="rounded bg-[#eb4d32] px-4 py-2 text-sm text-[#ffffff]">1</button>
+                  <div className="space-y-2">
+                    {downloadableCoupons.map((item) => {
+                      const disabled = item.alreadyOwned;
+                      const checked = selectedCouponIds.includes(item.couponId);
+                      return (
+                        <label
+                          key={item.couponId}
+                          className={`flex items-center justify-between rounded border px-4 py-3 ${disabled ? "border-gray-200 bg-gray-100 text-gray-400" : "border-gray-200 bg-[#ffffff]"}`}
+                        >
+                          <div className="flex items-center gap-3">
+                            <input
+                              type="checkbox"
+                              checked={checked}
+                              disabled={disabled}
+                              onChange={() => toggleCoupon(item.couponId)}
+                            />
+                            <div>
+                              <p className="text-sm font-semibold">{item.couponName}</p>
+                              <p className="text-xs text-gray-500">
+                                {item.couponCode} / {item.couponKind || "기타"}
+                                {item.couponKind === "포인트" ? " (다운로드 즉시 포인트 적립)" : ""}
+                              </p>
+                            </div>
+                          </div>
+                          <p className="text-xs text-gray-500">
+                            {item.discountType === "RATE"
+                              ? `${item.discountValue}% 할인`
+                              : `${item.discountValue.toLocaleString()} ${item.couponKind === "포인트" ? "P" : "원"}`}
+                          </p>
+                        </label>
+                      );
+                    })}
+                  </div>
+                </>
+              )}
+              <div className="mt-2 flex justify-center gap-3">
+                <button
+                  className="rounded border border-[#eb4d32] px-8 py-2 text-base font-semibold text-[#eb4d32]"
+                  onClick={() => setShowDownloadModal(false)}
+                  disabled={downloadSubmitting}
+                >
+                  취소
+                </button>
+                <button
+                  className="rounded bg-[#eb4d32] px-8 py-2 text-base font-semibold text-[#ffffff] disabled:opacity-60"
+                  onClick={submitSelectedDownload}
+                  disabled={downloadSubmitting || downloadLoading || selectedCouponIds.length === 0}
+                >
+                  {downloadSubmitting ? "다운로드 중..." : "선택 다운로드"}
+                </button>
+              </div>
+            </div>
           </div>
-
-          <div className="mt-8 rounded border border-gray-200 bg-[#ffffff] px-4 py-3">이용안내</div>
-        </>
-      )}
+        </div>
+      ) : null}
     </section>
   );
 }

@@ -1,5 +1,8 @@
+import { useEffect } from 'react';
 import type { MyCouponItem, MyReservationItem } from "../../../api/myPageApi";
 import type { PageKey } from "../../../types/mypage";
+import ReviewVerifyModal from '../../common/review/ReviewVerifyModal';
+import ReviewWriteModal from '../../common/review/ReviewWriteModal';
 
 export function MyPageModals(
   props: {
@@ -67,13 +70,19 @@ export function MyPageModals(
     reservations,
     setWatchedMovies,
 
-    showReviewModal,
-    setShowReviewModal,
-    reviewMovieTitleInput,
-    setReviewMovieTitleInput,
-    reviewContentInput,
-    setReviewContentInput,
-    setReviews,
+    showVerifyModal, setShowVerifyModal,
+    showReviewModal, setShowReviewModal,
+    reviewReservationNumberInput, setReviewReservationNumberInput,
+    reviewMovieTitleInput, setReviewMovieTitleInput,
+    reviewMovieId, setReviewMovieId,
+    reviewContentInput, setReviewContentInput,
+    handleVerifyAndOpenReview,
+    handleReviewSubmit,
+    scoreDirection, setScoreDirection,
+    scoreStory, setScoreStory,
+    scoreVisual, setScoreVisual,
+    scoreActor, setScoreActor,
+    scoreOst, setScoreOst,
 
     showCardRegisterModal,
     closeCardRegisterModal,
@@ -194,7 +203,7 @@ export function MyPageModals(
               <div className="rounded-sm bg-[#fdf4e3] p-4">
                 <div className="flex flex-wrap items-center gap-3">
                   <label className="min-w-[140px] text-right text-base font-semibold text-[#000000]">할인쿠폰 번호</label>
-                  <input value={couponRegisterCode} onChange={(e) => { setCouponRegisterCode(e.target.value.toUpperCase()); if (couponRegisterError) setCouponRegisterError(""); }} className="h-12 flex-1 border border-gray-200 bg-[#ffffff] px-3 text-base text-[#000000] outline-none" placeholder="숫자만 입력해 주세요" />
+                  <input value={couponRegisterCode} onChange={(e) => { setCouponRegisterCode(e.target.value.toUpperCase()); if (couponRegisterError) setCouponRegisterError(""); }} className="h-12 flex-1 border border-gray-200 bg-[#ffffff] px-3 text-base text-[#000000] outline-none" />
                   <button className="h-12 rounded-sm bg-[#eb4d32] px-6 text-base font-semibold text-[#ffffff] disabled:opacity-60" onClick={handleCouponRegister} disabled={couponRegistering}>{couponRegistering ? "등록 중..." : "등록"}</button>
                 </div>
                 {couponRegisterError ? <p className="mt-2 text-sm text-[#eb4d32]">{couponRegisterError}</p> : null}
@@ -236,25 +245,37 @@ export function MyPageModals(
         </div>
       ) : null}
 
-      {showReviewModal ? (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#000000]/70 px-4">
-          <div className="w-full max-w-lg rounded-sm border border-[#000000] bg-[#ffffff] p-6">
-            <h3 className="text-2xl font-semibold">관람평 작성</h3>
-            <div className="mt-4 space-y-3">
-              <input value={reviewMovieTitleInput} onChange={(e) => setReviewMovieTitleInput(e.target.value)} className="h-11 w-full border border-gray-300 px-3" placeholder="영화 제목" />
-              <textarea value={reviewContentInput} onChange={(e) => setReviewContentInput(e.target.value)} className="h-24 w-full resize-none border border-gray-300 px-3 py-2" placeholder="관람평을 입력해 주세요." />
-            </div>
-            <div className="mt-5 flex justify-end gap-2">
-              <button className="rounded border border-gray-300 px-4 py-2" onClick={() => setShowReviewModal(false)}>취소</button>
-              <button className="rounded bg-[#eb4d32] px-4 py-2 text-[#ffffff]" onClick={() => {
-                if (!reviewMovieTitleInput.trim() || !reviewContentInput.trim()) { alert("영화 제목과 관람평을 입력해 주세요."); return; }
-                setReviews((prev: any[]) => [{ id: `rv-${Date.now()}`, movieTitle: reviewMovieTitleInput.trim(), content: reviewContentInput.trim(), createdAt: new Date().toISOString() }, ...prev]);
-                setShowReviewModal(false); setReviewMovieTitleInput(""); setReviewContentInput("");
-              }}>등록</button>
-            </div>
-          </div>
-        </div>
-      ) : null}
+      {/* １. 1단계: 예매 번호 확인 모달 (공통 컴포넌트 호출) */}
+      <ReviewVerifyModal 
+          isOpen={showVerifyModal}
+          onClose={() => setShowVerifyModal(false)}
+          onVerifySuccess={handleVerifyAndOpenReview}
+          reservationNumber={reviewReservationNumberInput}
+          setReservationNumber={setReviewReservationNumberInput}
+      />
+
+      {/* ２. 2단계: 리뷰 작성 모달 (공통 컴포넌트 호출) */}
+      <ReviewWriteModal 
+        isOpen={showReviewModal}
+        onClose={() => setShowReviewModal(false)}
+        movieTitle={reviewMovieTitleInput}
+        movieId={reviewMovieId} 
+        reservationNumber={reviewReservationNumberInput}
+        content={reviewContentInput}
+        setContent={setReviewContentInput}
+        onSubmit={handleReviewSubmit}
+        scores={{
+            scoreDirection, scoreStory, scoreVisual, scoreActor, scoreOst
+        }}
+        setScores={(newScores: any) => {
+            if (newScores.scoreDirection !== undefined) setScoreDirection(newScores.scoreDirection);
+            if (newScores.scoreStory !== undefined) setScoreStory(newScores.scoreStory);
+            if (newScores.scoreVisual !== undefined) setScoreVisual(newScores.scoreVisual);
+            if (newScores.scoreActor !== undefined) setScoreActor(newScores.scoreActor);
+            if (newScores.scoreOst !== undefined) setScoreOst(newScores.scoreOst);
+        }}
+    />
+
 
       {showCardRegisterModal ? (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#000000]/70 px-4">

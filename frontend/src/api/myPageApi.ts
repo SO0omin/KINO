@@ -116,7 +116,40 @@ export interface MyCouponItem {
   issuedAt?: string;
   status: 'AVAILABLE' | 'USED' | 'EXPIRED' | string;
   couponKind: string;
-  sourceType: 'MEGABOX' | 'PARTNER' | string;
+  sourceType: 'KINO' | 'PARTNER' | string;
+  downloadable?: boolean;
+}
+
+export interface DownloadAllCouponsResponse {
+  downloadedCount: number;
+  skippedCount: number;
+  totalRequestedCount: number;
+  pointAppliedCount?: number;
+}
+
+export interface DownloadableCouponItem {
+  couponId: number;
+  couponCode: string;
+  couponName: string;
+  discountType: string;
+  discountValue: number;
+  minPrice: number;
+  couponKind: string;
+  sourceType: 'KINO' | 'PARTNER' | string;
+  validDays: number;
+  alreadyOwned: boolean;
+}
+
+export interface DownloadableCouponsResponse {
+  totalCount: number;
+  coupons: DownloadableCouponItem[];
+}
+
+export interface DownloadSelectedCouponsResponse {
+  downloadedCount: number;
+  skippedCount: number;
+  totalRequestedCount: number;
+  pointAppliedCount: number;
 }
 
 export interface MyMembershipCardItem {
@@ -285,6 +318,49 @@ export async function redeemCoupon(memberId: number, code: string) {
     return response.data;
   } catch (error: any) {
     throw new Error(error.response?.data?.message || '쿠폰 등록에 실패했습니다.');
+  }
+}
+
+export async function downloadAllCoupons(
+  memberId: number,
+  sourceType: 'KINO' | 'PARTNER' | 'ALL'
+): Promise<DownloadAllCouponsResponse> {
+  try {
+    const response = await api.post(`/api/coupons/download-all`, { memberId, sourceType });
+    return response.data;
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || '쿠폰 전체 다운로드에 실패했습니다.');
+  }
+}
+
+export async function getDownloadableCoupons(
+  memberId: number,
+  sourceType: 'KINO' | 'PARTNER' | 'ALL'
+): Promise<DownloadableCouponsResponse> {
+  try {
+    const response = await api.get(`/api/coupons/downloadables`, {
+      params: { memberId, sourceType },
+    });
+    return response.data;
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || '다운로드 가능 쿠폰 조회에 실패했습니다.');
+  }
+}
+
+export async function downloadSelectedCoupons(
+  memberId: number,
+  sourceType: 'KINO' | 'PARTNER' | 'ALL',
+  couponIds: number[]
+): Promise<DownloadSelectedCouponsResponse> {
+  try {
+    const response = await api.post(`/api/coupons/download-selected`, {
+      memberId,
+      sourceType,
+      couponIds,
+    });
+    return response.data;
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || '선택 쿠폰 다운로드에 실패했습니다.');
   }
 }
 

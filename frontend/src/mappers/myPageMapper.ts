@@ -8,7 +8,7 @@ export type UiVoucherStatus = "available" | "used" | "expired";
 export type CouponStatusFilter = "available" | "used" | "expired";
 export type CouponTabFilter = "megabox" | "partner";
 export type CouponKindFilter = "전체" | "매표" | "매점" | "포인트" | "포토카드" | "기타";
-export type CouponSourceFilter = "전체" | "할인쿠폰" | "VIP쿠폰" | "쿠폰패스";
+export type CouponSourceFilter = "전체" | "사용가능" | "사용완료" | "기간만료";
 
 export type PurchaseSelectType = "all" | "movie";
 export type PurchaseStatusType = "all" | "purchase" | "cancel";
@@ -64,18 +64,23 @@ export function filterCoupons(
         ? item.sourceType !== "PARTNER"
         : item.sourceType === "PARTNER";
 
-    const byKind = filters.kind === "전체" ? true : item.couponKind === filters.kind;
+    const effectiveKind = filters.kind;
+    const byKind = effectiveKind === "전체" ? true : item.couponKind === effectiveKind;
 
-    const byStatus = normalizeCouponStatus(item.status) === filters.status;
-
-    const bySource =
-      filters.source === "전체"
+    const sourceStatus =
+      filters.source === "사용가능"
+        ? "available"
+        : filters.source === "사용완료"
+          ? "used"
+          : filters.source === "기간만료"
+            ? "expired"
+            : null;
+    const byStatus =
+      sourceStatus === null
         ? true
-        : filters.source === "할인쿠폰"
-          ? item.discountType === "FIXED" || item.discountType === "RATE"
-          : filters.source === "VIP쿠폰"
-            ? item.couponName.includes("VIP")
-            : item.couponName.includes("패스");
+        : normalizeCouponStatus(item.status) === sourceStatus;
+
+    const bySource = true;
 
     const byHidden = filters.hiddenOnly
       ? normalizeCouponStatus(item.status) !== "available"

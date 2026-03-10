@@ -1,5 +1,6 @@
 package com.cinema.kino.dto;
 
+import jakarta.validation.constraints.Size;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -11,6 +12,7 @@ import java.time.LocalDate;
 @NoArgsConstructor
 public class MemberSignupRequestDTO {
     private String username;
+    @Size(min = 8, max = 20, message = "비밀번호는 8~20자여야 합니다.")
     private String password;
     private String name;
     private LocalDate birth_date; // LocalDate로 변환할 수도 있지만, 우선 String으로 받습니다.
