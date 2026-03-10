@@ -48,12 +48,25 @@ const SignupPage: React.FC = () => {
   const [alertMessage, setAlertMessage] = useState("");
   const [isDuplicateModalOpen, setIsDuplicateModalOpen] = useState(false);
 
+  const [pwValidation, setPwValidation] = useState({
+    length: false,
+    english: false,
+    number: false,
+    special: false,
+    noPersonal: false, // 💡 기본값 false로 변경 (비밀번호 입력 전까지)
+  });
+
   const getProviderNameKOR = (provider?: string) => {
     if (provider === 'KAKAO') return '카카오';
     if (provider === 'NAVER') return '네이버';
     if (provider === 'GOOGLE') return '구글';
     return '';
   };
+
+  // 💡 [실시간 검사] 비밀번호, 아이디, 전화번호, 생일이 바뀔 때마다 실행
+  useEffect(() => {
+    validatePassword(memberData.password);
+  }, [memberData.password, memberData.username, memberData.tel, memberData.birth_date]);
 
   useEffect(() => {
     if (socialData && socialData.provider) {
@@ -77,6 +90,34 @@ const SignupPage: React.FC = () => {
     return `${target.slice(0, 3)}-${target.slice(3, 7)}-${target.slice(7)}`;
   };
 
+  const validatePassword = (password: string) => {
+    const specChars = /[`~!@#$%^&*|'";:\₩\\?]/;
+    const isLength = password.length >= 8 && password.length <= 20;
+    const hasEnglish = /[a-zA-Z]/.test(password);
+    const hasNumber = /[0-9]/.test(password);
+    const hasSpecial = specChars.test(password);
+
+    const cleanTel = memberData.tel.replace(/[^0-9]/g, "");
+    const cleanBirth = memberData.birth_date.replace(/-/g, "");
+
+    // 💡 각 항목이 입력되었을 때만 검사, 미입력 시 통과(true) 처리하여 폰트 튐 방지
+    const isIdSafe = memberData.username ? !password.includes(memberData.username) : true;
+    const isTelSafe = cleanTel.length >= 4 ? !password.includes(cleanTel.slice(-4)) : true;
+    const isMidTelSafe = cleanTel.length >= 8 ? !password.includes(cleanTel.slice(3, 7)) : true;
+    const isBirthSafe = cleanBirth ? !password.includes(cleanBirth) : true;
+
+    // 비밀번호가 비어있지 않고 위 모든 안전 조건을 통과해야 함
+    const isNotEmpty = password.length > 0;
+
+    setPwValidation({
+      length: isLength,
+      english: hasEnglish,
+      number: hasNumber,
+      special: hasSpecial,
+      noPersonal: isNotEmpty && isIdSafe && isTelSafe && isMidTelSafe && isBirthSafe
+    });
+  };
+
   const handleMemberChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     let finalValue = value;
@@ -87,9 +128,6 @@ const SignupPage: React.FC = () => {
 
     setMemberData(prev => ({ ...prev, [name]: finalValue }));
     
-    if (name === 'password') {
-      validatePassword(finalValue);
-    }
     if (name === 'username') {
       setIsUsernameChecked(false);
     }
@@ -104,37 +142,6 @@ const SignupPage: React.FC = () => {
     }
 
     setGuestData(prev => ({ ...prev, [name]: finalValue }));
-  };
-
-  const [pwValidation, setPwValidation] = useState({
-    length: false,
-    english: false,
-    number: false,
-    special: false,
-    noPersonal: true, 
-  });
-
-  const validatePassword = (password: string) => {
-    const specChars = /[`~!@#$%^&*|'";:\₩\\?]/;
-    const isLength = password.length >= 8 && password.length <= 20;
-    const hasEnglish = /[a-zA-Z]/.test(password);
-    const hasNumber = /[0-9]/.test(password);
-    const hasSpecial = specChars.test(password);
-
-    const cleanTel = memberData.tel.replace(/[^0-9]/g, "");
-    const isPersonalSafe = 
-      !password.includes(memberData.username) && 
-      (cleanTel.length < 4 || !password.includes(cleanTel.slice(-4))) && 
-      (cleanTel.length < 8 || !password.includes(cleanTel.slice(3, 7))) && 
-      !password.includes(memberData.birth_date.replace(/-/g, "")); 
-
-    setPwValidation({
-      length: isLength,
-      english: hasEnglish,
-      number: hasNumber,
-      special: hasSpecial,
-      noPersonal: isPersonalSafe
-    });
   };
 
   const handleUsernameCheck = async () => {
@@ -213,7 +220,6 @@ const SignupPage: React.FC = () => {
     }
   };
 
-  // 💡 로그인 페이지와 동일한 인풋/라벨 스타일 적용
   const inputClass = "w-full border border-black/10 rounded-sm p-4 text-sm focus:border-[#B91C1C] focus:ring-1 focus:ring-[#B91C1C] outline-none transition-all placeholder:text-black/20 bg-white";
   const labelClass = "block text-[10px] font-bold uppercase tracking-widest text-black/40 mb-2";
 
@@ -228,23 +234,25 @@ const SignupPage: React.FC = () => {
     <div className="min-h-screen bg-white text-[#1A1A1A] font-sans selection:bg-[#B91C1C] selection:text-white pb-20">
       
       {/* Header Area */}
-      <div className="bg-[#1A1A1A] text-white pt-24 pb-16 relative overflow-hidden mb-12">
+      <div className="bg-[#1A1A1A] text-white pt-24 pb-12 relative overflow-hidden mb-12">
         <div className="absolute inset-0 opacity-10 pointer-events-none">
           <div className="absolute top-0 left-0 w-full h-full bg-[radial-gradient(circle_at_50%_50%,#B91C1C_0%,transparent_70%)]"></div>
         </div>
         
-        <div className="max-w-7xl mx-auto px-6 md:px-10 relative z-10 flex flex-col items-center">
-          <div className="flex items-center gap-4 mb-6">
-            <div className="h-px w-12 bg-[#B91C1C]"></div>
-            <p className="font-sans text-[10px] font-bold tracking-[0.5em] text-[#B91C1C] uppercase">Kino Cinema</p>
-            <div className="h-px w-12 bg-[#B91C1C]"></div>
+        <div className="max-w-7xl mx-auto px-6 md:px-10 relative z-10">
+          <div className="flex flex-col items-center text-center space-y-6">
+            <div className="flex items-center gap-4">
+              <div className="h-px w-12 bg-[#B91C1C]"></div>
+              <p className="font-mono text-[10px] font-bold tracking-[0.5em] text-[#B91C1C] uppercase">Kino Cinema Archive</p>
+              <div className="h-px w-12 bg-[#B91C1C]"></div>
+            </div>
+            <h1 className="font-display text-4xl md:text-4xl uppercase tracking-tighter leading-none">
+              Sign <span className="text-white/20">Up</span>
+            </h1>
+            <p className="text-xs font-bold uppercase tracking-widest text-white/40">
+              키노 시네마 회원 가입
+            </p>
           </div>
-          <h1 className="font-display text-5xl md:text-6xl uppercase tracking-tighter leading-none mb-4">
-            Sign <span className="text-white/20">Up</span>
-          </h1>
-          <p className="text-xs font-bold uppercase tracking-widest text-white/40">
-            키노 시네마 회원가입
-          </p>
         </div>
       </div>
 
@@ -256,40 +264,29 @@ const SignupPage: React.FC = () => {
             type="button"
             onClick={() => setActiveTab('MEMBER')} 
             className={`flex-1 py-4 text-[15px] font-bold uppercase tracking-widest transition-all relative ${
-              activeTab === 'MEMBER' 
-                ? 'text-[#B91C1C]' 
-                : 'text-black/40 hover:text-black'
+              activeTab === 'MEMBER' ? 'text-[#B91C1C]' : 'text-black/40 hover:text-black'
             }`}
           >
             Member
-            {activeTab === 'MEMBER' && (
-              <div className="absolute bottom-[-1px] left-0 w-full h-[2px] bg-[#B91C1C]"></div>
-            )}
+            {activeTab === 'MEMBER' && <div className="absolute bottom-[-1px] left-0 w-full h-[2px] bg-[#B91C1C]"></div>}
           </button>
           <button 
             type="button"
             onClick={() => setActiveTab('GUEST')} 
             className={`flex-1 py-4 text-[15px] font-bold uppercase tracking-widest transition-all relative ${
-              activeTab === 'GUEST' 
-                ? 'text-[#B91C1C]' 
-                : 'text-black/40 hover:text-black'
+              activeTab === 'GUEST' ? 'text-[#B91C1C]' : 'text-black/40 hover:text-black'
             }`}
           >
             Guest
-            {activeTab === 'GUEST' && (
-              <div className="absolute bottom-[-1px] left-0 w-full h-[2px] bg-[#B91C1C]"></div>
-            )}
+            {activeTab === 'GUEST' && <div className="absolute bottom-[-1px] left-0 w-full h-[2px] bg-[#B91C1C]"></div>}
           </button>
         </div>
 
-        {/* 폼 컨테이너 */}
         <div className="bg-[#FDFDFD] border border-black/5 rounded-sm p-8 shadow-xl">
           <form onSubmit={handleSubmit} className="flex flex-col gap-6">
             
             {activeTab === 'MEMBER' && (
               <div className="flex flex-col gap-6 animate-in fade-in slide-in-from-bottom-2 duration-300">
-                
-                {/* 소셜 연동 안내 배너 */}
                 {socialData && socialData.provider && (
                   <div className={`rounded-sm border p-4 text-[11px] font-bold uppercase tracking-widest flex items-center justify-center gap-2 mb-2 ${getBannerColorClass(socialData.provider)}`}>
                     <span className="text-lg">💬</span>
@@ -340,13 +337,9 @@ const SignupPage: React.FC = () => {
                   {memberData.confirmPassword.length > 0 && (
                     <div className="mt-2 px-1">
                       {memberData.password === memberData.confirmPassword ? (
-                        <p className="text-[#03C75A] text-[10px] font-bold uppercase tracking-widest">
-                          ✓ 비밀번호가 일치합니다
-                        </p>
+                        <p className="text-[#03C75A] text-[10px] font-bold uppercase tracking-widest">✓ 비밀번호가 일치합니다</p>
                       ) : (
-                        <p className="text-[#B91C1C] text-[10px] font-bold uppercase tracking-widest">
-                          ✘ 비밀번호가 일치하지 않습니다
-                        </p>
+                        <p className="text-[#B91C1C] text-[10px] font-bold uppercase tracking-widest">✘ 비밀번호가 일치하지 않습니다</p>
                       )}
                     </div>
                   )}
@@ -379,29 +372,24 @@ const SignupPage: React.FC = () => {
                 <div className="bg-black/5 border border-black/5 rounded-sm p-5 text-center">
                   <h3 className="text-[10px] font-bold uppercase tracking-[0.3em] text-[#B91C1C] mb-2">Notice</h3>
                   <p className="text-[11px] font-bold text-black/60 leading-relaxed">
-                    비회원 예매 및 결제를 위한 필수 정보입니다.<br/>
-                    입력하신 정보는 예매 내역 조회 시 사용됩니다.
+                    비회원 예매 및 결제를 위한 필수 정보입니다.<br/>입력하신 정보는 예매 내역 조회 시 사용됩니다.
                   </p>
                 </div>
-
                 <div>
                   <label className={labelClass}>Full Name</label>
                   <input type="text" name="guestName" value={guestData.guestName} onChange={handleGuestChange} required 
                     className={inputClass} placeholder="예매자 이름" />
                 </div>
-
                 <div>
                   <label className={labelClass}>Phone</label>
                   <input type="tel" name="guestTel" value={guestData.guestTel} onChange={handleGuestChange} required 
                     className={inputClass} placeholder="010-0000-0000 (- 제외)" />
                 </div>
-
                 <div>
                   <label className={labelClass}>Booking Password</label>
                   <input type="password" name="guestPassword" value={guestData.guestPassword} onChange={handleGuestChange} required maxLength={4} 
                     className={`${inputClass} font-mono tracking-widest`} placeholder="예매용 숫자 4자리" />
                 </div>
-
                 <div>
                   <label className={labelClass}>Confirm Password</label>
                   <input type="password" name="guestConfirmPassword" value={guestData.guestConfirmPassword} onChange={handleGuestChange} required maxLength={4} 
@@ -427,49 +415,28 @@ const SignupPage: React.FC = () => {
         </div>
       </div>
 
-      {/* 기본 알림 모달 */}
       <CommonModal isOpen={isAlertOpen} onClose={closeAlert}>
         <div className="bg-white rounded-sm shadow-2xl overflow-hidden min-w-[320px]">
           <div className="bg-[#B91C1C] text-white px-6 py-4 flex items-center justify-center border-b border-[#991B1B]">
             <h3 className="text-[10px] font-bold uppercase tracking-[0.3em]">Notice</h3>
           </div>
           <div className="p-8 flex flex-col items-center">
-            <p className="text-sm font-medium text-[#1A1A1A] text-center mb-8 leading-relaxed">
-              {alertMessage}
-            </p>
-            <button 
-              onClick={closeAlert} 
-              className="w-full bg-[#1A1A1A] text-white text-[10px] font-bold uppercase tracking-[0.2em] py-4 rounded-sm hover:bg-[#B91C1C] transition-colors"
-            >
-              Confirm
-            </button>
+            <p className="text-sm font-medium text-[#1A1A1A] text-center mb-8 leading-relaxed">{alertMessage}</p>
+            <button onClick={closeAlert} className="w-full bg-[#1A1A1A] text-white text-[10px] font-bold uppercase tracking-[0.2em] py-4 rounded-sm hover:bg-[#B91C1C] transition-colors">Confirm</button>
           </div>
         </div>
       </CommonModal>
 
-      {/* 이메일 중복 시 안내 모달 */}
       <CommonModal isOpen={isDuplicateModalOpen} onClose={closeDuplicateModal}>
         <div className="bg-white rounded-sm shadow-2xl overflow-hidden min-w-[340px]">
           <div className="bg-[#B91C1C] text-white px-6 py-4 flex items-center justify-center border-b border-[#991B1B]">
             <h3 className="text-[10px] font-bold uppercase tracking-[0.3em]">Account Exists</h3>
           </div>
           <div className="p-8 flex flex-col items-center">
-            <p className="text-sm font-medium text-[#1A1A1A] text-center mb-8 leading-relaxed">
-              이미 해당 이메일로 가입된 이력이 있습니다.<br/>로그인 페이지로 이동하시겠습니까?
-            </p>
+            <p className="text-sm font-medium text-[#1A1A1A] text-center mb-8 leading-relaxed">이미 해당 이메일로 가입된 이력이 있습니다.<br/>로그인 페이지로 이동하시겠습니까?</p>
             <div className="flex w-full gap-3">
-              <button 
-                onClick={() => navigate('/login')} 
-                className="flex-1 bg-[#1A1A1A] text-white text-[10px] font-bold uppercase tracking-[0.2em] py-4 rounded-sm hover:bg-[#B91C1C] transition-colors"
-              >
-                Sign In
-              </button>
-              <button 
-                onClick={() => navigate('/find-account')} 
-                className="flex-1 bg-white border border-black/10 text-[#1A1A1A] text-[10px] font-bold uppercase tracking-[0.2em] py-4 rounded-sm hover:border-black/30 transition-colors"
-              >
-                Find Account
-              </button>
+              <button onClick={() => navigate('/login')} className="flex-1 bg-[#1A1A1A] text-white text-[10px] font-bold uppercase tracking-[0.2em] py-4 rounded-sm hover:bg-[#B91C1C] transition-colors">Sign In</button>
+              <button onClick={() => navigate('/find-account')} className="flex-1 bg-white border border-black/10 text-[#1A1A1A] text-[10px] font-bold uppercase tracking-[0.2em] py-4 rounded-sm hover:border-black/30 transition-colors">Find Account</button>
             </div>
           </div>
         </div>

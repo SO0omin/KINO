@@ -97,7 +97,7 @@ const LoginPage: React.FC = () => {
               {isBookingFlow ? (
                 <>Ticket <span className="text-white/20">Booking</span></>
               ) : (
-                <>로그인 <span className="text-white/20"></span></>
+                <>Log <span className="text-white/20">In</span></>
               )}
             </h1>
             <p className="text-xs font-bold uppercase tracking-widest text-white/40">
