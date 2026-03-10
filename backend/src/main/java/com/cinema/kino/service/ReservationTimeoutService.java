@@ -47,6 +47,7 @@ public class ReservationTimeoutService {
                     paymentRepository.findByReservationId(resId).ifPresent(p -> {
                         if (READY.equals(p.getPaymentStatus())) {
                             p.setPaymentStatus(FAILED);
+                            p.setCancelledAt(now);
                         }
                     });
 

@@ -19,6 +19,8 @@ interface DiscountSectionProps {
   // 추가: 서버에서 조회한 보유 포인트
   availablePoints?: number;
 
+  maxUsablePoints?: number;
+
   // 옵션: 포인트 사용 단위(기본 100)
   pointUnit?: number;
 }
@@ -33,6 +35,7 @@ export function DiscountSection({
   onCouponSelect,
   onPointChange,
   availablePoints = 0,
+  maxUsablePoints = 0,
   pointUnit = 100,
 }: DiscountSectionProps) {
   const [pointInput, setPointInput] = useState<string>('');
@@ -44,8 +47,9 @@ export function DiscountSection({
   const normalizePoint = (raw: string) => {
     const num = parseInt(raw.replace(/[^0-9]/g, ''), 10) || 0;
 
-    // 보유 포인트 초과 방지
-    const clamped = Math.min(num, availablePoints);
+    // 보유 포인트와 결제 가능 금액을 함께 기준으로 제한
+    const maxPointLimit = Math.max(0, Math.min(availablePoints, maxUsablePoints));
+    const clamped = Math.min(num, maxPointLimit);
 
     return clamped;
   };
@@ -54,8 +58,7 @@ export function DiscountSection({
     const entered = normalizePoint(val);
     const applied = pointUnit > 1 ? Math.floor(entered / pointUnit) * pointUnit : entered;
 
-    // 타이핑 중에는 사용자가 입력한 값을 보여주고, 실제 적용값만 단위 보정
-    setPointInput(entered > 0 ? entered.toLocaleString() : '');
+    setPointInput(applied > 0 ? applied.toLocaleString() : '');
     onPointChange?.(applied);
   };
 
@@ -202,12 +205,14 @@ export function DiscountSection({
                   onChange={(e) => handlePointInput(e.target.value)}
                   onBlur={syncPointInputToAppliedUnit}
                   placeholder="0"
+                  disabled={Math.min(availablePoints, maxUsablePoints) <= 0}
                   className="flex-1 py-3 px-4 border border-gray-300 rounded focus:ring-1 focus:ring-[#eb4d32] outline-none text-right font-mono"
                 />
                 <span className="text-gray-600">P</span>
                 <button
                   className="px-4 py-3 bg-gray-800 text-white rounded text-sm hover:bg-black transition-colors"
-                  onClick={() => handlePointInput(String(availablePoints))}
+                  onClick={() => handlePointInput(String(Math.max(0, Math.min(availablePoints, maxUsablePoints))))}
+                  disabled={Math.min(availablePoints, maxUsablePoints) <= 0}
                 >
                   전액사용
                 </button>
@@ -217,6 +222,9 @@ export function DiscountSection({
                 <span className="text-black font-bold">{availablePoints.toLocaleString()}</span> P
                 {pointUnit > 1 ? ` (${pointUnit.toLocaleString()}P 단위로 사용 가능)` : ''}
               </p>
+              {Math.min(availablePoints, maxUsablePoints) <= 0 && (
+                <p className="text-xs text-red-500 mt-1 ml-1">사용 가능한 포인트가 없습니다.</p>
+              )}
             </div>
           )}
 

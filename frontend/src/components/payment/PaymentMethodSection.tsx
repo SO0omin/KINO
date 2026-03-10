@@ -1,4 +1,5 @@
 import { Plus } from 'lucide-react';
+import type { MyMembershipCardItem } from '../../api/myPageApi';
 
 export type TossPaymentType =
   | 'CARD'
@@ -9,11 +10,17 @@ export type TossPaymentType =
 interface PaymentMethodSectionProps {
   selectedPaymentMethod: TossPaymentType;
   setSelectedPaymentMethod: (method: TossPaymentType) => void;
+  membershipCards?: MyMembershipCardItem[];
+  selectedMembershipCardId?: number | null;
+  setSelectedMembershipCardId?: (cardId: number | null) => void;
 }
 
 export function PaymentMethodSection({
   selectedPaymentMethod,
-  setSelectedPaymentMethod
+  setSelectedPaymentMethod,
+  membershipCards = [],
+  selectedMembershipCardId = null,
+  setSelectedMembershipCardId
 }: PaymentMethodSectionProps) {
 
   const paymentMethods: { label: string; type: TossPaymentType }[] = [
@@ -31,15 +38,45 @@ export function PaymentMethodSection({
 
       <div className="bg-white rounded-lg p-8">
 
-        <div className="border-2 border-dashed border-gray-300 rounded-lg p-12 flex flex-col items-center justify-center min-h-[200px]">
-          <Plus size={48} className="text-gray-400 mb-4" />
-          <p className="text-gray-500 mb-1">
-            자주 사용하는 카드 등록하고
-          </p>
-          <p className="text-gray-500">
-            더욱 빠르게 결제하세요!
-          </p>
-        </div>
+        {selectedPaymentMethod === 'CARD' && membershipCards.length > 0 ? (
+          <div className="grid gap-4 md:grid-cols-2">
+            {membershipCards.map((card) => {
+              const isSelected = selectedMembershipCardId === card.cardId;
+              return (
+                <button
+                  key={card.cardId}
+                  type="button"
+                  onClick={() => setSelectedMembershipCardId?.(card.cardId)}
+                  className={`rounded-xl border p-5 text-left transition-all ${
+                    isSelected
+                      ? 'border-[#eb4d32] bg-[#fdf4e3] shadow-sm'
+                      : 'border-gray-200 bg-white hover:border-[#eb4d32]'
+                  }`}
+                >
+                  <p className="text-xs font-semibold uppercase tracking-[0.2em] text-gray-500">{card.issuerName}</p>
+                  <p className="mt-4 text-xl font-semibold text-gray-900">{card.cardNumber}</p>
+                  <div className="mt-6 flex items-end justify-between">
+                    <div>
+                      <p className="text-sm font-medium text-gray-900">{card.cardName}</p>
+                      <p className="mt-1 text-xs text-gray-500">{card.channelName}</p>
+                    </div>
+                    {isSelected ? <span className="text-sm font-semibold text-[#eb4d32]">선택됨</span> : null}
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+        ) : (
+          <div className="border-2 border-dashed border-gray-300 rounded-lg p-12 flex flex-col items-center justify-center min-h-[200px]">
+            <Plus size={48} className="text-gray-400 mb-4" />
+            <p className="text-gray-500 mb-1">
+              자주 사용하는 카드 등록하고
+            </p>
+            <p className="text-gray-500">
+              더욱 빠르게 결제하세요!
+            </p>
+          </div>
+        )}
 
         <div className="mt-6 flex gap-3 flex-wrap">
           {paymentMethods.map((method) => (

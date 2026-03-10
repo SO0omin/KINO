@@ -49,6 +49,29 @@ type ReservationsSectionProps = {
   cancelledReservations: MyReservationItem[];
 };
 
+function mapCancelReasonLabel(reason?: string | null) {
+  if (reason === "TIMEOUT") return "시간만료";
+  if (reason === "USER") return "사용자취소";
+  return "취소";
+}
+
+function formatCompactDateTime(value?: string) {
+  if (!value) return ["-", ""];
+  const normalized = value.includes(" ") ? value.replace(" ", "T") : value;
+  const date = new Date(normalized);
+  if (Number.isNaN(date.getTime())) return ["-", ""];
+
+  const dateText = `${date.getFullYear()}.${String(date.getMonth() + 1).padStart(2, "0")}.${String(
+    date.getDate()
+  ).padStart(2, "0")}`;
+  const hour = date.getHours();
+  const period = hour >= 12 ? "PM" : "AM";
+  const hour12 = hour % 12 === 0 ? 12 : hour % 12;
+  const timeText = `${period} ${String(hour12).padStart(2, "0")}:${String(date.getMinutes()).padStart(2, "0")}`;
+
+  return [dateText, timeText];
+}
+
 export function ReservationsSection({
   guestView = false,
   reservationTab,
@@ -332,25 +355,45 @@ export function ReservationsSection({
           <h2 className="text-2xl font-semibold text-[#eb4d32]">예매취소내역</h2>
           <p className="mt-2 text-sm text-gray-600">· 상영일 기준 7일간 취소내역을 확인하실 수 있습니다.</p>
           <div className="mt-4 overflow-hidden rounded-sm border border-gray-200 bg-white">
-            <div className="grid grid-cols-5 bg-[#ffffff] px-4 py-3 text-center text-sm font-semibold">
+            <div className="grid grid-cols-[1.2fr_1fr_1fr_1.2fr_1fr_0.9fr] bg-[#ffffff] px-4 py-3 text-center text-sm font-semibold">
               <span>취소일시</span>
               <span>영화명</span>
               <span>극장</span>
               <span>상영일시</span>
               <span>취소금액</span>
+              <span>취소사유</span>
             </div>
             {cancelledReservations.length === 0 ? (
               <div className="py-6 text-center text-gray-500">취소내역이 없습니다.</div>
             ) : (
-              cancelledReservations.map((item) => (
-                <div key={item.reservationId} className="grid grid-cols-5 border-t border-gray-200 px-4 py-3 text-center text-sm">
-                  <span>{formatDateTime(item.cancelledAt ?? "")}</span>
-                  <span>{item.movieTitle}</span>
-                  <span>{item.theaterName}</span>
-                  <span>{formatDateTime(item.startTime)}</span>
-                  <span>{formatMoney(item.finalAmount)}</span>
-                </div>
-              ))
+              cancelledReservations.map((item) => {
+                const [cancelDate, cancelTime] = formatCompactDateTime(item.cancelledAt);
+                const [screenDate, screenTime] = formatCompactDateTime(item.startTime);
+
+                return (
+                  <div
+                    key={item.reservationId}
+                    className="grid grid-cols-[1.2fr_1fr_1fr_1.2fr_1fr_0.9fr] items-center border-t border-gray-200 px-4 py-4 text-center text-sm"
+                  >
+                    <span className="leading-relaxed">
+                      <span className="block">{cancelDate}</span>
+                      <span className="block">{cancelTime}</span>
+                    </span>
+                    <span className="truncate px-2">{item.movieTitle}</span>
+                    <span className="truncate px-2">{item.theaterName}</span>
+                    <span className="leading-relaxed">
+                      <span className="block">{screenDate}</span>
+                      <span className="block">{screenTime}</span>
+                    </span>
+                    <span className="whitespace-nowrap font-medium">{formatMoney(item.finalAmount)}</span>
+                    <span className="flex justify-center">
+                      <span className="rounded-full bg-[#f3f4f6] px-3 py-1 text-xs font-medium text-gray-700">
+                        {mapCancelReasonLabel(item.cancelReason)}
+                      </span>
+                    </span>
+                  </div>
+                );
+              })
             )}
           </div>
         </div>
@@ -591,25 +634,45 @@ export function ReservationsSection({
           <h2 className="text-2xl font-semibold text-[#eb4d32]">예매취소내역</h2>
           <p className="mt-2 text-sm text-gray-600">· 상영일 기준 7일간 취소내역을 확인하실 수 있습니다.</p>
           <div className="mt-4 overflow-hidden rounded-sm border border-gray-200 bg-white">
-            <div className="grid grid-cols-5 bg-[#ffffff] px-4 py-3 text-center text-sm font-semibold">
+            <div className="grid grid-cols-[1.2fr_1fr_1fr_1.2fr_1fr_0.9fr] bg-[#ffffff] px-4 py-3 text-center text-sm font-semibold">
               <span>취소일시</span>
               <span>영화명</span>
               <span>극장</span>
               <span>상영일시</span>
               <span>취소금액</span>
+              <span>취소사유</span>
             </div>
             {cancelledReservations.length === 0 ? (
               <div className="py-6 text-center text-gray-500">취소내역이 없습니다.</div>
             ) : (
-              cancelledReservations.map((item) => (
-                <div key={item.reservationId} className="grid grid-cols-5 border-t border-gray-200 px-4 py-3 text-center text-sm">
-                  <span>{formatDateTime(item.cancelledAt ?? "")}</span>
-                  <span>{item.movieTitle}</span>
-                  <span>{item.theaterName}</span>
-                  <span>{formatDateTime(item.startTime)}</span>
-                  <span>{formatMoney(item.finalAmount)}</span>
-                </div>
-              ))
+              cancelledReservations.map((item) => {
+                const [cancelDate, cancelTime] = formatCompactDateTime(item.cancelledAt);
+                const [screenDate, screenTime] = formatCompactDateTime(item.startTime);
+
+                return (
+                  <div
+                    key={item.reservationId}
+                    className="grid grid-cols-[1.2fr_1fr_1fr_1.2fr_1fr_0.9fr] items-center border-t border-gray-200 px-4 py-4 text-center text-sm"
+                  >
+                    <span className="leading-relaxed">
+                      <span className="block">{cancelDate}</span>
+                      <span className="block">{cancelTime}</span>
+                    </span>
+                    <span className="truncate px-2">{item.movieTitle}</span>
+                    <span className="truncate px-2">{item.theaterName}</span>
+                    <span className="leading-relaxed">
+                      <span className="block">{screenDate}</span>
+                      <span className="block">{screenTime}</span>
+                    </span>
+                    <span className="whitespace-nowrap font-medium">{formatMoney(item.finalAmount)}</span>
+                    <span className="flex justify-center">
+                      <span className="rounded-full bg-[#f3f4f6] px-3 py-1 text-xs font-medium text-gray-700">
+                        {mapCancelReasonLabel(item.cancelReason)}
+                      </span>
+                    </span>
+                  </div>
+                );
+              })
             )}
           </div>
         </div>

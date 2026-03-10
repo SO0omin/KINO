@@ -197,15 +197,20 @@ public class PaymentService {
 
             if (usedPoints > 0) {
                 int available = memberPointRepository.getAvailablePointsByMemberId(reservation.getMember().getId());
-                if (available < usedPoints) throw new IllegalArgumentException("포인트 부족");
+                if (available <= 0) {
+                    throw new IllegalArgumentException("사용 가능한 포인트가 없습니다.");
+                }
+                if (available < usedPoints) {
+                    throw new IllegalArgumentException("포인트 부족");
+                }
+                int maxUsablePoints = Math.max(0, originalPrice - discountAmount);
+                if (usedPoints > maxUsablePoints) {
+                    throw new IllegalArgumentException("포인트는 최종 결제 예정 금액까지만 사용할 수 있습니다.");
+                }
             }
         } else {
             usedPoints = 0; // 비회원이면 무조건 0 처리
         }
-
-        int finalVal = Math.max(0, originalPrice - discountAmount - usedPoints);
-        String orderId = "ORD-" + UUID.randomUUID().toString().substring(0, 8);
-        reservation.setOrderId(orderId);
 
         Payment payment = paymentRepository.findByReservation(reservation)
                 .orElseGet(() -> Payment.builder()
@@ -215,7 +220,18 @@ public class PaymentService {
                         .paymentStatus(PaymentStatus.READY)
                         .build());
 
+        int finalVal = Math.max(0, originalPrice - discountAmount - usedPoints);
+        boolean reuseReadyOrder = payment.getPaymentStatus() == PaymentStatus.READY
+                && payment.getMerchantUid() != null
+                && !payment.getMerchantUid().isBlank();
+        String orderId = reuseReadyOrder
+                ? payment.getMerchantUid()
+                : "ORD-" + UUID.randomUUID().toString().substring(0, 8);
+
+        reservation.setOrderId(orderId);
+
         payment.setMerchantUid(orderId);
+        payment.setPaymentStatus(PaymentStatus.READY);
         payment.setOriginalAmount(originalPrice);
         payment.setDiscount(discountAmount);
         payment.setUsedPoints(usedPoints);

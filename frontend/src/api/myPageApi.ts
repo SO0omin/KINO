@@ -60,6 +60,7 @@ export interface MyReservationItem {
   finalAmount: number;
   reservationStatus: string;
   paymentStatus: string; // "PENDING", "PAID", "CANCELED" 등
+  cancelReason?: string | null;
   seatNames: string[];
   cancellable: boolean;
   paidAt?: string;

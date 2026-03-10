@@ -99,6 +99,7 @@ public class MyPageDTO {
         private Integer finalAmount;
         private String reservationStatus;
         private String paymentStatus;
+        private String cancelReason;
         private List<String> seatNames;
         private boolean cancellable;
         private LocalDateTime holdExpiresAt;
