@@ -101,15 +101,6 @@ const TheaterStatSection = ({ stats }: TheaterStatSectionProps) => {
             ))}
           </motion.div>
         </div>
-
-        {/* 3. 하단 태그라인 (KINO 정체성 반영) */}
-        <div className="mt-24 text-center">
-          <div className="inline-block border-y border-black/5 py-6 px-16">
-            <p className="font-bold text-[11px] tracking-[0.6em] uppercase text-black/20">
-              Exhibitions held daily • Est. 1928 • KINO CINEMA ARCHIVE
-            </p>
-          </div>
-        </div>
       </div>
     </section>
   );

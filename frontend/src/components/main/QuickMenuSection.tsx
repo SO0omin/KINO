@@ -64,7 +64,7 @@ const QuickMenuSection = () => {
                 <Film size={24} strokeWidth={2} />
               </div>
               <div className="space-y-0.5">
-                <span className="block font-display text-xl uppercase tracking-tight text-[#1A1A1A] group-hover:text-white">Movies</span>
+                <span className="block font-dis play text-xl uppercase tracking-tight text-[#1A1A1A] group-hover:text-white">Movies</span>
                 <span className="block font-sans text-[9px] font-bold uppercase tracking-widest text-black/30 group-hover:text-white/70">Top Reels</span>
               </div>
             </Link>
