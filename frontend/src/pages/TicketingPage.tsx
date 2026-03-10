@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useRef } from 'react';
 import { useLocation } from 'react-router-dom';
 import { useTicketing } from '../hooks/useTicketing';
 import { generateDateList } from '../utils/dateUtils';
@@ -7,396 +7,367 @@ import type { Screening } from '../types/ticketing';
 import SeatPreviewModal from '../components/ticketing/SeatPreviewModal';
 import FilmStrip from '../components/ticketing/FilmStrip';
 import ratingImages, { type AgeRatingType } from "../utils/getRatingImage";
+import { ChevronLeft, ChevronRight, Calendar, MapPin, Film, Clock, Search } from 'lucide-react';
 
 const VISIBLE_COUNT = 10;
 const VISIBLE_HOUR_COUNT = 10;
 
 const TicketingPage: React.FC = () => {
-    // 💡 라우터를 통해 넘어온 선택된 영화 ID 캐치 (키 이름이 movieId든 preSelectedMovieId든 둘 다 대응하도록 수정!)
     const location = useLocation();
-    const preSelectedMovieId = location.state?.movieId ||location.state?.preSelectedMovieId || location.state?.movieId;
+    const preSelectedMovieId = location.state?.movieId || location.state?.preSelectedMovieId;
     const preSelectedTheaterId = location.state?.theaterId || location.state?.preSelectedTheaterId || null;
     const preSelectedRegionId = location.state?.regionId || null;
     const preSelectedDate = location.state?.selectedDate || null;
 
     const dateList = generateDateList(30);
-    // 💡 커스텀 훅으로 영화 ID를 넘겨서 초기값으로 세팅 (가장 깔끔한 방법)
-    const { states, setters, handlers, memos } = useTicketing(dateList, preSelectedMovieId, preSelectedTheaterId, preSelectedRegionId,preSelectedDate);
+    const { states, setters, handlers, memos } = useTicketing(dateList, preSelectedMovieId, preSelectedTheaterId, preSelectedRegionId, preSelectedDate);
     const dateInputRef = useRef<HTMLInputElement>(null);
 
-    const xBtnClass = "text-red-700 font-bold ml-1 hover:scale-125 transition-transform text-lg outline-none focus:outline-none focus-visible:outline-none !ring-0 !shadow-none !bg-transparent !border-none !p-0 select-none";
-
-    useEffect(() => {
-        if (!document.getElementById('tailwind-cdn')) {
-            const script = document.createElement('script'); script.id = 'tailwind-cdn';
-            script.src = 'https://cdn.tailwindcss.com'; document.head.appendChild(script);
-        }
-        if (!document.getElementById('google-fonts')) {
-            const fontLink = document.createElement('link'); fontLink.id = 'google-fonts'; fontLink.rel = 'stylesheet';
-            fontLink.href = 'https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400&family=Montserrat:wght@300;400;600;700&family=Courier+Prime:wght@400;700&family=Special+Elite&display=swap';
-            document.head.appendChild(fontLink);
-        }
-    }, []);
-
-    const vintageStyles = `
-    .font-serif { font-family: 'Playfair Display', serif; }
-    .font-mono { font-family: 'Courier Prime', monospace; }
-    .font-typewriter { font-family: 'Special Elite', cursive; }
-    .grainy::before { content: ""; position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 9999; opacity: 0.05; background-image: url('https://grainy-gradients.vercel.app/noise.svg'); }
-    @keyframes flicker { 0% { opacity: 0.97; } 100% { opacity: 1; } }
-    .projector-glow { animation: flicker 0.15s infinite; }
-    .custom-scrollbar::-webkit-scrollbar { width: 6px; }
-    .custom-scrollbar::-webkit-scrollbar-track { background: #eee; }
-    .custom-scrollbar::-webkit-scrollbar-thumb { background: #333; }
-    .paper-texture { background-image: url('https://www.transparenttextures.com/patterns/p6.png'); }
-  `;
-
     return (
-        <div className="bg-[#f4f1ea] text-black min-h-screen relative overflow-x-hidden paper-texture">
-            <style dangerouslySetInnerHTML={{ __html: vintageStyles }} />
-
-            <div className="bg-black text-white pt-12 pb-8 relative">
-                <div className="max-w-7xl mx-auto px-10 flex flex-col items-center projector-glow">
-                    <div className="flex items-center gap-4 mb-8">
-                        <div className="h-px w-20 bg-white/40"></div>
-                        <p className="font-mono text-sm tracking-[0.3em] text-white/60 uppercase">Swift Booking • Online Now</p>
-                        <div className="h-px w-20 bg-white/40"></div>
+        <div className="bg-white text-[#1A1A1A] min-h-screen font-sans selection:bg-[#B91C1C] selection:text-white">
+            
+            {/* Header Area */}
+            <div className="bg-[#1A1A1A] text-white pt-15 pb-3 relative overflow-hidden">
+                <div className="absolute inset-0 opacity-10 pointer-events-none">
+                    <div className="absolute top-0 left-0 w-full h-full bg-[radial-gradient(circle_at_50%_50%,#B91C1C_0%,transparent_70%)]"></div>
+                </div>
+                
+                <div className="max-w-5xl mx-auto px-6 md:px-10 relative z-10">
+                    <div className="flex flex-col items-center text-center space-y-6">
+                        <div className="flex items-center gap-4">
+                            <div className="h-px w-12 bg-[#B91C1C]"></div>
+                            <p className="font-mono text-[10px] font-bold tracking-[0.5em] text-[#B91C1C] uppercase">Kino Cinema</p>
+                            <div className="h-px w-12 bg-[#B91C1C]"></div>
+                        </div>
+                        <h1 className="font-display text-2xl md:text-7xl uppercase tracking-tighter leading-none">
+                            예매<span className="text-white/20"></span>
+                        </h1>
+                        <FilmStrip />
                     </div>
-                    <FilmStrip />
                 </div>
             </div>
 
-            <div className="max-w-7xl mx-auto px-10 py-12 flex flex-col gap-0 font-sans relative">
-
-                <div className="border-[6px] border-black bg-white flex items-center h-24 relative overflow-hidden mb-12 shadow-[12px_12px_0_0_#000]">
-                    <button onClick={() => setters.setStartIndex(Math.max(0, states.startIndex - 1))} disabled={states.startIndex === 0} className="px-8 h-full text-4xl font-light hover:bg-black hover:text-white transition-all disabled:opacity-20 z-10">‹</button>
-                    <div className="flex-1 flex items-center justify-between px-4 h-full relative">
-                        <div className="absolute inset-y-0 left-0 w-8 bg-gradient-to-r from-white to-transparent z-10 pointer-events-none"></div>
-                        <div className="absolute inset-y-0 right-0 w-8 bg-gradient-to-l from-white to-transparent z-10 pointer-events-none"></div>
-                        {dateList.slice(states.startIndex, states.startIndex + VISIBLE_COUNT).map((d) => (
-                            <div key={d.fullDate} onClick={() => setters.onDateButtonClick(d.fullDate)} className={`flex flex-col items-center justify-center cursor-pointer min-w-[85px] h-full transition-all border-x border-black/5 ${states.selectedDate === d.fullDate ? 'bg-black text-white scale-105 z-20 shadow-xl' : 'hover:bg-[#e6dcc5]'}`}>
-                                <span className={`text-2xl font-mono font-bold ${d.isWeekend && states.selectedDate !== d.fullDate ? 'text-red-600' : ''}`}>{d.dateNum}</span>
-                                <span className={`text-[10px] font-bold tracking-widest uppercase ${d.isWeekend && states.selectedDate !== d.fullDate ? 'text-red-600' : 'opacity-60'}`}>{d.dayName}</span>
-                                {states.selectedDate === d.fullDate && <div className="absolute top-1 left-1 w-1.5 h-1.5 bg-red-600 rounded-full"></div>}
-                            </div>
-                        ))}
+            <div className="max-w-7xl mx-auto px-6 md:px-10 py-20">
+                
+                {/* Date Selector */}
+                <div className="mb-16">
+                    <div className="flex items-center justify-between mb-8">
+                        <div className="flex items-center gap-3 text-[#B91C1C] font-bold tracking-[0.4em] uppercase text-xs">
+                            <div className="w-8 h-px bg-[#B91C1C]"></div>
+                            <span>Select Date</span>
+                        </div>
+                        <button 
+                            onClick={() => dateInputRef.current?.showPicker()}
+                            className="flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-black/40 hover:text-[#B91C1C] transition-colors"
+                        >
+                            <Calendar size={16} />
+                            <span>Calendar View</span>
+                            <input ref={dateInputRef} type="date" className="absolute opacity-0 pointer-events-none" value={states.selectedDate} onChange={(e) => setters.onCalendarChange(e.target.value)} />
+                        </button>
                     </div>
-                    <button onClick={() => setters.setStartIndex(Math.min(dateList.length - VISIBLE_COUNT, states.startIndex + 1))} disabled={states.startIndex + VISIBLE_COUNT >= dateList.length} className="px-8 h-full text-4xl font-light hover:bg-black hover:text-white transition-all disabled:opacity-20 z-10">›</button>
-                    <div className="border-l-[6px] border-black px-8 h-full flex items-center justify-center bg-[#f4f1ea] cursor-pointer hover:bg-[#e6dcc5] group" onClick={() => dateInputRef.current?.showPicker()}>
-                        <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="group-hover:rotate-12 transition-transform"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
-                        <input ref={dateInputRef} type="date" className="absolute opacity-0 pointer-events-none" value={states.selectedDate} onChange={(e) => setters.onCalendarChange(e.target.value)} />
+
+                    <div className="relative flex items-center bg-[#FDFDFD] border border-black/5 rounded-sm p-2 shadow-xl">
+                        <button 
+                            onClick={() => setters.setStartIndex(Math.max(0, states.startIndex - 1))} 
+                            disabled={states.startIndex === 0} 
+                            className="p-4 hover:bg-black hover:text-white transition-all disabled:opacity-10 rounded-sm"
+                        >
+                            <ChevronLeft size={24} />
+                        </button>
+                        
+                        <div className="flex-1 flex items-center justify-between px-4 overflow-hidden">
+                            {dateList.slice(states.startIndex, states.startIndex + VISIBLE_COUNT).map((d) => (
+                                <button 
+                                    key={d.fullDate} 
+                                    onClick={() => setters.onDateButtonClick(d.fullDate)} 
+                                    className={`flex flex-col items-center justify-center min-w-[100px] py-6 rounded-sm transition-all ${
+                                        states.selectedDate === d.fullDate 
+                                            ? 'bg-[#B91C1C] text-white shadow-lg scale-105 z-10' 
+                                            : 'hover:bg-black/5'
+                                    }`}
+                                >
+                                    <span className={`text-3xl font-display leading-none mb-1 ${d.isWeekend && states.selectedDate !== d.fullDate ? 'text-[#B91C1C]' : ''}`}>{d.dateNum}</span>
+                                    <span className={`text-[10px] font-bold tracking-widest uppercase ${d.isWeekend && states.selectedDate !== d.fullDate ? 'text-[#B91C1C]' : 'opacity-40'}`}>{d.dayName}</span>
+                                </button>
+                            ))}
+                        </div>
+
+                        <button 
+                            onClick={() => setters.setStartIndex(Math.min(dateList.length - VISIBLE_COUNT, states.startIndex + 1))} 
+                            disabled={states.startIndex + VISIBLE_COUNT >= dateList.length} 
+                            className="p-4 hover:bg-black hover:text-white transition-all disabled:opacity-10 rounded-sm"
+                        >
+                            <ChevronRight size={24} />
+                        </button>
                     </div>
                 </div>
 
-                <div className="grid grid-cols-4 gap-0 border-[6px] border-black h-[800px] min-h-0 bg-white shadow-[20px_20px_0_0_#000] relative">
-                    <div className="border-r-[6px] border-black flex flex-col h-full min-h-0 bg-[#f4f1ea]">
-                        <div className="bg-black text-white py-4 text-center font-serif text-2xl italic tracking-widest uppercase border-b-4 border-black">
-                            Theater
+                {/* Main Selection Grid */}
+                <div className="grid grid-cols-1 lg:grid-cols-4 gap-12">
+                    
+                    {/* Theater Selection */}
+                    <div className="lg:col-span-1 space-y-8">
+                        <div className="flex items-center gap-3 text-[#B91C1C] font-bold tracking-[0.4em] uppercase text-xs">
+                            <div className="w-8 h-px bg-[#B91C1C]"></div>
+                            <span>Theater</span>
                         </div>
+                        
+                        <div className="bg-[#FDFDFD] border border-black/5 rounded-sm overflow-hidden shadow-xl flex flex-col h-[600px]">
+                            <div className="flex border-b border-black/5">
+                                <button
+                                    onClick={() => setters.setActiveTab('ALL')}
+                                    className={`flex-1 py-4 text-[10px] font-bold uppercase tracking-widest transition-all ${
+                                        states.activeTab === 'ALL' ? 'bg-[#1A1A1A] text-white' : 'hover:bg-black/5'
+                                    }`}
+                                >
+                                    Regions
+                                </button>
+                                <button
+                                    onClick={() => setters.setActiveTab('SPECIAL')}
+                                    className={`flex-1 py-4 text-[10px] font-bold uppercase tracking-widest transition-all ${
+                                        states.activeTab === 'SPECIAL' ? 'bg-[#1A1A1A] text-white' : 'hover:bg-black/5'
+                                    }`}
+                                >
+                                    Special
+                                </button>
+                            </div>
 
-                        <div className="flex border-b-4 border-black h-14 bg-white shrink-0">
-                            <button
-                                onClick={() => setters.setActiveTab('ALL')}
-                                className={`flex-1 text-xs font-bold uppercase tracking-[0.2em] transition-all border-r-2 border-black/10 ${
-                                    states.activeTab === 'ALL' ? 'bg-black text-white' : 'hover:bg-[#e6dcc5]'
-                                }`}
-                            >
-                                Regions
-                            </button>
-                            <button
-                                onClick={() => setters.setActiveTab('SPECIAL')}
-                                className={`flex-1 text-xs font-bold uppercase tracking-[0.2em] transition-all ${
-                                    states.activeTab === 'SPECIAL' ? 'bg-black text-white' : 'hover:bg-[#e6dcc5]'
-                                }`}
-                            >
-                                Special
-                            </button>
-                        </div>
-
-                        <div className="flex-1 min-h-0 overflow-hidden">
-                            <div className="flex h-full">
-                                <div className="w-1/2 border-r-4 border-black/20 overflow-y-auto custom-scrollbar bg-white/40 min-h-0">
-                                    {states.activeTab === 'ALL'
-                                        ? states.regions.map((r) => (
-                                            <div
-                                                key={r.id}
-                                                onClick={() => setters.setSelectedRegionId(r.id)}
-                                                className={`p-5 cursor-pointer text-xs font-bold uppercase tracking-widest border-b border-black/5 transition-colors ${
-                                                    states.selectedRegionId === r.id ? 'bg-black text-white' : 'hover:bg-white'
-                                                }`}
-                                            >
-                                                {r.name}
-                                            </div>
-                                        ))
-                                        : states.specialTypes.map((type) => (
-                                            <div
-                                                key={type}
-                                                onClick={() => setters.setSelectedSpecialType(type)}
-                                                className={`p-5 cursor-pointer text-xs font-bold uppercase tracking-widest border-b border-black/5 transition-colors ${
-                                                    states.selectedSpecialType === type ? 'bg-black text-white' : 'hover:bg-white'
-                                                }`}
-                                            >
-                                                {type}
-                                            </div>
-                                        ))}
+                            <div className="flex-1 flex min-h-0">
+                                <div className="w-1/2 border-r border-black/5 overflow-y-auto bg-black/[0.02]">
+                                    {(states.activeTab === 'ALL' ? states.regions : states.specialTypes.map(t => ({ id: t, name: t }))).map((r: any) => (
+                                        <button
+                                            key={r.id}
+                                            onClick={() => states.activeTab === 'ALL' ? setters.setSelectedRegionId(r.id) : setters.setSelectedSpecialType(r.name)}
+                                            className={`w-full p-5 text-left text-[11px] font-bold uppercase tracking-widest border-b border-black/5 transition-all ${
+                                                (states.activeTab === 'ALL' ? states.selectedRegionId === r.id : states.selectedSpecialType === r.name) 
+                                                    ? 'bg-white text-[#B91C1C] shadow-sm' 
+                                                    : 'text-black/40 hover:text-black hover:bg-white'
+                                            }`}
+                                        >
+                                            {r.name}
+                                        </button>
+                                    ))}
                                 </div>
-
-                                <div className="w-1/2 overflow-y-auto custom-scrollbar bg-white min-h-0">
+                                <div className="w-1/2 overflow-y-auto bg-white">
                                     {states.theaters.map((t) => (
-                                        <div
+                                        <button
                                             key={t.id}
                                             onClick={() => handlers.toggleTheater(t.id, t.name)}
-                                            className={`p-5 cursor-pointer text-sm font-medium border-b border-black/5 transition-all ${
+                                            className={`w-full p-5 text-left text-xs font-medium border-b border-black/5 transition-all ${
                                                 states.selectedTheaters.includes(t.id)
-                                                    ? 'bg-red-700 text-white font-bold'
-                                                    : 'text-black hover:bg-[#f4f1ea]'
-                                            } ${!memos.theaterSet.has(t.id) && states.selectedMovies.length > 0 ? 'opacity-50' : ''}`}
+                                                    ? 'bg-[#B91C1C]/5 text-[#B91C1C] font-bold'
+                                                    : 'text-black/60 hover:bg-black/[0.02]'
+                                            } ${!memos.theaterSet.has(t.id) && states.selectedMovies.length > 0 ? 'opacity-30' : ''}`}
                                         >
                                             {t.name}
-                                        </div>
+                                        </button>
                                     ))}
                                 </div>
                             </div>
-                        </div>
 
-                        <div className="p-4 bg-black/5 h-[160px] border-t-[6px] border-black shrink-0">
-                            <div className="grid grid-cols-2 gap-2">
-                                {states.selectedTheatersInfo.length === 0 ? (
-                                    <div className="col-span-2 h-28 flex flex-col items-center justify-center text-gray-500 text-[10px] text-center p-4 border-2 border-dashed border-black/20 uppercase tracking-widest leading-relaxed">
-                                        Select Venue<br />(Max 4)
-                                    </div>
-                                ) : (
-                                    <>
-                                        {states.selectedTheatersInfo.map((t) => (
-                                            <div
-                                                key={t.id}
-                                                className="flex items-center justify-between border-2 border-black px-2 py-2 bg-white shadow-[3px_3px_0_0_rgba(0,0,0,0.1)] h-12"
-                                            >
-                                                <span className="text-[12px] uppercase font-bold truncate flex-1 tracking-tighter leading-none">
-                                                {t.name}
-                                                </span>
-                                                <button
-                                                    onClick={(e) => {
-                                                        e.stopPropagation();
-                                                        handlers.toggleTheater(t.id);
-                                                    }}
-                                                    className={xBtnClass}
-                                                    style={{ WebkitTapHighlightColor: 'transparent' }}
-                                                >
-                                                    ×
-                                                </button>
+                            {/* Selected Theaters Summary */}
+                            <div className="p-6 bg-[#F8F8F8] border-t border-black/5">
+                                <div className="flex flex-wrap gap-2">
+                                    {states.selectedTheatersInfo.length === 0 ? (
+                                        <div className="w-full py-4 border border-dashed border-black/10 rounded-sm flex items-center justify-center">
+                                            <span className="text-[10px] font-bold text-black/20 uppercase tracking-widest">Select Venue (Max 4)</span>
+                                        </div>
+                                    ) : (
+                                        states.selectedTheatersInfo.map((t) => (
+                                            <div key={t.id} className="bg-white border border-black/5 px-3 py-2 rounded-sm flex items-center gap-2 shadow-sm">
+                                                <span className="text-[10px] font-bold uppercase tracking-tight truncate max-w-[80px]">{t.name}</span>
+                                                <button onClick={() => handlers.toggleTheater(t.id)} className="text-[#B91C1C] hover:scale-125 transition-transform">×</button>
                                             </div>
-                                        ))}
-                                        {Array.from({ length: 4 - states.selectedTheatersInfo.length }).map((_, i) => (
-                                            <div
-                                                key={`empty-t-${i}`}
-                                                className="border-2 border-dashed border-black/10 h-12 flex items-center justify-center text-xs opacity-20 font-bold"
-                                            >
-                                                +
-                                            </div>
-                                        ))}
-                                    </>
-                                )}
+                                        ))
+                                    )}
+                                </div>
                             </div>
                         </div>
                     </div>
 
-
-                    <div className="border-r-[6px] border-black flex flex-col h-full min-h-0 bg-[#f4f1ea]">
-                        <div className="bg-black text-white py-4 text-center font-serif text-2xl italic tracking-widest uppercase border-b-4 border-black">
-                            Movie
+                    {/* Movie Selection */}
+                    <div className="lg:col-span-1 space-y-8">
+                        <div className="flex items-center gap-3 text-[#B91C1C] font-bold tracking-[0.4em] uppercase text-xs">
+                            <div className="w-8 h-px bg-[#B91C1C]"></div>
+                            <span>Movie</span>
                         </div>
 
-                        <div className="flex-1 min-h-0 overflow-y-auto custom-scrollbar bg-white">
-                            {states.movies.map((m) => {
-                                const style = mapRatingToStyle(m.ageRating);
-                                return (
-                                    <div
+                        <div className="bg-[#FDFDFD] border border-black/5 rounded-sm overflow-hidden shadow-xl flex flex-col h-[600px]">
+                            <div className="flex-1 overflow-y-auto bg-white">
+                                {states.movies.map((m) => (
+                                    <button
                                         key={m.id}
                                         onClick={() => handlers.toggleMovie(m.id)}
-                                        className={`p-5 cursor-pointer border-b border-black/10 transition-all flex items-center group ${
+                                        className={`w-full p-5 text-left border-b border-black/5 transition-all flex items-center gap-4 group ${
                                             states.selectedMovies.includes(m.id)
-                                                ? 'bg-black text-white'
-                                                : 'text-black hover:bg-[#f4f1ea]'
-                                        } ${!memos.movieSet.has(m.id) && states.selectedTheaters.length > 0 ? 'opacity-50' : ''}`}
+                                                ? 'bg-[#B91C1C]/5 text-[#B91C1C]'
+                                                : 'text-black/60 hover:bg-black/[0.02]'
+                                        } ${!memos.movieSet.has(m.id) && states.selectedTheaters.length > 0 ? 'opacity-30' : ''}`}
                                     >
-                                    <img 
-                                        src={ratingImages[m.ageRating as AgeRatingType] || ratingImages.ALL} 
-                                        alt={m.ageRating}
-                                        className="w-6 h-6 object-contain mr-4 shrink-0" 
-                                    />
-                                    <span className="text-sm font-bold uppercase tracking-tight truncate group-hover:italic">
-                                    {m.title}
-                                    </span>
-                                    </div>
-                                );
-                            })}
+                                        <img 
+                                            src={ratingImages[m.ageRating as AgeRatingType] || ratingImages.ALL} 
+                                            alt={m.ageRating}
+                                            className="w-6 h-6 object-contain transition-all" 
+                                        />
+                                        <span className="text-xs font-bold uppercase tracking-tight truncate group-hover:text-[#B91C1C] transition-colors">{m.title}</span>
+                                    </button>
+                                ))}
+                            </div>
+
+                            {/* Selected Movies Summary */}
+                            <div className="p-6 bg-[#F8F8F8] border-t border-black/5">
+                                <div className="grid grid-cols-3 gap-3">
+                                    {states.selectedMovies.length === 0 ? (
+                                        <div className="col-span-3 py-8 border border-dashed border-black/10 rounded-sm flex items-center justify-center">
+                                            <span className="text-[10px] font-bold text-black/20 uppercase tracking-widest">Select Movie (Max 3)</span>
+                                        </div>
+                                    ) : (
+                                        states.selectedMovies.map((mId) => {
+                                            const movie = states.movies.find(m => m.id === mId);
+                                            return (
+                                                <div key={mId} className="relative aspect-[2/3] bg-white border border-black/5 rounded-sm overflow-hidden shadow-md group">
+                                                    {movie?.posterUrl ? (
+                                                        <img src={movie.posterUrl} alt={movie.title} className="w-full h-full object-cover" />
+                                                    ) : (
+                                                        <div className="w-full h-full flex items-center justify-center p-2 text-center">
+                                                            <span className="text-[8px] font-bold uppercase leading-tight">{movie?.title}</span>
+                                                        </div>
+                                                    )}
+                                                    <button 
+                                                        onClick={() => handlers.toggleMovie(mId)}
+                                                        className="absolute top-1 right-1 w-5 h-5 bg-[#B91C1C] text-white rounded-full flex items-center justify-center text-xs shadow-lg opacity-0 group-hover:opacity-100 transition-opacity"
+                                                    >
+                                                        ×
+                                                    </button>
+                                                </div>
+                                            );
+                                        })
+                                    )}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Schedule Selection */}
+                    <div className="lg:col-span-2 space-y-8">
+                        <div className="flex items-center gap-3 text-[#B91C1C] font-bold tracking-[0.4em] uppercase text-xs">
+                            <div className="w-8 h-px bg-[#B91C1C]"></div>
+                            <span>Schedule</span>
                         </div>
 
-                        <div className="p-5 bg-black/5 h-[160px] border-t-[6px] border-black shrink-0">
-                            <div className="grid grid-cols-3 gap-3 h-full">
-                                {states.selectedMovies.length === 0 ? (
-                                    <div className="col-span-3 h-28 flex flex-col items-center justify-center text-gray-500 text-[10px] text-center p-4 border-2 border-dashed border-black/20 uppercase tracking-widest leading-relaxed">
-                                        Select Movie<br />(Max 3)
-                                    </div>
-                                ) : (
-                                    <>
-                                        {states.selectedMovies.map((mId) => (
-                                            <div key={mId} className="relative aspect-[2/3] border-2 border-black bg-white shadow-[6px_6px_0_0_rgba(0,0,0,0.1)] overflow-hidden">
-                                            {(() => {
-                                                const movie = states.movies.find((m) => m.id === mId);
-                                                return movie?.posterUrl ? (
-                                                // 1. 포스터가 있을 때: 이미지 출력
-                                                <img 
-                                                    src={movie.posterUrl} 
-                                                    alt={movie.title} 
-                                                    className="w-full h-full object-cover" 
-                                                />
-                                                ) : (
-                                                // 2. 포스터가 없을 때: 제목 텍스트 출력
-                                                <div className="absolute inset-0 p-2 flex items-center justify-center bg-[#f4f1ea]">
-                                                    <p className="text-[10px] text-center font-bold leading-tight uppercase overflow-hidden">
-                                                    {movie?.title}
-                                                    </p>
-                                                </div>
-                                                );
-                                            })()}
-
-                                            <button
-                                                onClick={(e) => {
-                                                e.stopPropagation();
-                                                handlers.toggleMovie(mId);
-                                                }}
-                                                className={`absolute -top-1 -right-1 bg-red-700 text-white w-6 h-6 border-2 border-black flex items-center justify-center text-xs font-bold z-10 ${xBtnClass}`}
+                        <div className="bg-[#FDFDFD] border border-black/5 rounded-sm overflow-hidden shadow-xl flex flex-col h-[600px]">
+                            {/* Time Filter */}
+                            <div className="flex items-center bg-white border-b border-black/5 p-4 gap-4">
+                                <button onClick={() => setters.setHourStartIndex(Math.max(0, states.startHourIndex - 1))} disabled={states.startHourIndex === 0} className="p-2 hover:bg-black hover:text-white transition-all disabled:opacity-10 rounded-sm">
+                                    <ChevronLeft size={20} />
+                                </button>
+                                <div className="flex-1 flex items-center justify-around overflow-hidden">
+                                    {Array.from({ length: 24 }).slice(states.startHourIndex, states.startHourIndex + VISIBLE_HOUR_COUNT).map((_, idx) => {
+                                        const hour = states.startHourIndex + idx;
+                                        const hasMovie = memos.availableHours.has(hour);
+                                        return (
+                                            <button 
+                                                key={hour} 
+                                                disabled={!hasMovie} 
+                                                onClick={() => setters.setSelectedHour(hour)} 
+                                                className={`w-10 h-10 flex flex-col items-center justify-center rounded-sm transition-all border ${
+                                                    states.selectedHour === hour 
+                                                        ? 'bg-[#1A1A1A] border-[#1A1A1A] text-white shadow-lg scale-110' 
+                                                        : 'border-transparent text-black/40 hover:border-black/20 hover:text-black' 
+                                                } ${!hasMovie && 'opacity-10 cursor-not-allowed'}`}
                                             >
-                                                ×
+                                                <span className="font-mono text-xs font-bold leading-none">{String(hour).padStart(2, '0')}</span>
+                                                <span className="text-[7px] uppercase mt-0.5 tracking-tighter font-bold">HR</span>
                                             </button>
+                                        );
+                                    })}
+                                </div>
+                                <button onClick={() => setters.setHourStartIndex(Math.min(14, states.startHourIndex + 1))} disabled={states.startHourIndex + VISIBLE_HOUR_COUNT >= 24} className="p-2 hover:bg-black hover:text-white transition-all disabled:opacity-10 rounded-sm">
+                                    <ChevronRight size={20} />
+                                </button>
+                            </div>
+
+                            {/* Screenings List */}
+                            <div className="flex-1 overflow-y-auto p-8 bg-white/50 custom-scrollbar">
+                                {Object.keys(memos.groupedScreenings).length > 0 ? (
+                                    Object.entries(memos.groupedScreenings).map(([title, items]) => {
+                                        const screeningItems = items as Screening[];
+                                        const ratingStyle = mapRatingToStyle(screeningItems[0]?.ageRating || 'ALL');
+                                        const finalKey = ratingStyle.text === 'ALL' ? 'ALL' : `AGE_${ratingStyle.text}`;
+                                        const groups = screeningItems.reduce((acc, s) => { const key = `${s.theaterName}|${s.screenType}`; if (!acc[key]) acc[key] = []; acc[key].push(s); return acc; }, {} as Record<string, Screening[]>);
+                                        
+                                        return (
+                                            <div key={title} className="mb-12 last:mb-0">
+                                                <div className="flex items-center gap-4 mb-6">
+                                                    <img 
+                                                        src={ratingImages[finalKey as AgeRatingType] || ratingImages.ALL} 
+                                                        alt={finalKey}
+                                                        className="w-8 h-8 object-contain" 
+                                                    />
+                                                    <h3 className="font-display text-3xl uppercase tracking-tight text-[#1A1A1A]">{title}</h3>
+                                                </div>
+                                                
+                                                {Object.entries(groups).map(([key, times]) => {
+                                                    const [tName, sType] = key.split('|');
+                                                    const screeningTimes = times as Screening[];
+                                                    return (
+                                                        <div key={key} className="mb-8 last:mb-0">
+                                                            <div className="flex items-center gap-3 mb-4">
+                                                                <span className="text-[9px] font-bold uppercase tracking-[0.2em] bg-black text-white px-2 py-0.5 rounded-sm">{sType}</span>
+                                                                <span className="text-xs font-bold uppercase tracking-widest text-black/40">{tName}</span>
+                                                            </div>
+                                                            <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-4 gap-3">
+                                                                {screeningTimes.map((s) => {
+                                                                    const time = s.startTime.includes('T') ? s.startTime.split('T')[1].substring(0, 5) : s.startTime.substring(0, 5);
+                                                                    const isSoldOut = s.availableSeats === 0;
+                                                                    return (
+                                                                        <button 
+                                                                            key={s.id} 
+                                                                            disabled={isSoldOut}
+                                                                            onClick={() => handlers.handleTimeClick(s)} 
+                                                                            className={`group relative p-4 bg-white border border-black/5 rounded-sm transition-all duration-300 flex flex-col gap-2 text-left shadow-sm hover:shadow-xl hover:border-[#B91C1C]/30 ${isSoldOut ? 'opacity-40 cursor-not-allowed grayscale' : ''}`}
+                                                                        >
+                                                                            <div className="font-display text-2xl group-hover:text-[#B91C1C] transition-colors">{time}</div>
+                                                                            <div className="flex flex-col items-center pt-2 border-t border-black/5">
+                                                                                <div className="text-[10px] font-bold">
+                                                                                    <span className="text-[#B91C1C]">{s.availableSeats}</span>
+                                                                                    <span className="text-black/20"> / {s.totalSeats}</span>
+                                                                                </div>
+                                                                                <div className="text-[9px] font-mono font-bold text-black/20 uppercase">{s.screenName}</div>
+                                                                            </div>
+                                                                            {isSoldOut && (
+                                                                                <div className="absolute inset-0 bg-black/60 flex items-center justify-center">
+                                                                                    <span className="text-white text-[10px] font-bold border border-white px-2 py-1 uppercase tracking-widest">Sold Out</span>
+                                                                                </div>
+                                                                            )}
+                                                                        </button>
+                                                                    );
+                                                                })}
+                                                            </div>
+                                                        </div>
+                                                    );
+                                                })}
                                             </div>
-                                        ))}
-                                        {Array.from({ length: 3 - states.selectedMovies.length }).map((_, i) => (
-                                            <div
-                                                key={`empty-m-${i}`}
-                                                className="aspect-[2/3] border-2 border-dashed border-black/10 bg-transparent flex items-center justify-center"
-                                            >
-                                                <span className="text-black/10 text-3xl font-light">+</span>
-                                            </div>
-                                        ))}
-                                    </>
+                                        );
+                                    })
+                                ) : (
+                                    <div className="h-full flex flex-col items-center justify-center text-center space-y-6 opacity-20">
+                                        <div className="w-24 h-24 border-2 border-dashed border-black rounded-full flex items-center justify-center">
+                                            <Clock size={40} />
+                                        </div>
+                                        <div className="space-y-2">
+                                            <p className="font-display text-2xl uppercase tracking-tight">Awaiting Selection</p>
+                                            <p className="text-[10px] font-bold uppercase tracking-[0.3em] max-w-[200px] leading-relaxed">Select venue and movie to view available sessions</p>
+                                        </div>
+                                    </div>
                                 )}
                             </div>
-                        </div>
-                    </div>
-
-
-                    <div className="flex flex-col col-span-2 bg-[#f4f1ea] h-full overflow-hidden">
-                        <div className="bg-black text-white py-4 text-center font-serif text-2xl italic tracking-widest uppercase border-b-4 border-black">Schedule</div>
-                        <div className="flex items-center border-b-4 border-black h-20 bg-white px-4 relative z-10 shadow-md">
-                            <button onClick={() => setters.setHourStartIndex(Math.max(0, states.startHourIndex - 1))} disabled={states.startHourIndex === 0} className="w-14 h-full flex items-center justify-center text-4xl font-light hover:bg-black hover:text-white transition-all disabled:opacity-10">‹</button>
-                            <div className="flex-1 flex items-center justify-around h-full overflow-hidden mx-4">
-                                {Array.from({ length: 24 }).slice(states.startHourIndex, states.startHourIndex + VISIBLE_HOUR_COUNT).map((_, idx) => {
-                                    const hour = states.startHourIndex + idx;
-                                    const hasMovie = memos.availableHours.has(hour);
-                                    return (
-                                        <button key={hour} disabled={!hasMovie} onClick={() => setters.setSelectedHour(hour)} className={`w-12 h-12 flex flex-col items-center justify-center font-mono text-sm font-bold transition-all border-2 ${states.selectedHour === hour ? 'border-black bg-black text-white rotate-3 scale-110 shadow-lg' : 'border-transparent text-black hover:border-black/30' } ${!hasMovie && 'opacity-10 cursor-not-allowed grayscale'}`}>
-                                            {String(hour).padStart(2, '0')}<span className="text-[7px] uppercase mt-0.5 tracking-tighter">HR</span>
-                                        </button>
-                                    );
-                                })}
-                            </div>
-                            <button onClick={() => setters.setHourStartIndex(Math.min(14, states.startHourIndex + 1))} disabled={states.startHourIndex + VISIBLE_HOUR_COUNT >= 24} className="w-14 h-full flex items-center justify-center text-4xl font-light hover:bg-black hover:text-white transition-all disabled:opacity-10">›</button>
-                        </div>
-
-                        <div className="p-8 text-left flex-1 overflow-y-auto bg-white/20 custom-scrollbar">
-                            {Object.keys(memos.groupedScreenings).length > 0 ? (
-                                Object.entries(memos.groupedScreenings).map(([title, items]) => {
-                                    const ratingStyle = mapRatingToStyle(items[0]?.ageRating || 'ALL');
-                                    const finalKey = ratingStyle.text === 'ALL' 
-                                        ? 'ALL' 
-                                        : `AGE_${ratingStyle.text}`;
-                                    const groups = items.reduce((acc, s) => { const key = `${s.theaterName}|${s.screenType}`; if (!acc[key]) acc[key] = []; acc[key].push(s); return acc; }, {} as Record<string, Screening[]>);
-                                    return (
-                                        <div key={title} className="mb-10 border-l-[8px] border-black pl-6">
-                                            <div className="flex items-center gap-3 mb-5">
-                                                <img 
-                                                    src={ratingImages[finalKey as AgeRatingType] || ratingImages.ALL} 
-                                                    alt={finalKey}
-                                                    className="w-7 h-7 object-contain shrink-0 shadow-[2px_2px_0_0_rgba(0,0,0,1)]" 
-                                                />
-                                                <h3 className="font-serif text-3xl italic tracking-tighter text-black uppercase">{title}</h3>
-                                            </div>
-                                            {Object.entries(groups).map(([key, times]) => {
-                                                const [tName, sType] = key.split('|');
-                                                return (
-                                                    <div key={key} className="mb-6">
-                                                        <div className="flex items-baseline gap-3 mb-3 border-b border-black/10 pb-1">
-                                                            <span className="font-mono text-[9px] font-bold uppercase tracking-widest bg-black text-white px-2 py-0.5">{sType}</span>
-                                                            <span className="font-serif text-lg text-black/60 italic">{tName}</span>
-                                                        </div>
-                                                        <div className="grid grid-cols-4 gap-3">
-                                                            {times.map((s) => {
-                                                                const time = s.startTime.includes('T') ? s.startTime.split('T')[1].substring(0, 5) : s.startTime.substring(0, 5);
-                                                                return (
-                                                                    <button key={s.id} onClick={() => handlers.handleTimeClick(s)} className="border-2 border-black p-2 !bg-white hover:!bg-black hover:!text-white transition-all shadow-[4px_4px_0_0_rgba(0,0,0,0.1)] flex flex-col gap-1 relative overflow-hidden group active:translate-x-0.5 active:translate-y-0.5 active:shadow-none">
-                                                                        <div className="font-mono text-xl font-bold tracking-tighter group-hover:text-white">{time}</div>
-                                                                        <div className="flex justify-between items-end border-t border-black/5 group-hover:border-white/20 pt-1">
-                                                                            <div className="text-[10px] font-bold"><span className="!text-red-700 group-hover:!text-red-400">{s.availableSeats}</span><span className="text-black/30 group-hover:text-white/30">/{s.totalSeats}</span></div>
-                                                                            <div className="text-[9px] font-mono text-black/40 group-hover:text-white/40">{s.screenName.replace('관', '')}관</div>
-                                                                        </div>
-                                                                        {s.availableSeats === 0 && <div className="absolute inset-0 !bg-black/60 flex items-center justify-center rotate-[-10deg]"><span className="text-white text-[10px] font-bold border-2 border-white px-1 uppercase">Sold Out</span></div>}
-                                                                    </button>
-                                                                );
-                                                            })}
-                                                        </div>
-                                                    </div>
-                                                );
-                                            })}
-                                        </div>
-                                    );
-                                })
-                            ) : (<div className="h-full flex flex-col items-center justify-center text-center space-y-4"><div className="w-20 h-20 border-4 border-dashed border-black/10 rounded-full flex items-center justify-center"><span className="font-serif text-3xl italic text-black/20">?</span></div><p className="font-serif text-2xl italic text-black/30 uppercase tracking-tighter">Awaiting Selection</p><p className="font-mono text-[9px] text-black/40 uppercase tracking-widest max-w-[200px] leading-relaxed">Select venue and movie reels to see the daily manifest.</p></div>)}
-                        </div>
-                    </div>
-                </div>
-
-                {/* Footer/Credits Section */}
-                <div className="mt-16 flex flex-col items-center gap-10">
-                    <div className="w-full flex items-center gap-8 px-10">
-                        <div className="flex-1 h-1.5 border-y border-black"></div>
-                        <div className="font-serif italic text-4xl uppercase tracking-tighter">The End</div>
-                        <div className="flex-1 h-1.5 border-y border-black"></div>
-                    </div>
-
-                    <div className="max-w-2xl text-center space-y-4">
-                        <p className="font-typewriter text-[11px] text-black/60 uppercase leading-relaxed tracking-widest">
-                            Tickets are valid for the selected session only. Please arrive 10 minutes before the screening.
-                            Recording and photography are strictly prohibited inside the auditorium.
-                        </p>
-                        <div className="flex items-center justify-center gap-6 opacity-30 grayscale scale-75">
-                            <img src="https://img.icons8.com/ios-filled/50/000000/movie-projector.png" alt="projector" className="w-12 h-12" />
-                            <div className="h-10 w-px bg-black"></div>
-                            <img src="https://img.icons8.com/ios-filled/50/000000/film-reel.png" alt="film" className="w-12 h-12" />
-                            <div className="h-10 w-px bg-black"></div>
-                            <img src="https://img.icons8.com/ios-filled/50/000000/star.png" alt="stars" className="w-12 h-12" />
                         </div>
                     </div>
                 </div>
             </div>
 
             <SeatPreviewModal key={states.selectedScreeningData?.id} isOpen={states.isModalOpen} onClose={() => setters.setIsModalOpen(false)} screening={states.selectedScreeningData} seats={states.currentSeats} />
-
-            {/* Final Credits Footer */}
-            <footer className="bg-black text-white/40 py-16 mt-5 text-center relative">
-                <div className="max-w-4xl mx-auto px-10">
-                    <FilmStrip />
-                    <div className="mt-12 space-y-6 font-mono text-[10px] uppercase tracking-[0.5em]">
-                        <p>© 1928 - 2026 GOLDEN AGE CINEMA EXHIBITIONS</p>
-                        <p className="opacity-20 leading-loose">
-                            Special thanks to the projectionists, ushers, and patrons of fine cinema.<br/>
-                            Distributed by Vintage Film Works, Inc.
-                        </p>
-                    </div>
-                </div>
-            </footer>
         </div>
     );
 };

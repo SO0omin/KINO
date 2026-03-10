@@ -15,6 +15,7 @@ export type PurchaseStatusType = "all" | "purchase" | "cancel";
 
 export type PurchaseRow = {
   id: number;
+  reservationNumber: string;
   paymentDate: Date;
   category: string;
   productName: string;
@@ -103,6 +104,7 @@ export function toPurchaseRows(
         item.paymentStatus === "CANCELLED" || item.reservationStatus === "CANCELED";
       return {
         id: item.reservationId,
+        reservationNumber: item.reservationNumber,
         paymentDate,
         category: "영화예매",
         productName: item.movieTitle,

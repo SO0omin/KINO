@@ -308,7 +308,7 @@ public class PaymentService {
             String bookingNo = generateBookingNo(reservation.getId());
             reservation.setReservationNumber(bookingNo);
 
-            mailService.sendPaymentCompleteEmail(payment.getMember(),reservation,bookingNo);
+            if(payment.getMember() != null) mailService.sendPaymentCompleteEmail(payment.getMember(),reservation,bookingNo);
 
             screeningSeatRepository.findByReservationId(reservation.getId())
                     .forEach(s -> {
