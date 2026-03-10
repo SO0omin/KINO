@@ -278,12 +278,15 @@ export function CouponsSection({
       <div className="mt-8 rounded-sm border border-black/5 bg-[#FDFDFD] px-4 py-4 text-[11px] font-bold uppercase tracking-[0.18em] text-black/35 shadow-xl">이용안내</div>
 
       {showDownloadModal ? (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#000000]/70 px-4">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#1A1A1A]/78 px-4 py-6 backdrop-blur-sm">
           <div className="max-h-[88vh] w-full max-w-3xl overflow-auto rounded-sm border border-black/5 bg-[#FDFDFD] shadow-2xl">
             <div className="flex items-center justify-between bg-[#1A1A1A] px-5 py-4">
-              <h3 className="text-3xl font-semibold tracking-tight text-white">다운로드 가능 쿠폰</h3>
+              <div>
+                <p className="text-[10px] font-bold uppercase tracking-[0.35em] text-[#B91C1C]">Kino Mypage</p>
+                <h3 className="mt-2 text-3xl font-semibold tracking-tight text-white">다운로드 가능 쿠폰</h3>
+              </div>
               <button
-                className="text-4xl leading-none text-white"
+                className="text-4xl leading-none text-white/70 transition-colors hover:text-white"
                 onClick={() => setShowDownloadModal(false)}
                 aria-label="닫기"
               >
@@ -297,7 +300,7 @@ export function CouponsSection({
                 <div className="py-10 text-center text-sm text-black/45">다운로드 가능한 쿠폰이 없습니다.</div>
               ) : (
                 <>
-                  <div className="flex items-center justify-between rounded-sm border border-black/10 bg-white px-4 py-3">
+                  <div className="flex items-center justify-between rounded-sm border border-black/5 bg-white px-4 py-4 shadow-sm">
                     <label className="flex cursor-pointer items-center gap-2 text-sm">
                       <input type="checkbox" checked={allSelected} onChange={toggleSelectAll} />
                       전체 선택
@@ -314,7 +317,7 @@ export function CouponsSection({
                       return (
                         <label
                           key={item.couponId}
-                          className={`flex items-center justify-between rounded-sm border px-4 py-3 ${disabled ? "border-black/10 bg-black/5 text-black/30" : "border-black/10 bg-white text-[#1A1A1A]"}`}
+                          className={`flex items-center justify-between rounded-sm border px-4 py-4 transition-colors ${disabled ? "border-black/10 bg-black/5 text-black/30" : "border-black/5 bg-white text-[#1A1A1A] shadow-sm hover:border-[#B91C1C]/30"}`}
                         >
                           <div className="flex items-center gap-3">
                             <input
@@ -344,7 +347,7 @@ export function CouponsSection({
               )}
               <div className="mt-2 flex justify-center gap-3">
                 <button
-                  className="rounded-sm border border-[#B91C1C] px-8 py-2 text-base font-semibold text-[#B91C1C] transition-colors hover:bg-[#B91C1C] hover:text-white"
+                  className="rounded-sm border border-black/10 bg-white px-8 py-3 text-base font-semibold text-[#1A1A1A] transition-colors hover:border-[#B91C1C] hover:text-[#B91C1C]"
                   onClick={() => setShowDownloadModal(false)}
                   disabled={downloadSubmitting}
                 >

@@ -84,20 +84,22 @@ public class CouponService {
     }
 
     @Transactional(readOnly = true)
-    public List<CouponDTO.MyCouponResponse> getMyAvailableCoupons(Long memberId) {
+    public List<CouponDTO.MyCouponResponse> getMyAvailableCoupons(Long memberId, String couponKind) {
         return memberCouponRepository.findAvailableCouponsByMemberId(memberId)
                 .stream()
                 .map(CouponDTO.MyCouponResponse::from)
                 .map(this::normalizeCouponStatus)
+                .filter(coupon -> matchesCouponKind(coupon, couponKind))
                 .toList();
     }
 
     @Transactional(readOnly = true)
-    public List<CouponDTO.MyCouponResponse> getMyCoupons(Long memberId) {
+    public List<CouponDTO.MyCouponResponse> getMyCoupons(Long memberId, String couponKind) {
         return memberCouponRepository.findAllCouponsByMemberId(memberId)
                 .stream()
                 .map(CouponDTO.MyCouponResponse::from)
                 .map(this::normalizeCouponStatus)
+                .filter(coupon -> matchesCouponKind(coupon, couponKind))
                 .toList();
     }
 
@@ -266,6 +268,16 @@ public class CouponService {
         } catch (IllegalArgumentException e) {
             throw new IllegalArgumentException("sourceType은 KINO, PARTNER, ALL만 가능합니다.");
         }
+    }
+
+    private boolean matchesCouponKind(CouponDTO.MyCouponResponse coupon, String couponKind) {
+        if (couponKind == null || couponKind.isBlank()) {
+            return true;
+        }
+
+        String normalizedRequestedKind = couponKind.trim();
+        String normalizedCouponKind = coupon.getCouponKind() != null ? coupon.getCouponKind().trim() : "";
+        return normalizedRequestedKind.equals(normalizedCouponKind);
     }
 
     private boolean isPointCoupon(Coupon coupon) {
