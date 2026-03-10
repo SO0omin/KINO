@@ -55,12 +55,13 @@ public class CouponController {
     @GetMapping("/my")
     public ResponseEntity<List<CouponDTO.MyCouponResponse>> myCoupons(
             @RequestParam Long memberId,
-            @RequestParam(defaultValue = "false") boolean includeAll
+            @RequestParam(defaultValue = "false") boolean includeAll,
+            @RequestParam(required = false) String couponKind
     ) {
         return ResponseEntity.ok(
                 includeAll
-                        ? couponService.getMyCoupons(memberId)
-                        : couponService.getMyAvailableCoupons(memberId)
+                        ? couponService.getMyCoupons(memberId, couponKind)
+                        : couponService.getMyAvailableCoupons(memberId, couponKind)
         );
     }
 }

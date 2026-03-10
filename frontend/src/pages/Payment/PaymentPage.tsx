@@ -86,7 +86,7 @@ export default function PaymentPage() {
     (async () => {
       setCouponLoading(true);
       try {
-        const list = await getMyCoupons(memberId);
+        const list = await getMyCoupons(memberId, '매표');
         setCoupons(list);
       } catch (e) {
         console.error('쿠폰 목록 조회 실패:', e);
@@ -159,7 +159,7 @@ export default function PaymentPage() {
     setCouponLoading(true);
     try {
       await redeemCoupon(code, memberId);
-      const list = await getMyCoupons(memberId);
+      const list = await getMyCoupons(memberId, '매표');
       setCoupons(list);
     } catch (e: any) {
       alert(e?.message ?? '쿠폰 등록에 실패했습니다.');
