@@ -425,6 +425,16 @@ export default function MyPage() {
     }, [pageKey, location.search]);
 
     useEffect(() => {
+        if (pageKey !== "movie-story") return;
+        const movieTab = new URLSearchParams(location.search).get("movieTab");
+        if (movieTab === "review" || movieTab === "watched" || movieTab === "wish" || movieTab === "timeline") {
+            setMovieStoryTab(movieTab);
+            return;
+        }
+        setMovieStoryTab("timeline");
+    }, [pageKey, location.search]);
+
+    useEffect(() => {
         if (!isGuestReservationOnly) return;
         if (location.pathname !== "/mypage/reservations") {
             navigate(`/mypage/reservations?guestId=${guestId}`, { replace: true });
@@ -1144,7 +1154,11 @@ export default function MyPage() {
                             <h3 className="text-xl font-semibold text-[#eb4d32]">나의 무비스토리</h3>
                             <button
                                 className="rounded border border-gray-300 px-4 py-1 text-sm"
-                                onClick={() => moveMenu("/mypage/movie-story")}
+                                onClick={() => {
+                                    const params = new URLSearchParams(location.search);
+                                    params.set("movieTab", "watched");
+                                    navigate(`/mypage/movie-story?${params.toString()}`);
+                                }}
                             >
                                 본 영화 등록
                             </button>

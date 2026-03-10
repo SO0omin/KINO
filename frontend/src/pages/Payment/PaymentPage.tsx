@@ -14,6 +14,7 @@ import {
   getMyPoints,
   type MyCouponResponse,
 } from '../../api/paymentApi';
+import { getMyMembershipCards, type MyMembershipCardItem } from '../../api/myPageApi';
 
 import type { PriceType, TicketRequest } from '../../types/dtos/payment.dto';
 
@@ -46,6 +47,8 @@ export default function PaymentPage() {
   const [agreeTerms, setAgreeTerms] = useState(false);
   const [selectedPaymentMethod, setSelectedPaymentMethod] =
     useState<'CARD' | 'TRANSFER' | 'VIRTUAL_ACCOUNT' | 'MOBILE_PHONE'>('CARD');
+  const [membershipCards, setMembershipCards] = useState<MyMembershipCardItem[]>([]);
+  const [selectedMembershipCardId, setSelectedMembershipCardId] = useState<number | null>(null);
 
   const [serverOriginalPrice, setServerOriginalPrice] = useState<number>(0);
   const [serverCouponDiscount, setServerCouponDiscount] = useState<number>(0);
@@ -118,6 +121,33 @@ export default function PaymentPage() {
     })();
   }, [reservationDetail?.memberId]);
 
+  useEffect(() => {
+    const memberId = reservationDetail?.memberId ?? null;
+
+    if (!memberId) {
+      setMembershipCards([]);
+      setSelectedMembershipCardId(null);
+      return;
+    }
+
+    (async () => {
+      try {
+        const cards = await getMyMembershipCards(memberId);
+        setMembershipCards(cards);
+        setSelectedMembershipCardId((prev) => {
+          if (prev && cards.some((card) => card.cardId === prev)) {
+            return prev;
+          }
+          return cards[0]?.cardId ?? null;
+        });
+      } catch (e) {
+        console.error('멤버십 카드 조회 실패:', e);
+        setMembershipCards([]);
+        setSelectedMembershipCardId(null);
+      }
+    })();
+  }, [reservationDetail?.memberId]);
+
   const handleRedeemCoupon = async (code: string) => {
     const memberId = reservationDetail?.memberId ?? null;
 
@@ -185,6 +215,16 @@ export default function PaymentPage() {
     recalc();
   }, [reservationDetail?.reservationId, selectedCouponId, usedPoints]);
 
+  const baseTotal = serverOriginalPrice > 0 ? serverOriginalPrice : reservationDetail?.totalAmount ?? 0;
+  const maxUsablePoints = Math.max(0, baseTotal - (serverCouponDiscount || 0));
+
+  useEffect(() => {
+    const clampedPoints = Math.floor(Math.min(usedPoints, availablePoints, maxUsablePoints) / 100) * 100;
+    if (clampedPoints !== usedPoints) {
+      setUsedPoints(clampedPoints);
+    }
+  }, [availablePoints, maxUsablePoints, usedPoints]);
+
   if (!reservationId) {
     return (
       <div className="bg-white min-h-screen flex items-center justify-center">
@@ -241,8 +281,6 @@ export default function PaymentPage() {
     screeningId: reservationDetail.screeningId,
     posterUrl: reservationDetail.posterUrl,
   };
-
-  const baseTotal = serverOriginalPrice > 0 ? serverOriginalPrice : reservationDetail.totalAmount;
   const totalDiscount = (serverCouponDiscount || 0) + (serverUsedPoints || 0);
 
   const paymentData: PaymentData = {
@@ -313,12 +351,16 @@ export default function PaymentPage() {
               couponLoading={couponLoading}
               onRedeemCoupon={handleRedeemCoupon}
               availablePoints={availablePoints}
+              maxUsablePoints={maxUsablePoints}
               pointUnit={100}
             />
 
             <PaymentMethodSection
               selectedPaymentMethod={selectedPaymentMethod}
               setSelectedPaymentMethod={setSelectedPaymentMethod}
+              membershipCards={membershipCards}
+              selectedMembershipCardId={selectedMembershipCardId}
+              setSelectedMembershipCardId={setSelectedMembershipCardId}
             />
 
             {/* 약관 동의 체크박스 (디자인 리팩토링) */}

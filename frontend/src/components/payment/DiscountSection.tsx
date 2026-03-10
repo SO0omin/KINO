@@ -13,6 +13,9 @@ interface DiscountSectionProps {
   onCouponSelect?: (couponId: number | null) => void;
   onPointChange?: (points: number) => void;
   availablePoints?: number;
+  maxUsablePoints?: number;
+
+  // 옵션: 포인트 사용 단위(기본 100)
   pointUnit?: number;
 }
 
@@ -26,6 +29,7 @@ export function DiscountSection({
   onCouponSelect,
   onPointChange,
   availablePoints = 0,
+  maxUsablePoints = 0,
   pointUnit = 100,
 }: DiscountSectionProps) {
   const [pointInput, setPointInput] = useState<string>('');
@@ -35,13 +39,16 @@ export function DiscountSection({
 
   const normalizePoint = (raw: string) => {
     const num = parseInt(raw.replace(/[^0-9]/g, ''), 10) || 0;
-    return Math.min(num, availablePoints);
+    const maxPointLimit = Math.max(0, Math.min(availablePoints, maxUsablePoints));
+    const clamped = Math.min(num, maxPointLimit);
+
+    return clamped;
   };
 
   const handlePointInput = (val: string) => {
     const entered = normalizePoint(val);
     const applied = pointUnit > 1 ? Math.floor(entered / pointUnit) * pointUnit : entered;
-    setPointInput(entered > 0 ? entered.toLocaleString() : '');
+    setPointInput(applied > 0 ? applied.toLocaleString() : '');
     onPointChange?.(applied);
   };
 
@@ -187,32 +194,50 @@ export function DiscountSection({
             )}
 
             {discountTab === 'point' && (
-              <div className="animate-in fade-in space-y-4 pt-4">
+              <div className="animate-in fade-in space-y-6">
+                <div className="border-b border-black/5 pb-2">
+                  <p className="text-[10px] font-bold uppercase tracking-widest text-black/60">Available Points</p>
+                </div>
+
                 <div className="flex gap-3 items-center">
-                  <div className="relative flex-1">
-                    <input
-                      type="text"
-                      value={pointInput}
-                      onChange={(e) => handlePointInput(e.target.value)}
-                      onBlur={syncPointInputToAppliedUnit}
-                      placeholder="0"
-                      className="w-full py-4 px-4 bg-white border border-black/10 rounded-sm focus:border-[#B91C1C] outline-none text-right font-display text-2xl transition-all placeholder:text-black/10 pr-10"
-                    />
-                    <span className="absolute right-4 top-1/2 -translate-y-1/2 text-black/40 font-bold">P</span>
-                  </div>
+                  <input
+                    type="text"
+                    value={pointInput}
+                    onChange={(e) => handlePointInput(e.target.value)}
+                    onBlur={syncPointInputToAppliedUnit}
+                    placeholder="0"
+                    disabled={Math.min(availablePoints, maxUsablePoints) <= 0}
+                    className="flex-1 py-3 px-4 bg-white border border-black/10 rounded-sm text-right font-mono text-sm focus:border-[#B91C1C] focus:ring-1 focus:ring-[#B91C1C] outline-none transition-all placeholder:text-black/20 disabled:bg-black/[0.03]"
+                  />
+                  <span className="text-black/50 font-semibold">P</span>
                   <button
-                    className="px-8 py-4 bg-[#1A1A1A] text-white rounded-sm text-xs font-bold tracking-[0.2em] uppercase hover:bg-[#B91C1C] transition-colors h-full"
-                    onClick={() => handlePointInput(String(availablePoints))}
+                    className="px-6 py-3 bg-[#1A1A1A] text-white rounded-sm text-xs font-bold tracking-widest uppercase hover:bg-[#B91C1C] transition-colors disabled:opacity-50"
+                    onClick={() => handlePointInput(String(Math.max(0, Math.min(availablePoints, maxUsablePoints))))}
+                    disabled={Math.min(availablePoints, maxUsablePoints) <= 0}
                   >
                     전액사용
                   </button>
                 </div>
-                <div className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest text-black/40 pl-1">
-                  <span>보유 포인트: <span className="text-[#1A1A1A]">{availablePoints.toLocaleString()}</span> P</span>
-                  {pointUnit > 1 && <span>({pointUnit.toLocaleString()}P 단위)</span>}
-                </div>
+
+                <p className="text-xs text-black/50">
+                  보유 포인트:{' '}
+                  <span className="text-black font-bold">{availablePoints.toLocaleString()}</span> P
+                  {pointUnit > 1 ? ` (${pointUnit.toLocaleString()}P 단위로 사용 가능)` : ''}
+                </p>
+
+                {Math.min(availablePoints, maxUsablePoints) <= 0 && (
+                  <p className="text-xs text-[#B91C1C]">사용 가능한 포인트가 없습니다.</p>
+                )}
               </div>
             )}
+
+            <div className="mt-6 pt-6 border-t border-gray-100">
+              <ul className="text-xs text-gray-500 space-y-1.5 leading-relaxed">
+                <li>• 쿠폰과 포인트는 중복 적용이 가능합니다.</li>
+                <li>• 최종 결제 금액은 서버 계산이 기준입니다.</li>
+                <li>• 결제 실패 시 쿠폰은 자동으로 복구됩니다.</li>
+              </ul>
+            </div>
           </div>
         </div>
       )}
