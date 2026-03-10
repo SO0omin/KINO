@@ -15,35 +15,36 @@ const ReviewSection = ({ movies }: ReviewSectionProps) => {
   if (!movies || movies.length === 0) return null;
 
   const current = movies[index];
+  
   const nextMovie = () => setIndex((prev) => (prev === movies.length - 1 ? 0 : prev + 1));
   const prevMovie = () => setIndex((prev) => (prev === 0 ? movies.length - 1 : prev - 1));
 
   const progressWidth = ((index + 1) / movies.length) * 100;
 
   return (
-    <section className="py-32 relative bg-white overflow-hidden">
+    <section className="py-32 relative bg-white overflow-hidden font-sans">
       <div className="max-w-7xl mx-auto px-6 md:px-10">
         
-        {/* Section Header - Modern Style */}
+        {/* 1. 섹션 헤더: 모던 시네마 스타일 */}
         <div className="flex flex-col md:flex-row justify-between items-end mb-20 gap-8">
           <div className="space-y-4">
             <div className="flex items-center gap-3 text-[#B91C1C] font-bold tracking-[0.4em] uppercase text-xs">
               <div className="w-12 h-px bg-[#B91C1C]"></div>
               <span>The Critics' Corner</span>
             </div>
-            <h2 className="font-display text-5xl md:text-7xl text-[#1A1A1A] uppercase tracking-tight leading-none">
-              Daily <span className="text-[#B91C1C]">Reviews</span>
+            <h2 className="font-display text-5xl md:text-7xl text-[#1A1A1A] uppercase tracking-tighter leading-none">
+              Patron <span className="text-[#B91C1C]">Reviews</span>
             </h2>
           </div>
           <div className="hidden md:block text-right space-y-2">
             <p className="font-mono text-[10px] font-bold tracking-widest uppercase text-black/20">Volume XIV • Issue 08</p>
-            <p className="font-display text-2xl text-[#1A1A1A] uppercase tracking-tight">"Fine cinema for fine people"</p>
+            <p className="font-display text-2xl text-[#1A1A1A] uppercase tracking-tight italic">"Cinema speaks for itself"</p>
           </div>
         </div>
 
         <div className="flex flex-col lg:flex-row gap-16 items-stretch">
           
-          {/* 1. Left: Info & Controls */}
+          {/* 2. Left: Info & Controls */}
           <div className="w-full lg:w-[340px] flex flex-col justify-between shrink-0">
             <AnimatePresence mode="wait">
               <motion.div
@@ -55,7 +56,7 @@ const ReviewSection = ({ movies }: ReviewSectionProps) => {
                 className="space-y-8"
               >
                 <div className="space-y-4">
-                  <h3 className="font-display text-4xl md:text-5xl text-[#1A1A1A] uppercase tracking-tight leading-none">
+                  <h3 className="font-display text-4xl md:text-5xl text-[#1A1A1A] uppercase tracking-tight leading-[0.9]">
                     {current.title}
                   </h3>
                   <div className="h-1.5 w-20 bg-[#B91C1C]"></div>
@@ -64,7 +65,12 @@ const ReviewSection = ({ movies }: ReviewSectionProps) => {
                 <div className="flex items-center gap-6">
                   <div className="flex gap-1.5 text-[#FFD700]">
                     {[1,2,3,4,5].map(s => (
-                      <Star key={s} size={20} fill={s <= Math.round(current.avgRating) ? "currentColor" : "none"} className={s <= Math.round(current.avgRating) ? "" : "text-black/10"} />
+                      <Star 
+                        key={s} 
+                        size={20} 
+                        fill={s <= Math.round(current.avgRating / 2) ? "currentColor" : "none"} 
+                        className={s <= Math.round(current.avgRating / 2) ? "" : "text-black/10"} 
+                      />
                     ))}
                   </div>
                   <span className="font-mono text-2xl font-bold italic text-[#1A1A1A]">{current.avgRating.toFixed(1)}</span>
@@ -80,11 +86,11 @@ const ReviewSection = ({ movies }: ReviewSectionProps) => {
               </motion.div>
             </AnimatePresence>
 
-            {/* Progress & Controls */}
+            {/* Progress & Navigation */}
             <div className="space-y-8 pt-12 border-t border-black/10 mt-12 lg:mt-0">
-              <div className="flex justify-between items-end">
+              <div className="flex justify-between items-end font-mono">
                 <span className="font-bold text-[10px] text-black/20 uppercase tracking-widest">Reel Progress</span>
-                <span className="font-mono text-lg font-bold italic text-[#1A1A1A]">
+                <span className="text-lg font-bold italic text-[#1A1A1A]">
                   {String(index + 1).padStart(2, '0')} / {String(movies.length).padStart(2, '0')}
                 </span>
               </div>
@@ -109,20 +115,20 @@ const ReviewSection = ({ movies }: ReviewSectionProps) => {
             </div>
           </div>
 
-          {/* 2. Center: Ticket Reviews */}
+          {/* 3. Center: Ticket Reviews */}
           <div className="flex-1 flex flex-col gap-6">
             <AnimatePresence mode="wait">
               <motion.div 
                 key={`list-${current.id}`}
                 className="space-y-6"
               >
-                {current.latestReviews.length > 0 ? current.latestReviews.map((rev: string, i: number) => (
+                {current.latestReviews && current.latestReviews.length > 0 ? current.latestReviews.map((rev: string, i: number) => (
                   <motion.div
                     key={i}
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: i * 0.1, duration: 0.5 }}
-                    className="relative w-full bg-[#FDFDFD] border border-black/5 p-8 rounded-sm group hover:border-[#FF2D2D]/30 transition-all duration-500 shadow-xl"
+                    className="relative w-full bg-[#FDFDFD] border border-black/5 p-8 rounded-sm group hover:border-[#B91C1C]/30 transition-all duration-500 shadow-xl"
                   >
                     <div className="flex flex-col gap-6">
                       <div className="flex justify-between items-center">
@@ -145,7 +151,8 @@ const ReviewSection = ({ movies }: ReviewSectionProps) => {
                     </div>
                   </motion.div>
                 )) : (
-                  <div className="h-full border-2 border-dashed border-black/5 flex items-center justify-center p-20 rounded-sm">
+                  <div className="h-full border-2 border-dashed border-black/5 flex flex-col items-center justify-center p-20 rounded-sm space-y-4">
+                    <Quote size={40} className="text-black/5" />
                     <p className="font-display text-2xl text-black/10 uppercase tracking-widest">Awaiting Manifest...</p>
                   </div>
                 )}
@@ -153,7 +160,7 @@ const ReviewSection = ({ movies }: ReviewSectionProps) => {
             </AnimatePresence>
           </div>
 
-          {/* 3. Right: Large Poster */}
+          {/* 4. Right: Large Poster */}
           <div className="w-full lg:w-[380px] shrink-0">
             <AnimatePresence mode="wait">
               <motion.div
@@ -167,8 +174,8 @@ const ReviewSection = ({ movies }: ReviewSectionProps) => {
                 <img src={current.posterUrl} alt={current.title} className="w-full h-full object-cover transition-all duration-1000 group-hover:scale-110" />
                 <div className="absolute inset-0 bg-gradient-to-t from-black via-black/20 to-transparent opacity-80" />
                 <div className="absolute bottom-10 left-10 right-10 space-y-2">
-                  <p className="font-bold text-[10px] text-[#B91C1C] tracking-[0.4em] uppercase">Now Playing</p>
-                  <p className="font-display text-3xl text-white uppercase tracking-tight leading-none">{current.title}</p>
+                  <p className="font-bold text-[10px] text-[#B91C1C] tracking-[0.4em] uppercase">Now Archives</p>
+                  <p className="font-display text-3xl text-white uppercase tracking-tight leading-none drop-shadow-lg">{current.title}</p>
                 </div>
               </motion.div>
             </AnimatePresence>
