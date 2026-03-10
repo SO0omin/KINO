@@ -6,7 +6,6 @@ import QuickMenuSection from '../components/main/QuickMenuSection';
 import BenefitSection from '../components/main/BenefitSection';
 import ReviewSection from '../components/main/ReviewSection';
 import TheaterStatSection from '../components/main/TheaterStatSection';
-import FilmStrip from '../components/ticketing/FilmStrip';
 import { Search, Facebook, Twitter, Instagram } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
@@ -121,10 +120,9 @@ const Main = () => {
         <TheaterStatSection stats={data.regionStats} />
       </div>
 
-      {/* 5. 모던 푸터 (기존 FilmStrip 시그니처 유지) */}
+      {/* 5. 모던 푸터 */}
       <footer className="bg-[#F8F8F8] border-t border-black/5 py-15 relative">
-        <div className="max-w-7xl mx-auto px-6 md:px-10">
-          
+        <div className="max-w-7xl mx-auto px-6 md:px-10 mt-16">
           <div className="flex flex-col md:flex-row justify-between items-center gap-16 mb-20">
             <div className="flex flex-col leading-none items-center md:items-start">
               <span className="font-display text-5xl tracking-tighter text-[#1A1A1A]">KINO</span>
@@ -148,7 +146,7 @@ const Main = () => {
             </div>
           </div>
 
-          <div className="pt-12 border-t border-black/5 flex flex-col md:flex-row justify-between items-center gap-8 text-[10px] font-bold uppercase tracking-[0.3em] text-black/20">
+          <div className="pt-12 border-t border-black/5 flex flex-col md:flex-row justify-between items-center gap-8 text-[10px] font-bold uppercase tracking-[0.3em] text-black/20 pb-16">
             <div className="flex flex-col items-center md:items-start gap-2 font-mono">
               <p>SUPPORT@KINOARCHIVE.COM</p>
               <p>+82 (02) 1234 5678</p>

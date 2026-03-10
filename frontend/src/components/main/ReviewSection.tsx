@@ -16,18 +16,16 @@ const ReviewSection = ({ movies }: ReviewSectionProps) => {
 
   const current = movies[index];
   
-  // 💡 원본의 슬라이드 제어 로직 유지
   const nextMovie = () => setIndex((prev) => (prev === movies.length - 1 ? 0 : prev + 1));
   const prevMovie = () => setIndex((prev) => (prev === 0 ? movies.length - 1 : prev - 1));
 
-  // 💡 원본의 프로그레스 바 계산 로직 유지
   const progressWidth = ((index + 1) / movies.length) * 100;
 
   return (
     <section className="py-32 relative bg-white overflow-hidden font-sans">
       <div className="max-w-7xl mx-auto px-6 md:px-10">
         
-        {/* 1. 섹션 헤더: 모던 시네마 스타일 (AI 디자인 적용) */}
+        {/* 1. 섹션 헤더: 모던 시네마 스타일 */}
         <div className="flex flex-col md:flex-row justify-between items-end mb-20 gap-8">
           <div className="space-y-4">
             <div className="flex items-center gap-3 text-[#B91C1C] font-bold tracking-[0.4em] uppercase text-xs">
@@ -46,7 +44,7 @@ const ReviewSection = ({ movies }: ReviewSectionProps) => {
 
         <div className="flex flex-col lg:flex-row gap-16 items-stretch">
           
-          {/* 2. Left: Info & Controls (상태 유지 + 디자인 변경) */}
+          {/* 2. Left: Info & Controls */}
           <div className="w-full lg:w-[340px] flex flex-col justify-between shrink-0">
             <AnimatePresence mode="wait">
               <motion.div
@@ -67,7 +65,12 @@ const ReviewSection = ({ movies }: ReviewSectionProps) => {
                 <div className="flex items-center gap-6">
                   <div className="flex gap-1.5 text-[#FFD700]">
                     {[1,2,3,4,5].map(s => (
-                      <Star key={s} size={20} fill={s <= Math.round(current.avgRating / 2) ? "currentColor" : "none"} className={s <= Math.round(current.avgRating / 2) ? "" : "text-black/10"} />
+                      <Star 
+                        key={s} 
+                        size={20} 
+                        fill={s <= Math.round(current.avgRating / 2) ? "currentColor" : "none"} 
+                        className={s <= Math.round(current.avgRating / 2) ? "" : "text-black/10"} 
+                      />
                     ))}
                   </div>
                   <span className="font-mono text-2xl font-bold italic text-[#1A1A1A]">{current.avgRating.toFixed(1)}</span>
@@ -75,7 +78,7 @@ const ReviewSection = ({ movies }: ReviewSectionProps) => {
 
                 <button 
                   onClick={() => navigate(`/movies/${current.id}`)}
-                  className="w-full py-4 bg-black/5 hover:bg-black/10 text-[#1A1A1A] font-bold uppercase tracking-widest text-xs transition-all duration-300 rounded-sm border border-black/10 flex items-center justify-center gap-3"
+                  className="w-full py-4 bg-black/5 hover:bg-black/10 backdrop-blur-md text-[#1A1A1A] font-bold uppercase tracking-widest text-xs transition-all duration-300 rounded-sm border border-black/10 flex items-center justify-center gap-3"
                 >
                   <Info size={18} />
                   <span>View Full Archive</span>
@@ -83,7 +86,7 @@ const ReviewSection = ({ movies }: ReviewSectionProps) => {
               </motion.div>
             </AnimatePresence>
 
-            {/* Progress & Navigation (AI 디자인 입힌 컨트롤러) */}
+            {/* Progress & Navigation */}
             <div className="space-y-8 pt-12 border-t border-black/10 mt-12 lg:mt-0">
               <div className="flex justify-between items-end font-mono">
                 <span className="font-bold text-[10px] text-black/20 uppercase tracking-widest">Reel Progress</span>
@@ -103,16 +106,16 @@ const ReviewSection = ({ movies }: ReviewSectionProps) => {
 
               <div className="flex gap-4">
                 <button onClick={prevMovie} className="flex-1 py-4 bg-black/5 hover:bg-[#B91C1C] transition-all duration-300 rounded-sm border border-black/5 group flex items-center justify-center">
-                  <ChevronLeft size={24} strokeWidth={3} className="text-[#1A1A1A] group-hover:text-white transition-all" />
+                  <ChevronLeft size={24} strokeWidth={3} className="text-[#1A1A1A] group-hover:text-white group-hover:scale-110 transition-all" />
                 </button>
                 <button onClick={nextMovie} className="flex-1 py-4 bg-black/5 hover:bg-[#B91C1C] transition-all duration-300 rounded-sm border border-black/5 group flex items-center justify-center">
-                  <ChevronRight size={24} strokeWidth={3} className="text-[#1A1A1A] group-hover:text-white transition-all" />
+                  <ChevronRight size={24} strokeWidth={3} className="text-[#1A1A1A] group-hover:text-white group-hover:scale-110 transition-all" />
                 </button>
               </div>
             </div>
           </div>
 
-          {/* 3. Center: Ticket Reviews (원본 데이터 바인딩 + AI 모던 카드) */}
+          {/* 3. Center: Ticket Reviews */}
           <div className="flex-1 flex flex-col gap-6">
             <AnimatePresence mode="wait">
               <motion.div 
@@ -139,7 +142,7 @@ const ReviewSection = ({ movies }: ReviewSectionProps) => {
                           {[1,2,3].map(s => <div key={s} className="w-1.5 h-1.5 rounded-full bg-black/10" />)}
                         </div>
                       </div>
-                      <p className="text-lg md:text-xl text-[#1A1A1A] leading-relaxed font-medium italic">
+                      <p className="font-sans text-lg md:text-xl text-[#1A1A1A] leading-relaxed font-medium italic">
                         "{rev}"
                       </p>
                       <div className="pt-6 border-t border-black/5 flex justify-end">
@@ -157,7 +160,7 @@ const ReviewSection = ({ movies }: ReviewSectionProps) => {
             </AnimatePresence>
           </div>
 
-          {/* 4. Right: Large Poster (디자인 통일) */}
+          {/* 4. Right: Large Poster */}
           <div className="w-full lg:w-[380px] shrink-0">
             <AnimatePresence mode="wait">
               <motion.div

@@ -16,7 +16,6 @@ const HeroSection = ({ movies }: HeroSectionProps) => {
 
   const currentMovie = movies[activeIndex];
   
-  // 💡 원본의 안정적인 유튜브 ID 추출 로직 유지
   const videoId = currentMovie.trailerUrl?.split('/').pop()?.split('?')[0] || '';
   const videoSrc = `https://www.youtube.com/embed/${videoId}?autoplay=1&mute=1&controls=0&loop=1&playlist=${videoId}&rel=0&showinfo=0&modestbranding=1&iv_load_policy=3&disablekb=1&enablejsapi=1`;
 
@@ -27,7 +26,7 @@ const HeroSection = ({ movies }: HeroSectionProps) => {
   return (
     <section className="relative w-full h-[95vh] overflow-hidden bg-black flex items-center">
       
-      {/* 1. 배경 트레일러 (풀스크린 모던 스타일) */}
+      {/* 1. 배경 트레일러 */}
       <div className="absolute inset-0 z-0 pointer-events-none overflow-hidden">
         <AnimatePresence mode="wait">
           <motion.div
@@ -49,7 +48,7 @@ const HeroSection = ({ movies }: HeroSectionProps) => {
         </AnimatePresence>
       </div>
 
-      {/* 2. 시네마틱 오버레이 (디자인 업그레이드) */}
+      {/* 2. 시네마틱 오버레이 */}
       <div className="absolute inset-0 z-10 pointer-events-none">
         {/* 좌측 텍스트 가독성을 위한 그라데이션 */}
         <div className="absolute inset-0 bg-gradient-to-r from-black via-black/40 to-transparent" />
@@ -57,7 +56,7 @@ const HeroSection = ({ movies }: HeroSectionProps) => {
         <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent" />
       </div>
 
-      {/* 3. 메인 콘텐츠 (AI 스튜디오 스타일 적용) */}
+      {/* 3. 메인 콘텐츠 */}
       <div className="relative z-20 w-full max-w-7xl mx-auto px-6 md:px-10">
         <AnimatePresence mode="wait">
           <motion.div
@@ -123,7 +122,7 @@ const HeroSection = ({ movies }: HeroSectionProps) => {
         </div>
       </div>
 
-      {/* 5. 사이드 화살표 네비게이션 (AI 스튜디오 스타일) */}
+      {/* 5. 사이드 화살표 네비게이션 */}
       <div className="absolute top-1/2 -translate-y-1/2 right-10 z-50 hidden md:flex flex-col gap-4">
         <button 
           onClick={prevSlide}
@@ -139,6 +138,8 @@ const HeroSection = ({ movies }: HeroSectionProps) => {
         </button>
       </div>
 
+      {/* 6. Decorative Side Elements */}
+      <div className="absolute left-0 top-0 bottom-0 w-32 bg-gradient-to-r from-black to-transparent z-15 pointer-events-none opacity-80" />
     </section>
   );
 };

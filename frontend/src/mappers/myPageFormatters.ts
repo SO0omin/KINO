@@ -65,7 +65,7 @@ export function monthLabel(monthKey: string) {
 }
 
 export function splitReservations(items: MyReservationItem[]) {
-  const active = items.filter((item) => item.paymentStatus !== "CANCELLED");
-  const cancelled = items.filter((item) => item.paymentStatus === "CANCELLED");
+  const active = items.filter((item) => item.reservationStatus !== "CANCELED");
+  const cancelled = items.filter((item) => item.reservationStatus === "CANCELED");
   return { active, cancelled };
 }

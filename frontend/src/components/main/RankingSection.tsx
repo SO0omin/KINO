@@ -18,7 +18,7 @@ const RankingSection = ({ movies }: RankingSectionProps) => {
     <section className="py-32 relative bg-white">
       <div className="max-w-7xl mx-auto px-6 md:px-10">
         
-        {/* 1. 헤더 영역: 모던한 폰트와 레드 포인트 라인 */}
+        {/* 1. 헤더 영역 */}
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-8 mb-20">
           <div className="space-y-4">
             <div className="flex items-center gap-3 text-[#B91C1C] font-bold tracking-[0.3em] uppercase text-xs font-sans">
@@ -30,7 +30,7 @@ const RankingSection = ({ movies }: RankingSectionProps) => {
             </h2>
           </div>
           
-          {/* 전체 보기 버튼 (이동 경로는 원본 스타일 유지) */}
+          {/* 전체 보기 버튼 */}
           <button 
             onClick={() => navigate('/movie-list')}
             className="flex items-center gap-2 text-black/40 hover:text-[#B91C1C] transition-colors font-bold uppercase tracking-widest text-xs group font-sans"
@@ -51,7 +51,7 @@ const RankingSection = ({ movies }: RankingSectionProps) => {
               transition={{ delay: index * 0.1, duration: 0.6 }}
               className="group relative"
             >
-              {/* 3. 대형 배경 숫자: AI 스튜디오의 시그니처 디자인 */}
+              {/* 3. 대형 배경 숫자 */}
               <span className="absolute -left-6 -top-12 font-display text-[180px] text-black/[0.03] select-none pointer-events-none z-0 leading-none group-hover:text-[#B91C1C]/[0.05] transition-colors duration-500">
                 {index + 1}
               </span>
@@ -72,7 +72,7 @@ const RankingSection = ({ movies }: RankingSectionProps) => {
                   {/* 5. 모던 호버 오버레이: 아래에서 위로 올라오는 버튼들 */}
                   <div className="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-transparent opacity-0 group-hover:opacity-100 transition-all duration-500 flex flex-col justify-end p-8">
                     <div className="space-y-4 translate-y-10 group-hover:translate-y-0 transition-transform duration-500">
-                      {/* 예매하기 (기존 state 전달 기능 유지) */}
+                      {/* 예매하기 */}
                       <button 
                         onClick={() => navigate('/ticketing', { state: { movieId: movie.id } })}
                         className="w-full py-4 bg-[#B91C1C] text-white font-bold uppercase tracking-widest text-xs flex items-center justify-center gap-3 hover:bg-[#991B1B] transition-colors rounded-sm shadow-xl"

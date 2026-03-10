@@ -93,7 +93,7 @@ public class MyPageService {
 
         int availablePoints = memberPointRepository.getAvailablePointsByMemberId(memberId);
         PointTierInfo pointTierInfo = determinePointTier(availablePoints);
-        int pendingPoints = calculatePendingPoints(memberId);
+        int pendingPoints = 0;
         int expiringThisMonth = calculateExpiringThisMonth(memberId);
         int vipTicketPoints = memberPointRepository.sumPositiveEarnPoints(memberId);
         int coupons = memberCouponRepository.findAvailableCouponsByMemberId(memberId).size();
@@ -231,11 +231,6 @@ public class MyPageService {
             Payment payment = paymentRepository.findByReservation(reservation).orElse(null);
 
 
-            // && payment.getPaymentStatus() == PaymentStatus.FAILED
-            if (payment != null  && payment.getPaymentStatus() == PaymentStatus.FAILED) {
-                continue;
-            }
-
             List<ScreeningSeat> seats = screeningSeatRepository.findByReservationId(reservation.getId());
             List<String> seatNames = seats.stream()
                     .map(s -> s.getSeat().getSeatRow() + s.getSeat().getSeatNumber())
@@ -257,11 +252,13 @@ public class MyPageService {
                     .screenName(reservation.getScreening().getScreen().getName())
                     .startTime(reservation.getScreening().getStartTime())
                     .paidAt(payment != null ? payment.getPaidAt() : null)
-                    .cancelledAt(payment != null ? payment.getCancelledAt() : null)
+                    .cancelledAt(resolveCancelledAt(reservation, payment, holdExpiresAt))
                     .finalAmount(payment != null ? payment.getFinalAmount() : reservation.getTotalPrice())
                     .reservationStatus(reservation.getStatus().name())
+                    .reservationNumber(reservation.getReservationNumber())
                     // 결제 정보가 없으면 기본값으로 PENDING 처리
                     .paymentStatus(payment != null ? payment.getPaymentStatus().name() : "PENDING")
+                    .cancelReason(resolveCancelReason(reservation.getStatus(), payment))
                     .seatNames(seatNames)
                     .cancellable(cancellable)
                     .holdExpiresAt(holdExpiresAt)
@@ -429,8 +426,10 @@ public class MyPageService {
                 .build();
     }
 
-    @Transactional(readOnly = true)
+    @Transactional
     public List<MyPageDTO.MembershipCardItem> getMembershipCards(Long memberId) {
+        normalizeLegacyMembershipBrand();
+
         memberRepository.findById(memberId)
                 .orElseThrow(() -> new IllegalArgumentException("회원 정보를 찾을 수 없습니다."));
 
@@ -471,8 +470,8 @@ public class MyPageService {
         MembershipCard card = MembershipCard.builder()
                 .member(member)
                 .cardNumber(cardNumber)
-                .cardName("메가박스 멤버십")
-                .issuerName("메가박스 멤버십")
+                .cardName("키노 멤버십")
+                .issuerName("키노 멤버십")
                 .channelName("온라인")
                 .issuedDate(LocalDate.now())
                 .build();
@@ -487,6 +486,11 @@ public class MyPageService {
                 .issuedDate(saved.getIssuedDate())
                 .message("멤버십 카드가 등록되었습니다.")
                 .build();
+    }
+
+    @Transactional
+    public int normalizeLegacyMembershipBrand() {
+        return membershipCardRepository.normalizeLegacyMembershipBrand();
     }
 
     @Transactional(readOnly = true)
@@ -808,17 +812,6 @@ public class MyPageService {
         return (int) Math.floor(finalAmount * POINT_EARN_RATE);
     }
 
-    private int calculatePendingPoints(Long memberId) {
-        LocalDateTime now = LocalDateTime.now();
-        LocalDateTime oneDayAgo = now.minusDays(1);
-
-        return paymentRepository.findPaidPaymentsByMemberIdFrom(memberId, oneDayAgo).stream()
-                .filter(payment -> payment.getPaidAt() != null)
-                .filter(payment -> payment.getPaidAt().plusDays(1).isAfter(now))
-                .mapToInt(payment -> calculateEarnPoints(payment.getFinalAmount()))
-                .sum();
-    }
-
     private int calculateExpiringThisMonth(Long memberId) {
         LocalDate today = LocalDate.now();
         LocalDateTime from = today.withDayOfMonth(1).atStartOfDay();
@@ -853,6 +846,33 @@ public class MyPageService {
                         .createdAt(r.getCreatedAt().toLocalDate().toString())
                         .build())
                 .collect(Collectors.toList());
+    }
+
+    private String resolveCancelReason(ReservationStatus reservationStatus, Payment payment) {
+        if (reservationStatus != ReservationStatus.CANCELED) {
+            return null;
+        }
+        if (payment != null && payment.getPaymentStatus() == PaymentStatus.FAILED) {
+            return "TIMEOUT";
+        }
+        return "USER";
+    }
+
+    private LocalDateTime resolveCancelledAt(Reservation reservation, Payment payment, LocalDateTime holdExpiresAt) {
+        if (payment != null && payment.getCancelledAt() != null) {
+            return payment.getCancelledAt();
+        }
+        if (reservation.getStatus() == ReservationStatus.CANCELED
+                && payment != null
+                && payment.getPaymentStatus() == PaymentStatus.FAILED) {
+            if (holdExpiresAt != null) {
+                return holdExpiresAt;
+            }
+            if (reservation.getCreatedAt() != null) {
+                return reservation.getCreatedAt().plusMinutes(10);
+            }
+        }
+        return null;
     }
 
     private record PointTierRule(String tierName, int minPoints) {

@@ -3,10 +3,10 @@ import { Link, useNavigate } from 'react-router-dom';
 import { Search, Calendar, Film, Ticket } from 'lucide-react';
 
 const QuickMenuSection = () => {
-  const [keyword, setKeyword] = useState(""); // 💡 원본 검색어 상태 유지
+  const [keyword, setKeyword] = useState(""); // 검색어 상태
   const navigate = useNavigate();
 
-  // 💡 원본 검색 핸들러 로직 유지
+  // 검색 핸들러 로직
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     if (!keyword.trim()) return;
@@ -15,11 +15,11 @@ const QuickMenuSection = () => {
 
   return (
     <section className="max-w-7xl mx-auto px-6 md:px-10 relative z-40 -mt-12 md:-mt-16">
-      {/* 메인 컨테이너: 강력한 그림자와 모던한 화이트 라운딩 */}
+      {/* 메인 컨테이너 */}
       <div className="bg-white border border-black/5 p-1 shadow-[0_20px_50px_rgba(0,0,0,0.1)] rounded-sm">
         <div className="bg-[#FDFDFD] p-8 flex flex-col lg:flex-row items-center justify-between gap-12">
           
-          {/* 1. Search Section: 모던하고 직관적인 입력창 */}
+          {/* 1. Search Section */}
           <form onSubmit={handleSearch} className="flex-1 w-full relative group">
             <label className="block text-[10px] font-bold text-black/40 uppercase tracking-[0.3em] mb-4 font-sans">
               Search Archive

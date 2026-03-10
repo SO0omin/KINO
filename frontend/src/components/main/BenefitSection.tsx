@@ -17,7 +17,6 @@ const BenefitSection = ({ coupons }: BenefitSectionProps) => {
 
   const icons = [Gift, Zap, Crown, ShieldCheck];
 
-  // --- 💡 원본의 핵심 로직들 (데이터 가공) 유지 ---
   const isPointCoupon = (coupon: CouponDTO) => {
     const kind = (coupon.couponKind || '').trim();
     const name = (coupon.name || '').trim();
@@ -56,7 +55,15 @@ const BenefitSection = ({ coupons }: BenefitSectionProps) => {
   };
 
   const handleCollectNow = () => {
-    isLoggedIn ? navigate('/mypage/coupons') : navigate('/login');
+    if (isLoggedIn) {
+      navigate('/mypage/coupons');
+      return;
+    }
+    navigate('/login', {
+      state: {
+        returnTo: '/mypage/coupons',
+      },
+    });
   };
 
   return (

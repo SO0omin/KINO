@@ -13,7 +13,6 @@ const TheaterStatSection = ({ stats }: TheaterStatSectionProps) => {
 
   if (!stats || stats.length === 0) return null;
 
-  // 💡 원본의 이동 로직 그대로 유지
   const handlePrev = () => {
     setCurrentIndex((prev) => (prev === 0 ? 0 : prev - 1));
   };
@@ -25,7 +24,7 @@ const TheaterStatSection = ({ stats }: TheaterStatSectionProps) => {
     <section className="py-32 relative bg-white border-t border-black/5 font-sans">
       <div className="max-w-7xl mx-auto px-6 md:px-10">
         
-        {/* 1. 헤더 영역: 네비게이션 버튼을 제목 옆으로 이동 (AI 디자인) */}
+        {/* 1. 헤더 영역 */}
         <div className="flex flex-col md:flex-row items-start justify-between mb-16 gap-8">
           <div className="space-y-6">
             <div className="flex items-center gap-3 text-[#B91C1C] font-bold tracking-[0.4em] uppercase text-xs">
@@ -72,7 +71,6 @@ const TheaterStatSection = ({ stats }: TheaterStatSectionProps) => {
         {/* 2. 슬라이더 영역: framer-motion으로 부드럽게 구현 */}
         <div className="overflow-hidden py-4">
           <motion.div 
-            // 💡 갭(gap-8)까지 계산된 정교한 이동 로직
             animate={{ x: `calc(-${currentIndex * (100 / itemsToShow)}% - ${currentIndex * (32 / itemsToShow)}px)` }}
             transition={{ type: "spring", stiffness: 100, damping: 20 }}
             className="flex gap-8"
