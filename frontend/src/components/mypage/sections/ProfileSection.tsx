@@ -1,4 +1,5 @@
-import type { MemberProfile } from "../../../api/myPageApi";
+import { type MemberProfile, deleteMember} from "../../../api/myPageApi";
+import { useAuth } from "../../../contexts/AuthContext";
 
 type ProfileSectionProps = {
   profileImageUrl: string;
@@ -26,6 +27,7 @@ type ProfileSectionProps = {
   loadMemberProfile: () => Promise<void>;
 };
 
+
 export function ProfileSection({
   profileImageUrl,
   setProfileImageUrl,
@@ -51,6 +53,23 @@ export function ProfileSection({
   toggleSocialLink,
   loadMemberProfile,
 }: ProfileSectionProps) {
+
+  const { logout } = useAuth();
+
+  const handleWithdraw = async () => {
+
+  if (!window.confirm("정말로 탈퇴하시겠습니까?")) return;
+
+  try {
+    await deleteMember();
+
+    logout();
+    window.location.href = '/'; 
+  } catch (error: any) {
+    console.error("4. 에러 발생:", error);
+    alert(error.message);
+  }
+};
   return (
     <section>
       <h1 className="text-4xl font-semibold text-[#000000]">개인정보 수정</h1>
@@ -85,7 +104,12 @@ export function ProfileSection({
             <span className="text-xs text-gray-400">개인정보가 포함된 이미지는 등록하지 마시기 바랍니다.</span>
           </div>
           <div className="px-4 text-right">
-            <button className="rounded border border-[#eb4d32] px-4 py-2 text-sm text-[#eb4d32]">회원탈퇴</button>
+            <button 
+              onClick={handleWithdraw} // 💡 클릭 이벤트 연결
+              className="rounded border border-[#eb4d32] px-4 py-2 text-sm text-[#eb4d32] hover:bg-[#eb4d32] hover:text-white transition-colors"
+            >
+              회원탈퇴
+            </button>
           </div>
         </div>
 

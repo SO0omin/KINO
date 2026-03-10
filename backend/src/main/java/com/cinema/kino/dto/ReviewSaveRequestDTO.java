@@ -10,6 +10,7 @@ import lombok.Setter;
 public class ReviewSaveRequestDTO {
     private Long memberId;
     private Long movieId;
+    private String reservationNumber;
     private String content;
     private int scoreDirection;
     private int scoreStory;

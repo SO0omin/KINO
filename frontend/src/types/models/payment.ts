@@ -21,7 +21,7 @@ export interface BookingData {
   dateTime: string;
   theater: string;
   screenName?: string; // 예: "1관"
-  ticketType: string;
+  seatNamesText: string;
   posterUrl?: string;
 
   /**
@@ -81,11 +81,18 @@ export interface PaymentData {
    * 성인 인원 수
    */
   adultCount: number;
+  youthCount: number;
+  seniorCount: number;
+  specialCount: number;
+  
 
   /**
    * 성인 1인 가격 (UI 표시용)
    */
   adultPrice: number;
+  youthPrice: number;
+  seniorPrice: number;
+  speciaPrice: number;
 
   /**
    * 할인 전 총 금액 (UI 계산값)
@@ -141,3 +148,9 @@ export interface PaymentData {
    */
   guestId?: number | null;
 }
+
+export type TossPaymentType =
+  | 'CARD'
+  | 'TRANSFER'
+  | 'VIRTUAL_ACCOUNT'
+  | 'MOBILE_PHONE';

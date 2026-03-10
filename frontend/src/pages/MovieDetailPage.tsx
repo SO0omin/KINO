@@ -5,7 +5,8 @@ import { useAuth } from '../contexts/AuthContext';
 import InfoTab from '../components/detail/InfoTab';
 import ReviewTab from '../components/detail/ReviewTab';
 import MediaTab from '../components/detail/MediaTab';
-import ReviewWriteModal from '../components/detail/ReviewWriteModal';
+import ReviewWriteModal from '../components/common/review/ReviewWriteModal';
+import ReviewVerifyModal from '../components/common/review/ReviewVerifyModal';
 
 const MovieDetail = () => {
   const { id } = useParams();
@@ -21,6 +22,26 @@ const MovieDetail = () => {
   const [isSoundOn, setIsSoundOn] = useState(false);
   const [currentPage, setCurrentPage] = useState(0);
   const [currentSort, setCurrentSort] = useState('id,desc');
+  const [isVerifyModalOpen, setIsVerifyModalOpen] = useState(false);
+  const [isWriteModalOpen, setIsWriteModalOpen] = useState(false);
+  const [verifiedResNum, setVerifiedResNum] = useState("");
+  const [reviewContent, setReviewContent] = useState("");
+  const [scores, setScores] = useState({
+    scoreDirection: 10,
+    scoreStory: 10,
+    scoreVisual: 10,
+    scoreActor: 10,
+    scoreOst: 10,
+  });
+
+  // 모달 리셋 로직 (두 모달이 다 닫혔을 때 초기화)
+  useEffect(() => {
+    if (!isVerifyModalOpen && !isWriteModalOpen) {
+      setVerifiedResNum("");
+      setReviewContent("");
+      setScores({ scoreDirection: 10, scoreStory: 10, scoreVisual: 10, scoreActor: 10, scoreOst: 10 });
+    }
+  }, [isVerifyModalOpen, isWriteModalOpen]);
 
   // --- 1. 데이터 연동 (백엔드) ---
   const fetchMovieData = useCallback(() => {
@@ -112,7 +133,7 @@ useEffect(() => {
       });
       setIsLiked(res.data);
     } catch (err) {
-      console.error('좋아요 실패 🕵️‍♂️', err);
+      console.error('좋아요 실패', err);
     }
   };
 
@@ -121,31 +142,73 @@ useEffect(() => {
     setCurrentPage(0); // 페이지를 첫 페이지(0)로 초기화
   };
 
-  const handleWriteReviewClick = () => {
-    if (!isLoggedIn) {
-      if (window.confirm('로그인이 필요한 서비스입니다. 로그인 페이지로 이동하시겠습니까?')) {
-        navigate('/login');
-      }
+  const handleVerifyReservation = async (resNum: string) => {
+  try {
+    // 1. 예매 번호 유효성 및 해당 영화 티켓 여부 확인
+    const response = await axios.get(`http://localhost:8080/api/reservations/verify/${resNum}`);
+    
+    if (Number(response.data.movieId) !== Number(id)) { 
+      alert("해당 영화의 예매 내역이 아닙니다. 영화를 다시 확인해주세요.");
+      setIsVerifyModalOpen(false); // 💡 잘못된 번호 입력 시 창 닫기
       return;
     }
-    setIsReviewModalOpen(true);
-  };
 
-  const handleReviewSubmit = async (reviewData: any) => {
+    // 2. 중복 리뷰 체크 (추가된 API 호출)
+    // 이미 리뷰가 있다면 서버에서 던지는 "이미 관람평을 작성한 예매 번호입니다." 메시지를 catch문으로 보냄
+    await axios.get(`http://localhost:8080/api/reviews/check-availability/${resNum}`);
 
-    try {
-      const finalData = {
-        ...reviewData,
-        memberId: memberId 
-      };
+    // 3. 모든 검사 통과 시
+    setVerifiedResNum(resNum); 
+    setIsVerifyModalOpen(false); 
+    setIsWriteModalOpen(true); 
 
-      await axios.post('http://localhost:8080/api/reviews', finalData);
-      setIsReviewModalOpen(false);
-      fetchMovieData();
-    } catch (err) {
-      console.error('리뷰 등록 실패:', err);
+  } catch (error: any) {
+    // 4. 에러 처리 (중복 리뷰 혹은 유효하지 않은 번호)
+    const errorMessage = error.response?.data?.error || "유효하지 않은 예매 번호입니다.";
+    
+    alert(errorMessage);         // 경고 알림창 띄우기
+    setIsVerifyModalOpen(false); // 알림창 확인 누르면 모달 닫기
+  }
+};
+
+const handleReviewSubmit = async () => {
+  if (!reviewContent.trim()) {
+      alert("관람평 내용을 입력해 주세요.");
+      return;
+  }
+
+  try {
+    // 서버에 보낼 데이터(finalData)를 현재 부모가 가진 상태값들로 채움
+    const finalData = {
+      movieId: Number(id),
+      reservationNumber: verifiedResNum,
+      content: reviewContent,   // 부모의 State
+      ...scores,               // 부모의 State (5가지 점수)
+      memberId: memberId 
+    };
+
+    await axios.post('http://localhost:8080/api/reviews', finalData);
+    
+    alert("리뷰가 성공적으로 등록되었습니다!");
+    setIsWriteModalOpen(false); // 작성 모달 닫기
+    fetchMovieData();           // 목록 새로고침
+    
+  } catch (err: any) {
+    console.error('리뷰 등록 실패:', err);
+    alert(err.response?.data?.error || "리뷰 등록 중 오류가 발생했습니다.");
+  }
+};
+
+// 3. 버튼 클릭 핸들러 수정
+const handleWriteReviewClick = () => {
+  if (!isLoggedIn) {
+    if (window.confirm('로그인이 필요한 서비스입니다. 로그인 페이지로 이동하시겠습니까?')) {
+      navigate('/login');
     }
-  };
+    return;
+  }
+  setIsVerifyModalOpen(true); // 바로 리뷰창이 아니라 검증창
+};
 
 
   if (!movie) return <div className="pt-40 text-center text-zinc-500 font-mono italic">KINO LOADING...</div>;
@@ -309,11 +372,26 @@ useEffect(() => {
         </div>
       </div>
 
+      {/* 검증 모달 호출  */}
+      <ReviewVerifyModal 
+        isOpen={isVerifyModalOpen}
+        onClose={() => setIsVerifyModalOpen(false)}
+        onVerifySuccess={handleVerifyReservation}
+        reservationNumber={verifiedResNum}
+        setReservationNumber={setVerifiedResNum}
+      />
+
+      {/* 작성 모달 호출 */}
       <ReviewWriteModal 
-        isOpen={isReviewModalOpen}
-        onClose={() => setIsReviewModalOpen(false)}
+        isOpen={isWriteModalOpen}
+        onClose={() => setIsWriteModalOpen(false)}
         movieTitle={movie.title}
-        movieId={movie.id}
+        movieId={Number(id)}
+        reservationNumber={verifiedResNum}
+        content={reviewContent}
+        setContent={setReviewContent}
+        scores={scores}
+        setScores={setScores}
         onSubmit={handleReviewSubmit}
       />
     </div>

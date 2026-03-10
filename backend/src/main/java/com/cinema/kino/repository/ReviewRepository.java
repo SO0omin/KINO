@@ -15,6 +15,7 @@ import java.util.List;
 @Repository
 public interface ReviewRepository extends JpaRepository<Review, Long> {
     List<Review> findByMemberId(Long memberId);
+    boolean existsByReservationId(Long reservationId);
     long countByMemberId(Long memberId);
 
     // 1. 메인 페이지용: 5개 항목 평균으로 상위 리뷰 가져오기

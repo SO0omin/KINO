@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { ChevronRight } from "lucide-react";
 import { useAuth } from "../contexts/AuthContext";
+import axios from 'axios';
 import { KAKAO_AUTH_URL, NAVER_AUTH_URL, GOOGLE_AUTH_URL } from "../constants/socialAuth";
 import {
     cancelReservation,
@@ -194,6 +195,14 @@ export default function MyPage() {
     const [reviewMovieTitleInput, setReviewMovieTitleInput] = useState("");
     const [reviewContentInput, setReviewContentInput] = useState("");
     const [reviews, setReviews] = useState<MyReviewItem[]>([]);
+    const [showVerifyModal, setShowVerifyModal] = useState(false);
+    const [reviewReservationNumberInput, setReviewReservationNumberInput] = useState("");
+    const [reviewMovieId, setReviewMovieId] = useState<number | null>(null);
+    const [scoreDirection, setScoreDirection] = useState(10);
+    const [scoreStory, setScoreStory] = useState(10);
+    const [scoreVisual, setScoreVisual] = useState(10);
+    const [scoreActor, setScoreActor] = useState(10);
+    const [scoreOst, setScoreOst] = useState(10);
     const {
         loading,
         summary,
@@ -303,7 +312,7 @@ export default function MyPage() {
         if (isLoggedIn && memberId) {
             getMyReviews(memberId)
                 .then((data) => {
-                    // 백엔드에서 가져온 진짜 리뷰 리스트를 상태에 저장!
+                    // 백엔드에서 가져온 진짜 리뷰 리스트를 상태에 저장
                     setReviews(data);
                 })
                 .catch((err) => {
@@ -432,6 +441,23 @@ export default function MyPage() {
         }
     }, [guestId, isGuestReservationOnly, location.pathname, navigate]);
 
+    useEffect(() => {
+        // 1단계 검증창이 닫혔고('AND'), 2단계 리뷰창도 닫혀있을 때만 리셋
+        // 이렇게 하면 1단계 -> 2단계로 넘어가는 "사이"에는 데이터가 유지
+        if (!showVerifyModal && !showReviewModal) {
+            setReviewReservationNumberInput("");
+            setReviewMovieId(null);
+            setReviewMovieTitleInput("");
+            
+            // 점수 초기화
+            setScoreDirection(10); 
+            setScoreStory(10); 
+            setScoreVisual(10); 
+            setScoreActor(10); 
+            setScoreOst(10);
+        }
+    }, [showVerifyModal, showReviewModal]);
+
     const openCancelModal = (reservationId: number) => {
         setCancelTargetId(reservationId);
         setCancelReason("");
@@ -448,6 +474,81 @@ export default function MyPage() {
         setShowVoucherRegisterModal(false);
         setVoucherRegisterCode("");
         setVoucherRegisterError("");
+    };
+
+    const handleVerifyAndOpenReview = async () => {
+        const resNum = reviewReservationNumberInput.trim();
+        
+        if (!resNum) {
+            alert("예매 번호를 입력해주세요.");
+            return;
+        }
+
+        try {
+            // 1단계: 예매 번호 자체가 유효한지 확인 (기존 API)
+            const response = await axios.get(`http://localhost:8080/api/reservations/verify/${resNum}`);
+            
+            // 2단계: 해당 번호로 이미 리뷰를 썼는지 확인 (새로 만든 중복 체크 API)
+            // 이 API는 이미 리뷰가 있으면 400 에러와 함께 "이미 작성된 리뷰입니다"를 던집니다.
+            await axios.get(`http://localhost:8080/api/reviews/check-availability/${resNum}`);
+            
+           //  데이터 세팅을 먼저 하고
+            setReviewMovieId(response.data.movieId);
+            setReviewMovieTitleInput(response.data.movieTitle);
+            
+            // 그 다음에 모달을 전환
+            setShowVerifyModal(false);
+            setShowReviewModal(true);
+
+        } catch (error: any) {
+            // 에러 처리 (이미 썼거나, 번호가 틀렸을 때)
+            const errorMessage = error.response?.data?.error || "유효하지 않은 예매 번호입니다. 번호를 확인해주세요.";
+            
+            alert(errorMessage);      // 1. 에러 알림창 띄우기
+            setShowVerifyModal(false); // 2. 확인 누르면 검증 모달 닫기
+        }
+    };
+
+    const handleResNumberChange = (value: string) => {
+        // 영문, 숫자, 하이픈만 허용하도록 필터링
+        const filteredValue = value.replace(/[^A-Za-z0-9-]/g, "").toUpperCase();
+        setReviewReservationNumberInput(filteredValue);
+    };
+
+    const handleReviewSubmit = async () => {
+        if (!reviewContentInput.trim()) {
+            alert("관람평 내용을 입력해 주세요.");
+            return;
+        }
+
+        try {
+            const reviewData = {
+                memberId: memberId,
+                movieId: reviewMovieId,
+                reservationNumber: reviewReservationNumberInput,
+                content: reviewContentInput.trim(),
+                // 하드코딩된 10 대신 State 값을 실어 보냄
+                scoreDirection,
+                scoreStory,
+                scoreVisual,
+                scoreActor,
+                scoreOst
+            };
+
+            await axios.post('/api/reviews', reviewData);
+
+            alert("관람평이 성공적으로 등록되었습니다!");
+            
+            setShowReviewModal(false);
+            // 초기화
+            setReviewContentInput("");
+            setScoreDirection(10); setScoreStory(10); setScoreVisual(10); setScoreActor(10); setScoreOst(10);
+            
+            const updatedReviews = await getMyReviews(memberId);
+            setReviews(updatedReviews);
+        } catch (error: any) {
+            alert(error.response?.data?.message || "리뷰 등록 실패");
+        }
     };
 
     const handleVoucherRegister = () => {
@@ -1435,7 +1536,7 @@ export default function MyPage() {
             timelineRows={timelineRows}
             formatDateSimple={formatDateSimple}
             reviewCount={reviewCount}
-            setShowReviewModal={setShowReviewModal}
+            setShowReviewModal={setShowVerifyModal}
             reviews={reviews}
             watchedCount={watchedCount}
             setShowWatchedModal={setShowWatchedModal}
@@ -1531,12 +1632,25 @@ export default function MyPage() {
                 setWatchedTicketCodeInput={setWatchedTicketCodeInput}
                 reservations={reservations}
                 setWatchedMovies={setWatchedMovies}
+
+                showVerifyModal={showVerifyModal} 
+                setShowVerifyModal={setShowVerifyModal}
                 showReviewModal={showReviewModal}
                 setShowReviewModal={setShowReviewModal}
+                reviewReservationNumberInput={reviewReservationNumberInput}
+                setReviewReservationNumberInput={setReviewReservationNumberInput}
                 reviewMovieTitleInput={reviewMovieTitleInput}
                 setReviewMovieTitleInput={setReviewMovieTitleInput}
                 reviewContentInput={reviewContentInput}
                 setReviewContentInput={setReviewContentInput}
+                handleVerifyAndOpenReview={handleVerifyAndOpenReview} // 1단계 확인 함수
+                scoreDirection={scoreDirection} setScoreDirection={setScoreDirection}
+                scoreStory={scoreStory} setScoreStory={setScoreStory}
+                scoreVisual={scoreVisual} setScoreVisual={setScoreVisual}
+                scoreActor={scoreActor} setScoreActor={setScoreActor}
+                scoreOst={scoreOst} setScoreOst={setScoreOst}
+                handleReviewSubmit={handleReviewSubmit}
+
                 setReviews={setReviews}
                 showCardRegisterModal={showCardRegisterModal}
                 closeCardRegisterModal={closeCardRegisterModal}

@@ -4,6 +4,7 @@ import {ReservationTimer} from "../modals/ReservationTimer";
 
 type PurchaseRow = {
   id: number;
+  reservationNumber: string;
   paymentDate: Date;
   category: string;
   productName: string;
@@ -511,7 +512,17 @@ export function ReservationsSection({
                             </button>
                           )}
 
-                          {item.cancellable ? (
+                          {/* 결제가 안 된 상태면 교환권 출력 숨김 처리 */}
+                          {!canPay && (
+                            <button
+                              className="rounded border border-[#eb4d32] bg-white px-5 py-2 text-sm font-semibold text-[#eb4d32]"
+                              onClick={() => openPrintVoucher(item)}
+                            >
+                              교환권출력
+                            </button>
+                          )}
+
+                          {!canPay && item.cancellable ? (
                             <button
                               className="rounded border border-[#eb4d32] px-4 py-2 text-sm text-[#eb4d32] hover:bg-red-50"
                               disabled={isCancelling === item.reservationId}
@@ -585,7 +596,8 @@ export function ReservationsSection({
             <div className="p-5">
               <p className="text-base font-semibold text-[#000000]">전체 {purchaseRows.length}건</p>
               <div className="mt-2">
-                <div className="grid grid-cols-5 border-y border-gray-200 bg-[#ffffff] px-4 py-3 text-center text-sm font-semibold text-[#000000]">
+                <div className="grid grid-cols-6 border-y border-gray-200 bg-[#ffffff] px-4 py-3 text-center text-sm font-semibold text-[#000000]">
+                  <span>예매번호</span>
                   <span>결제일시</span>
                   <span>구분</span>
                   <span>상품명</span>
@@ -596,7 +608,8 @@ export function ReservationsSection({
                   <div className="border-b border-gray-200 py-10 text-center text-[#000000]">결제내역이 없습니다.</div>
                 ) : (
                   purchaseRows.map((row) => (
-                    <div key={row.id} className="grid grid-cols-5 border-b border-gray-200 px-4 py-3 text-center text-sm text-[#000000]">
+                    <div key={row.id} className="grid grid-cols-6 border-b border-gray-200 px-4 py-3 text-center text-sm text-[#000000]">
+                      <span>{row.reservationNumber}</span>
                       <span>{formatDateTime(row.paymentDate.toISOString())}</span>
                       <span>{row.category}</span>
                       <span>{row.productName}</span>

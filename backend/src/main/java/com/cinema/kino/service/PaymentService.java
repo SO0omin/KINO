@@ -65,6 +65,18 @@ public class PaymentService {
         List<ScreeningSeat> fetchedSeats = screeningSeatRepository.findAllByScreeningIdAndSeatIdInWithSeat(
                 screening.getId(), ticketSeatIds);
 
+
+        // 1. 상영관 타입 꺼내기
+        ScreenType screenType = reservation.getScreening().getScreen().getScreenType();
+
+        // 💡 2. 상영 시간(LocalDateTime)에서 시간(LocalTime)만 쏙 빼서 ScreeningType 계산하기!
+        java.time.LocalTime time = reservation.getScreening().getStartTime().toLocalTime();
+        ScreeningType screeningType = ScreeningType.from(time); // 👉 결과: MORNING, NORMAL, NIGHT 중 하나
+
+        // 3. 계산된 조건으로 해당 영화의 가격표 뭉치 가져오기
+        List<TicketPrice> priceList = ticketPriceRepository.findByScreenTypeAndScreeningType(screenType, screeningType);
+
+        // 4. 티켓 정보를 SeatDetail DTO로 변환
         List<PaymentDTO.ReservationDetailResponse.SeatDetail> seatDetails = reservation.getTickets().stream()
                 .map(ticket -> {
                     ScreeningSeat ss = fetchedSeats.stream()
@@ -72,10 +84,18 @@ public class PaymentService {
                             .findFirst()
                             .orElseThrow(() -> new IllegalArgumentException("좌석 정보 없음"));
 
+                    // 가격표에서 현재 티켓 요금(성인/청소년)에 맞는 단가 찾기
+                    int seatPrice = priceList.stream()
+                            .filter(p -> p.getPriceType() == ticket.getPriceType())
+                            .findFirst()
+                            .map(TicketPrice::getPrice) // TicketPrice 엔티티의 가격 필드 (예: getPrice())
+                            .orElseThrow(() -> new IllegalArgumentException("해당 요금 타입의 가격 정책이 없습니다."));
+
                     return new PaymentDTO.ReservationDetailResponse.SeatDetail(
                             ticket.getSeatId(),
                             ss.getSeat().getSeatRow() + ss.getSeat().getSeatNumber(),
-                            ticket.getPriceType()
+                            ticket.getPriceType(),
+                            seatPrice // 💡 여기서 정확한 가격 세팅!
                     );
                 })
                 .collect(Collectors.toList());

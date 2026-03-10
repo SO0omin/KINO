@@ -73,175 +73,206 @@ const LoginPage: React.FC = () => {
     }
   };
 
+  // 💡 공통 인풋/라벨 스타일
+  const inputClass = "w-full border border-black/10 rounded-sm p-4 text-sm focus:border-[#B91C1C] focus:ring-1 focus:ring-[#B91C1C] outline-none transition-all placeholder:text-black/20 bg-white";
+  const labelClass = "block text-[10px] font-bold uppercase tracking-widest text-black/40 mb-2";
+
   return (
-    <div className="min-h-auto bg-[#fdf4e3] flex flex-col items-center pt-20 pb-20">
-      <div className="text-center mb-8">
-        <h1 className="text-3xl font-bold text-gray-800 mb-2">
-          {isBookingFlow ? '예매하기' : '로그인'}
-        </h1>
-        <p className="text-gray-600">
-          {isBookingFlow 
-            ? '로그인 혹은 비회원 정보를 입력해주세요.' 
-            : '서비스 이용을 위해 로그인이 필요합니다.'}
-        </p>
-      </div>
-
-      <div className="flex w-full max-w-[500px] mb-6">
-        <button 
-          type="button"
-          onClick={() => setActiveTab('MEMBER')} 
-          className={`flex-1 py-3 text-lg font-bold border-b-2 transition-colors ${
-            activeTab === 'MEMBER' 
-              ? 'border-[#eb4d32] text-[#eb4d32]' 
-              : 'border-gray-300 text-gray-400 hover:text-gray-600'
-          }`}
-        >
-          회원 로그인
-        </button>
-        <button 
-          type="button"
-          onClick={() => setActiveTab('GUEST')} 
-          className={`flex-1 py-3 text-lg font-bold border-b-2 transition-colors ${
-            activeTab === 'GUEST' 
-              ? 'border-[#eb4d32] text-[#eb4d32]' 
-              : 'border-gray-300 text-gray-400 hover:text-gray-600'
-          }`}
-        >
-          비회원 로그인
-        </button>
-      </div>
-
-      <div className="w-full max-w-[500px] bg-white rounded-lg p-8 shadow-sm border border-gray-100">
-        <form onSubmit={handleSubmit} className="flex flex-col gap-5">
-          
-          {activeTab === 'MEMBER' && (
-            <div className="flex flex-col gap-4 animate-[fadeIn_0.3s_ease-in-out]">
-              <input type="text" name="username" value={formData.username} onChange={handleChange} required 
-                className="w-full border border-gray-300 rounded p-3 focus:outline-none focus:border-[#eb4d32] transition-colors" 
-                placeholder="아이디" />
-              <input type="password" name="password" value={formData.password} onChange={handleChange} required 
-                className="w-full border border-gray-300 rounded p-3 focus:outline-none focus:border-[#eb4d32] transition-colors" 
-                placeholder="비밀번호" />
-            </div>
-          )}
-
-          {activeTab === 'GUEST' && (
-            <div className="flex flex-col gap-4 animate-[fadeIn_0.3s_ease-in-out]">
-              <input type="text" name="guestName" value={formData.guestName} onChange={handleChange} required 
-                className="w-full border border-gray-300 rounded p-3 focus:outline-none focus:border-[#eb4d32]" 
-                placeholder="이름" />
-              <input type="tel" name="guestTel" value={formData.guestTel} onChange={handleChange} required 
-                className="w-full border border-gray-300 rounded p-3 focus:outline-none focus:border-[#eb4d32]" 
-                placeholder="휴대폰 번호 (- 제외)" />
-              <input type="password" name="guestPassword" value={formData.guestPassword} onChange={handleChange} required maxLength={4}
-                className="w-full border border-gray-300 rounded p-3 focus:outline-none focus:border-[#eb4d32]" 
-                placeholder="예매용 비밀번호 (숫자 4자리)" />
-            </div>
-          )}
-
-          <div className="mt-2 flex flex-col gap-4">
-            <button 
-              type="submit" 
-              className={`w-full text-white font-bold py-3 rounded transition-colors ${
-                activeTab === 'MEMBER' ? 'bg-[#eb4d32] hover:bg-[#d4452d]' : 'bg-gray-800 hover:bg-black'
-              }`}
-            >
-              {activeTab === 'MEMBER' ? '로그인' : (isBookingFlow ? '비회원 예매 진행' : '예매 내역 조회')}
-            </button>
-            
-            {/* 💡 소셜 로그인 버튼 영역 */}
-            {activeTab === 'MEMBER' && (
-              <div className="flex flex-col items-center mt-8 px-4 w-full">
-                {/* 구분선 (빈티지 시네마 스타일) */}
-                <div className="relative flex w-full max-w-sm py-2 items-center mb-6">
-                  <div className="flex-grow border-t border-gray-300"></div>
-                  <span className="flex-shrink-0 mx-4 text-gray-400 text-[10px] font-mono tracking-[0.2em] uppercase">
-                    SNS Login
-                  </span>
-                  <div className="flex-grow border-t border-gray-300"></div>
-                </div>
-                
-                {/* 아이콘 버튼 컨테이너 */}
-                <div className="flex items-center justify-center gap-10">
-                  
-                  {/* 1. 카카오 */}
-                  <button 
-                    type="button"
-                    onClick={() => window.location.href = KAKAO_AUTH_URL}
-                    className="group flex flex-col items-center gap-2 transition-transform duration-300 hover:scale-125 active:scale-95 focus:outline-none"
-                  >
-                    <div className="w-11 h-11 flex items-center justify-center">
-                      <img 
-                        src="/src/assets/kakao_login_btn.png" 
-                        alt="Kakao" 
-                        className="w-full h-full object-contain" 
-                      />
-                    </div>
-                    <span className="text-[9px] font-mono text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity uppercase tracking-tighter">Kakao</span>
-                  </button>
-
-                  {/* 2. 네이버 */}
-                  <button 
-                    type="button"
-                    onClick={() => window.location.href = NAVER_AUTH_URL}
-                    className="group flex flex-col items-center gap-2 transition-transform duration-300 hover:scale-125 active:scale-95 focus:outline-none"
-                  >
-                    <div className="w-11 h-11 flex items-center justify-center">
-                      <img 
-                        src="/src/assets/naver_login_btn.png" 
-                        alt="Naver" 
-                        className="w-full h-full object-contain" 
-                      />
-                    </div>
-                    <span className="text-[9px] font-mono text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity uppercase tracking-tighter">Naver</span>
-                  </button>
-
-                  {/* 3. 구글 (이미지 버전) */}
-                  <button 
-                    type="button"
-                    onClick={() => window.location.href = GOOGLE_AUTH_URL}
-                    className="group flex flex-col items-center gap-2 transition-transform duration-300 hover:scale-125 active:scale-95 focus:outline-none"
-                  >
-                    <div className="w-11 h-11 flex items-center justify-center">
-                      <img 
-                        src="/src/assets/google_login_btn.png" 
-                        alt="Google" 
-                        className="w-full h-full object-contain" 
-                      />
-                    </div>
-                    <span className="text-[9px] font-mono text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity uppercase tracking-tighter">Google</span>
-                  </button>
-
-                </div>
-              </div>
-            )}
-
-            {activeTab === 'MEMBER' && (
-              <div className="flex items-center justify-center gap-4 text-sm text-gray-500 mt-2">
-                <Link to="/find-account" className="hover:text-gray-800 transition-colors">아이디/비밀번호 찾기</Link>
-                <span>|</span>
-                <Link to="/signup" className="hover:text-gray-800 transition-colors">회원가입</Link>
-              </div>
-            )}
-            {activeTab === 'GUEST' && (
-              <div className="flex items-center justify-center gap-4 text-sm text-gray-500 mt-2">
-                <Link to="/signup" className="hover:text-gray-800 transition-colors">비회원 회원가입</Link>
-              </div>
-            )}
+    <div className="min-h-screen bg-white text-[#1A1A1A] font-sans selection:bg-[#B91C1C] selection:text-white pb-20">
+      
+      {/* Header Area */}
+      <div className="bg-[#1A1A1A] text-white pt-24 pb-16 relative overflow-hidden mb-12">
+        <div className="absolute inset-0 opacity-10 pointer-events-none">
+          <div className="absolute top-0 left-0 w-full h-full bg-[radial-gradient(circle_at_50%_50%,#B91C1C_0%,transparent_70%)]"></div>
+        </div>
+        
+        <div className="max-w-7xl mx-auto px-6 md:px-10 relative z-10 flex flex-col items-center">
+          <div className="flex items-center gap-4 mb-6">
+            <div className="h-px w-12 bg-[#B91C1C]"></div>
+            <p className="font-sans text-[10px] font-bold tracking-[0.5em] text-[#B91C1C] uppercase">Kino Cinema</p>
+            <div className="h-px w-12 bg-[#B91C1C]"></div>
           </div>
-        </form>
+          <h1 className="font-display text-5xl md:text-6xl uppercase tracking-tighter leading-none mb-4">
+            {isBookingFlow ? (
+              <>Ticket <span className="text-white/20">Booking</span></>
+            ) : (
+              <>로그인 <span className="text-white/20"></span></>
+            )}
+          </h1>
+          <p className="text-xs font-bold uppercase tracking-widest text-white/40">
+            {isBookingFlow ? '예매 진행을 위해 로그인해주세요' : '서비스 이용을 위해 로그인해주세요'}
+          </p>
+        </div>
       </div>
 
-      <CommonModal isOpen={isAlertOpen} onClose={handleCloseModal}>
-        <div className="bg-white p-6 rounded-lg text-center max-w-sm w-full mx-auto">
-          <h3 className="text-xl font-bold text-gray-800 mb-2">알림</h3>
-          <p className="text-gray-600 mb-6">{alertMessage}</p>
+      <div className="max-w-[500px] mx-auto px-6">
+        
+        {/* 탭 버튼 영역 */}
+        <div className="flex mb-8 border-b border-black/10">
           <button 
-            onClick={handleCloseModal} 
-            className="w-full bg-[#eb4d32] text-white font-bold py-3 rounded hover:bg-[#d4452d] transition-colors"
+            type="button"
+            onClick={() => setActiveTab('MEMBER')} 
+            className={`flex-1 py-4 text-[15px] font-bold uppercase tracking-widest transition-all relative ${
+              activeTab === 'MEMBER' 
+                ? 'text-[#B91C1C]' 
+                : 'text-black/40 hover:text-black'
+            }`}
           >
-            확인
+            Member
+            {activeTab === 'MEMBER' && (
+              <div className="absolute bottom-[-1px] left-0 w-full h-[2px] bg-[#B91C1C]"></div>
+            )}
           </button>
+          <button 
+            type="button"
+            onClick={() => setActiveTab('GUEST')} 
+            className={`flex-1 py-4 text-[15px] font-bold uppercase tracking-widest transition-all relative ${
+              activeTab === 'GUEST' 
+                ? 'text-[#B91C1C]' 
+                : 'text-black/40 hover:text-black'
+            }`}
+          >
+            Guest
+            {activeTab === 'GUEST' && (
+              <div className="absolute bottom-[-1px] left-0 w-full h-[2px] bg-[#B91C1C]"></div>
+            )}
+          </button>
+        </div>
+
+        {/* 폼 컨테이너 */}
+        <div className="bg-[#FDFDFD] border border-black/5 rounded-sm p-8 shadow-xl">
+          <form onSubmit={handleSubmit} className="flex flex-col gap-6">
+            
+            {activeTab === 'MEMBER' && (
+              <div className="flex flex-col gap-5 animate-in fade-in slide-in-from-bottom-2 duration-300">
+                <div>
+                  <label className={labelClass}>User ID</label>
+                  <input type="text" name="username" value={formData.username} onChange={handleChange} required 
+                    className={inputClass} placeholder="아이디" />
+                </div>
+                <div>
+                  <label className={labelClass}>Password</label>
+                  <input type="password" name="password" value={formData.password} onChange={handleChange} required 
+                    className={inputClass} placeholder="비밀번호" />
+                </div>
+              </div>
+            )}
+
+            {activeTab === 'GUEST' && (
+              <div className="flex flex-col gap-5 animate-in fade-in slide-in-from-bottom-2 duration-300">
+                <div>
+                  <label className={labelClass}>Full Name</label>
+                  <input type="text" name="guestName" value={formData.guestName} onChange={handleChange} required 
+                    className={inputClass} placeholder="이름" />
+                </div>
+                <div>
+                  <label className={labelClass}>Phone</label>
+                  <input type="tel" name="guestTel" value={formData.guestTel} onChange={handleChange} required 
+                    className={inputClass} placeholder="010-0000-0000 (- 제외)" />
+                </div>
+                <div>
+                  <label className={labelClass}>Booking Password</label>
+                  <input type="password" name="guestPassword" value={formData.guestPassword} onChange={handleChange} required maxLength={4}
+                    className={inputClass} placeholder="예매용 비밀번호 (숫자 4자리)" />
+                </div>
+              </div>
+            )}
+
+            <div className="mt-4 flex flex-col gap-6">
+              <button 
+                type="submit" 
+                className="w-full py-4 bg-[#1A1A1A] text-white rounded-sm text-xs font-bold uppercase tracking-[0.2em] shadow-lg hover:bg-[#B91C1C] hover:shadow-xl hover:-translate-y-0.5 transition-all duration-300"
+              >
+                {activeTab === 'MEMBER' ? 'Sign In' : (isBookingFlow ? 'Continue as Guest' : 'Check Guest Booking')}
+              </button>
+              
+              {/* 💡 소셜 로그인 버튼 영역 */}
+              {activeTab === 'MEMBER' && (
+                <div className="flex flex-col items-center mt-4 w-full">
+                  {/* 구분선 */}
+                  <div className="flex w-full items-center mb-6">
+                    <div className="flex-grow border-t border-black/5"></div>
+                    <span className="mx-4 text-[10px] font-bold uppercase tracking-[0.3em] text-black/20">
+                      Social Login
+                    </span>
+                    <div className="flex-grow border-t border-black/5"></div>
+                  </div>
+                  
+                  {/* 아이콘 버튼 컨테이너 */}
+                  <div className="flex items-center justify-center gap-8">
+                    {/* 카카오 */}
+                    <button 
+                      type="button"
+                      onClick={() => window.location.href = KAKAO_AUTH_URL}
+                      className="group flex flex-col items-center gap-3 transition-transform duration-300 hover:-translate-y-1 focus:outline-none"
+                    >
+                      <div className="w-12 h-12 rounded-full shadow-sm hover:shadow-md transition-shadow flex items-center justify-center overflow-hidden border border-black/5">
+                        <img src="/src/assets/kakao_login_btn.png" alt="Kakao" className="w-full h-full object-cover" />
+                      </div>
+                      <span className="text-[9px] font-bold uppercase tracking-widest text-black/20 group-hover:text-[#B91C1C] transition-colors">Kakao</span>
+                    </button>
+
+                    {/* 네이버 */}
+                    <button 
+                      type="button"
+                      onClick={() => window.location.href = NAVER_AUTH_URL}
+                      className="group flex flex-col items-center gap-3 transition-transform duration-300 hover:-translate-y-1 focus:outline-none"
+                    >
+                      <div className="w-12 h-12 rounded-full shadow-sm hover:shadow-md transition-shadow flex items-center justify-center overflow-hidden border border-black/5">
+                        <img src="/src/assets/naver_login_btn.png" alt="Naver" className="w-full h-full object-cover" />
+                      </div>
+                      <span className="text-[9px] font-bold uppercase tracking-widest text-black/20 group-hover:text-[#B91C1C] transition-colors">Naver</span>
+                    </button>
+
+                    {/* 구글 */}
+                    <button 
+                      type="button"
+                      onClick={() => window.location.href = GOOGLE_AUTH_URL}
+                      className="group flex flex-col items-center gap-3 transition-transform duration-300 hover:-translate-y-1 focus:outline-none"
+                    >
+                      <div className="w-12 h-12 rounded-full shadow-sm hover:shadow-md transition-shadow flex items-center justify-center overflow-hidden border border-black/5 bg-white">
+                        <img src="/src/assets/google_login_btn.png" alt="Google" className="w-full h-full object-cover p-1" />
+                      </div>
+                      <span className="text-[9px] font-bold uppercase tracking-widest text-black/20 group-hover:text-[#B91C1C] transition-colors">Google</span>
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {/* 하단 링크 영역 */}
+              <div className="flex items-center justify-center gap-4 text-[13px] font-bold uppercase tracking-widest text-black/40 mt-4 pt-6 border-t border-black/5">
+                {activeTab === 'MEMBER' ? (
+                  <>
+                    <Link to="/find-account" className="hover:text-[#B91C1C] transition-colors">아이디/비밀번호 찾기</Link>
+                    <span className="text-black/20">|</span>
+                    <Link to="/signup" className="hover:text-[#B91C1C] transition-colors">회원가입</Link>
+                  </>
+                ) : (
+                  <Link to="/signup" className="hover:text-[#B91C1C] transition-colors">비회원 등록</Link>
+                )}
+              </div>
+            </div>
+          </form>
+        </div>
+      </div>
+
+      {/* 모달 디자인 (회원가입과 동일한 테마) */}
+      <CommonModal isOpen={isAlertOpen} onClose={handleCloseModal}>
+        <div className="bg-white rounded-sm shadow-2xl overflow-hidden min-w-[320px]">
+          <div className="bg-[#B91C1C] text-white px-6 py-4 flex items-center justify-center border-b border-[#991B1B]">
+            <h3 className="text-[10px] font-bold uppercase tracking-[0.3em]">Notice</h3>
+          </div>
+          <div className="p-8 flex flex-col items-center">
+            <p className="text-sm font-medium text-[#1A1A1A] text-center mb-8 leading-relaxed">
+              {alertMessage}
+            </p>
+            <button 
+              onClick={handleCloseModal} 
+              className="w-full bg-[#1A1A1A] text-white text-[10px] font-bold uppercase tracking-[0.2em] py-4 rounded-sm hover:bg-[#B91C1C] transition-colors"
+            >
+              Confirm
+            </button>
+          </div>
         </div>
       </CommonModal>
     </div>

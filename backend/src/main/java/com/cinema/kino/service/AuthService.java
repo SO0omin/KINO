@@ -31,7 +31,6 @@ public class AuthService {
     private final PasswordResetTokenRepository passwordResetTokenRepository;
     private final MailService mailService;
     private final PasswordEncoder passwordEncoder;
-    private final JavaMailSender mailSender;
     private final JwtUtil jwtUtil;
 
     // 회원가입
@@ -40,6 +39,24 @@ public class AuthService {
         if (memberRepository.existsByUsername(request.getUsername())) {
             throw new IllegalArgumentException("이미 사용 중인 아이디입니다.");
         }
+
+        // 2. 비밀번호 복합도 검증 (Regex)
+        String password = request.getPassword();
+        String pattern = "^(?=.*[a-zA-Z])(?=.*\\d)(?=.*[`~!@#$%^&*|'\";:₩\\\\?]).{8,20}$";
+
+        if (!password.matches(pattern)) {
+            throw new IllegalArgumentException("비밀번호는 영문, 숫자, 특수문자를 포함하여 8~20자여야 합니다.");
+        }
+
+        // 3. 개인정보 포함 여부 검증
+        String username = request.getUsername();
+        String tel = request.getTel().replace("-", "");
+        String birth = request.getBirth_date().toString().replace("-", "");
+
+        if (password.contains(username)) throw new IllegalArgumentException("비밀번호에 아이디를 포함할 수 없습니다.");
+        if (password.contains(tel)) throw new IllegalArgumentException("비밀번호에 전화번호를 포함할 수 없습니다.");
+        if (password.contains(birth)) throw new IllegalArgumentException("비밀번호에 생년월일을 포함할 수 없습니다.");
+
         if (memberRepository.existsByEmail(request.getEmail())) {
             throw new IllegalArgumentException("이미 가입된 이메일입니다.");
         }
@@ -75,6 +92,34 @@ public class AuthService {
         }
 
         return savedMember.getId();
+    }
+
+    @Transactional
+    public void resetPassword(String token, String newPassword) {
+        // 1. 토큰 존재 확인
+        PasswordResetToken resetToken = passwordResetTokenRepository.findByToken(token)
+                .orElseThrow(() -> new RuntimeException("유효하지 않거나 만료된 링크입니다. 다시 요청해주세요."));
+
+        // 2. 만료 시간 확인 (30분)
+        if (resetToken.getExpiryDate().isBefore(LocalDateTime.now())) {
+            passwordResetTokenRepository.delete(resetToken);
+            throw new RuntimeException("링크의 유효시간(30분)이 만료되었습니다. 다시 요청해주세요.");
+        }
+
+        Member member = resetToken.getMember();
+
+        // 💡 3. 보안 추가: 현재 사용 중인 비밀번호와 새 비밀번호가 같은지 확인
+        if (passwordEncoder.matches(newPassword, member.getPassword())) {
+            throw new IllegalArgumentException("현재 사용 중인 비밀번호와 동일한 비밀번호는 사용할 수 없습니다.");
+        }
+
+        // 4. 비밀번호 암호화 및 저장
+        member.setPassword(passwordEncoder.encode(newPassword));
+        memberRepository.save(member);
+
+        // 5. 사용한 토큰 삭제
+        passwordResetTokenRepository.delete(resetToken);
+        log.info("🔑 비밀번호 재설정 완료: {}", member.getUsername());
     }
 
     // 일반 로그인
@@ -186,27 +231,4 @@ public class AuthService {
         mailService.sendPasswordResetEmail(member, token);
     }
 
-    @Transactional
-    public void resetPassword(String token, String newPassword) {
-        // 1. 넘어온 토큰 문자열로 DB에서 진짜 토큰 뭉치를 찾습니다.
-        PasswordResetToken resetToken = passwordResetTokenRepository.findByToken(token)
-                .orElseThrow(() -> new RuntimeException("유효하지 않거나 만료된 링크입니다. 다시 요청해주세요."));
-        log.info("현재 시간: {}", LocalDateTime.now());
-        log.info("토큰 만료 시간: {}", resetToken.getExpiryDate());
-
-        // 2. 만료 시간이 지났는지 검사 (30분 초과)
-        if (resetToken.getExpiryDate().isBefore(LocalDateTime.now())) {
-            passwordResetTokenRepository.delete(resetToken); // 지난 토큰은 쓰레기통으로
-            throw new RuntimeException("링크의 유효시간(30분)이 만료되었습니다. 다시 요청해주세요.");
-        }
-
-        // 3. 토큰이 정상이면, 해당 토큰을 가진 회원의 비밀번호를 강제로 암호화해서 교체합니다.
-        Member member = resetToken.getMember();
-        member.setPassword(passwordEncoder.encode(newPassword));
-        memberRepository.save(member);
-
-        // 4. 한 번 쓴 토큰은 더 이상 못 쓰게 DB에서 삭제합니다.
-        passwordResetTokenRepository.delete(resetToken);
-        log.info("🔑 비밀번호 재설정 완료: {}", member.getUsername());
-    }
 }
