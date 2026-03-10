@@ -1,5 +1,8 @@
+import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
+import { motion } from 'framer-motion';
+import { Gift, Zap, Crown, ShieldCheck } from 'lucide-react';
 import type { CouponDTO } from '../../types/main';
 
 interface BenefitSectionProps {
@@ -9,8 +12,12 @@ interface BenefitSectionProps {
 const BenefitSection = ({ coupons }: BenefitSectionProps) => {
   const navigate = useNavigate();
   const { isLoggedIn } = useAuth();
+  
   if (!coupons || coupons.length === 0) return null;
 
+  const icons = [Gift, Zap, Crown, ShieldCheck];
+
+  // --- 💡 원본의 핵심 로직들 (데이터 가공) 유지 ---
   const isPointCoupon = (coupon: CouponDTO) => {
     const kind = (coupon.couponKind || '').trim();
     const name = (coupon.name || '').trim();
@@ -30,8 +37,7 @@ const BenefitSection = ({ coupons }: BenefitSectionProps) => {
 
   const displaySourceLabel = (coupon: CouponDTO) => {
     const source = (coupon.sourceType || '').toUpperCase();
-    if (source === 'PARTNER') return '제휴';
-    return '키노';
+    return source === 'PARTNER' ? '제휴' : '키노';
   };
 
   const displayCouponName = (coupon: CouponDTO) => {
@@ -44,107 +50,106 @@ const BenefitSection = ({ coupons }: BenefitSectionProps) => {
   };
 
   const formatDiscount = (coupon: CouponDTO) => {
-    if (isPointCoupon(coupon)) {
-      return `${coupon.discountValue.toLocaleString()}P`;
-    }
-    const discountType = coupon.discountType;
-    const discountValue = coupon.discountValue;
-    if (discountType === 'RATE') {
-      return `${discountValue.toLocaleString()}%`;
-    }
-    return `₩${discountValue.toLocaleString()}`;
+    if (isPointCoupon(coupon)) return `${coupon.discountValue.toLocaleString()}P`;
+    const { discountType, discountValue } = coupon;
+    return discountType === 'RATE' ? `${discountValue}%` : `₩${discountValue.toLocaleString()}`;
   };
 
   const handleCollectNow = () => {
-    if (isLoggedIn) {
-      navigate('/mypage/coupons');
-      return;
-    }
-    navigate('/login');
+    isLoggedIn ? navigate('/mypage/coupons') : navigate('/login');
   };
 
   return (
-    <section className="py-24 relative overflow-hidden">
-      <div className="max-w-7xl mx-auto px-10 relative z-10">
-        {/* Header */}
-        <div className="mb-16 flex flex-col items-center text-center">
-          <span className="font-typewriter text-[10px] text-black/40 tracking-[0.6em] uppercase mb-4">쿠폰 혜택</span>
-          <h2 className="font-serif text-5xl italic tracking-tighter text-black uppercase">
-            Exclusive <span className="text-white bg-black px-4 py-1">Vouchers</span>
+    <section className="py-32 relative bg-white overflow-hidden">
+      {/* 배경 장식: 은은한 레드 글로우 효과 */}
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-[#B91C1C]/5 rounded-full blur-[120px] pointer-events-none"></div>
+
+      <div className="max-w-7xl mx-auto px-6 md:px-10 relative z-10">
+        
+        {/* 1. 헤더: 모던 스타일 + 한국어 서브타이틀 */}
+        <div className="mb-20 flex flex-col items-center text-center space-y-4">
+          <div className="flex items-center gap-3 text-[#B91C1C] font-bold tracking-[0.4em] uppercase text-xs font-sans">
+            <div className="w-12 h-px bg-[#B91C1C]"></div>
+            <span>Patron Privileges</span>
+            <div className="w-12 h-px bg-[#B91C1C]"></div>
+          </div>
+          <h2 className="font-display text-5xl md:text-7xl text-[#1A1A1A] uppercase tracking-tighter">
+            Exclusive <span className="text-[#B91C1C]">Vouchers</span>
           </h2>
+          <p className="font-sans text-sm text-black/40 font-bold uppercase tracking-widest mt-2">
+            오직 키노 회원님만을 위한 특별한 혜택
+          </p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-10">
-          {coupons.map((coupon, idx) => (
-            <div key={coupon.id} className="group [perspective:1000px] h-[320px]">
-              {/* Card Inner: Handles the 3D Flip */}
-              <div className="relative w-full h-full transition-transform duration-700 [transform-style:preserve-3d] group-hover:[transform:rotateY(180deg)]">
-                
-                {/* --- FRONT: Dark Style (Black Background) --- */}
-                <div className="absolute inset-0 [backface-visibility:hidden] bg-black border-[4px] border-black p-1 shadow-[12px_12px_0_0_#000]">
-                  <div className="h-full border-2 border-dashed border-white/20 p-6 flex flex-col justify-between relative overflow-hidden text-white">
-                    
-                    <div className="flex justify-between items-start">
-                      <span className="font-mono text-[9px] font-bold text-white/40 uppercase tracking-widest">No. 00{idx + 1}</span>
-                      <div className="w-8 h-8 border-2 border-white/40 rounded-full flex items-center justify-center font-serif italic text-lg">K</div>
+        {/* 2. 쿠폰 그리드 */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+          {coupons.map((coupon, idx) => {
+            const Icon = icons[idx % icons.length];
+            return (
+              <motion.div 
+                key={coupon.id} 
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: idx * 0.1, duration: 0.5 }}
+                className="group relative h-[420px]"
+              >
+                {/* 카드 컨테이너 */}
+                <div className="relative w-full h-full bg-[#FDFDFD] border border-black/5 p-8 rounded-sm overflow-hidden group-hover:border-[#B91C1C]/30 transition-all duration-500 flex flex-col justify-between shadow-xl hover:shadow-2xl">
+                  
+                  {/* 배경 장식 아이콘 */}
+                  <Icon size={140} className="absolute -right-8 -top-8 text-black/[0.02] group-hover:text-[#B91C1C]/5 transition-colors duration-500 rotate-12" />
+
+                  <div className="space-y-6">
+                    <div className="flex justify-between items-center relative z-10">
+                      <div className="p-3 bg-black/5 rounded-sm text-[#B91C1C] group-hover:bg-[#B91C1C] group-hover:text-white transition-all duration-500">
+                        <Icon size={24} />
+                      </div>
+                      <span className="font-mono text-[10px] font-bold text-black/20 uppercase tracking-widest">
+                        CODE: 00{idx + 1}
+                      </span>
                     </div>
 
-                    <div className="space-y-2">
-                      <h3 className="font-serif text-2xl italic text-white uppercase leading-tight">
+                    <div className="space-y-3 relative z-10">
+                      <div className="flex items-center gap-2">
+                        <span className="px-2 py-0.5 bg-black/5 text-[10px] font-bold text-black/40 rounded-sm group-hover:text-[#B91C1C] transition-colors">
+                          {displaySourceLabel(coupon)}
+                        </span>
+                        <span className="text-[10px] font-bold text-black/20 uppercase tracking-widest">
+                          {inferCouponKind(coupon)}
+                        </span>
+                      </div>
+                      <h3 className="font-display text-2xl text-[#1A1A1A] uppercase leading-tight group-hover:text-[#B91C1C] transition-colors min-h-[3.5rem] line-clamp-2">
                         {displayCouponName(coupon)}
                       </h3>
-                      <p className="font-mono text-[9px] text-white/50 tracking-widest uppercase">
-                        {displaySourceLabel(coupon)} • {inferCouponKind(coupon)}
+                      <p className="text-black/40 text-xs font-medium leading-relaxed">
+                        {coupon.minPrice > 0 
+                          ? `₩${coupon.minPrice.toLocaleString()} 이상 결제 시 사용 가능` 
+                          : "금액 제한 없이 사용 가능한 쿠폰입니다."}
                       </p>
-                      <div className="h-px w-12 bg-white/20"></div>
-                    </div>
-
-                    <div className="flex items-baseline gap-1">
-                      <span className="font-mono text-4xl font-black italic text-white">
-                        {formatDiscount(coupon)}
-                      </span>
-                      <span className="font-typewriter text-[10px] text-white/40 uppercase ml-1">혜택</span>
                     </div>
                   </div>
-                </div>
 
-                {/* --- BACK: Light Style (White Background + Detailed Info) --- */}
-                <div className="absolute inset-0 [backface-visibility:hidden] [transform:rotateY(180deg)] bg-white border-[4px] border-black p-1 shadow-[12px_12px_0_0_#000]">
-                  <div className="h-full border-2 border-dashed border-black/20 p-6 flex flex-col justify-between text-black relative overflow-hidden">
-
-                    <div className="space-y-4">
-                      <div className="pb-3 border-b border-black/10 flex justify-between items-center">
-                        <span className="text-black/40 text-[8px] font-mono tracking-widest uppercase">이용 안내</span>
-                        <span className="text-black/40 text-[8px] font-mono uppercase tracking-widest">KINO 쿠폰</span>
-                      </div>
-
-                      <div className="space-y-3">
-                        <p className="font-typewriter text-[11px] text-black/80 leading-relaxed">
-                          {coupon.minPrice > 0 ? (
-                            <>
-                              최소 결제금액 <span className="text-black font-bold font-mono">₩{coupon.minPrice.toLocaleString()}</span> 이상에서 사용 가능합니다.
-                            </>
-                          ) : (
-                            <>최소 결제금액 제한 없이 사용할 수 있습니다.</>
-                          )}
-                        </p>
-                      </div>
+                  {/* 하단 혜택 정보 및 버튼 */}
+                  <div className="space-y-6 relative z-10">
+                    <div className="flex items-baseline gap-1">
+                      <span className="font-display text-6xl text-[#1A1A1A] group-hover:text-[#B91C1C] transition-colors">
+                        {formatDiscount(coupon)}
+                      </span>
+                      <span className="font-bold text-xs text-black/20 uppercase tracking-widest ml-2">OFF</span>
                     </div>
 
-                    {/* Action Button: Black Style */}
-                    <button
-                      type="button"
+                    <button 
                       onClick={handleCollectNow}
-                      className="w-full py-4 bg-transparent border-2 border-black text-black font-serif italic text-lg hover:bg-black hover:text-white transition-all active:scale-95"
+                      className="w-full py-4 bg-[#1A1A1A] hover:bg-[#B91C1C] text-white font-bold uppercase tracking-widest text-xs transition-all duration-300 rounded-sm shadow-lg active:scale-95"
                     >
                       쿠폰함 가기
                     </button>
                   </div>
                 </div>
-
-              </div>
-            </div>
-          ))}
+              </motion.div>
+            );
+          })}
         </div>
       </div>
     </section>

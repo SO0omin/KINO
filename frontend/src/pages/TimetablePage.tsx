@@ -1,9 +1,10 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
-import { ChevronLeft, ChevronRight, Calendar, Sun, Moon } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Calendar, Sun, Moon, Clock, Film, MapPin } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { motion, AnimatePresence } from 'framer-motion';
 import ratingImages, { type AgeRatingType } from '../utils/getRatingImage';
 
-// --- 타입 정의 ---
+// --- 타입 정의 (원본 유지) ---
 interface Movie { id: number; title: string; }
 interface Region { id: number | string; name: string; }
 interface Theater { id: number | string; name: string; regionId: number | string; address: string; }
@@ -23,6 +24,7 @@ interface ResponseByMovie {
 export default function TimetablePage() {
   const navigate = useNavigate();
   
+  // --- 상태 관리 (원본 로직 유지) ---
   const [activeTab, setActiveTab] = useState<'theater' | 'movie'>('theater');
   const [movieList, setMovieList] = useState<Movie[]>([]);
   const [regionList, setRegionList] = useState<Region[]>([]);
@@ -39,20 +41,27 @@ export default function TimetablePage() {
   const [timetableByTheater, setTimetableByTheater] = useState<ResponseByTheater[]>([]);
   const [timetableByMovie, setTimetableByMovie] = useState<ResponseByMovie[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(false);
-  const [, setError] = useState<string | null>(null);
 
-  // --- 날짜 생성 (useMemo로 안정화) ---
+  // --- 모던 스타일 정의 ---
+  const modernStyles = `
+    @import url('https://fonts.googleapis.com/css2?family=Anton&family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap');
+    .font-display { font-family: 'Anton', sans-serif; }
+    .font-sans { font-family: 'Inter', sans-serif; }
+    .scrollbar-hide::-webkit-scrollbar { display: none; }
+  `;
+
+  // --- 날짜 로직 (원본 유지) ---
   const allDates = useMemo(() => {
     return Array.from({ length: 30 }, (_, i) => {
       const d = new Date();
-      d.setHours(0, 0, 0, 0); // 시간 초기화
+      d.setHours(0, 0, 0, 0);
       d.setDate(d.getDate() + i); 
       return d;
     });
   }, []);
 
   const visibleDates = useMemo(() => {
-    return allDates.slice(dateStartIndex, dateStartIndex + 8); // 7~8개 표시
+    return allDates.slice(dateStartIndex, dateStartIndex + 10); // 10개 표시로 확장
   }, [allDates, dateStartIndex]);
 
   const formatYYYYMMDD = (date: Date) => {
@@ -68,7 +77,7 @@ export default function TimetablePage() {
   };
 
   const handlePrevDates = () => { if (dateStartIndex > 0) setDateStartIndex(prev => prev - 1); };
-  const handleNextDates = () => { if (dateStartIndex < allDates.length - 8) setDateStartIndex(prev => prev + 1); };
+  const handleNextDates = () => { if (dateStartIndex < allDates.length - 10) setDateStartIndex(prev => prev + 1); };
   
   const handleDateChangeFromPicker = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newDate = new Date(e.target.value);
@@ -79,7 +88,7 @@ export default function TimetablePage() {
       today.setHours(0,0,0,0);
       const diffTime = newDate.getTime() - today.getTime();
       const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
-      setDateStartIndex(Math.max(0, Math.min(diffDays, allDates.length - 8)));
+      setDateStartIndex(Math.max(0, Math.min(diffDays, allDates.length - 10)));
     }
   };
 
@@ -96,7 +105,7 @@ export default function TimetablePage() {
     return 'ALL';
   };
 
-  // 초기 데이터 로딩
+  // --- API 호출 (원본 로직 유지) ---
   useEffect(() => {
     const fetchInitialLists = async () => {
       try {
@@ -122,7 +131,6 @@ export default function TimetablePage() {
     fetchInitialLists();
   }, []);
 
-  // 시간표 API 호출
   useEffect(() => {
     const fetchTimetable = async () => {
       if ((activeTab === 'theater' && !selectedTheaterId) || (activeTab === 'movie' && !selectedMovieId)) return;
@@ -135,22 +143,25 @@ export default function TimetablePage() {
         const res = await fetch(url);
         const data = await res.json();
         activeTab === 'theater' ? setTimetableByTheater(data) : setTimetableByMovie(data);
-      } catch (err) { setError("시간표를 불러오지 못했습니다."); }
+      } catch (err) { console.error(err); }
       finally { setIsLoading(false); }
     };
     fetchTimetable();
   }, [activeTab, selectedTheaterId, selectedMovieId, selectedDate]);
 
+  // --- 렌더링: 상영 시간 박스 ---
   const renderScreeningBoxes = (screenings: ScreeningDetail[], currentMovieId: number, currentTheaterId: number | string) => (
-    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
+    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
       {screenings.map((sc) => {
         const isSoldOut = sc.remainingSeats === 0;
         return (
           <button
             key={sc.screeningId}
             disabled={isSoldOut}
-            className={`flex flex-col p-3 border rounded-lg text-left transition-all ${
-              isSoldOut ? 'bg-gray-100 border-gray-200 opacity-50 cursor-not-allowed' : 'bg-white border-gray-200 hover:border-[#eb4d32] hover:shadow-md'
+            className={`group relative flex flex-col p-5 border rounded-sm text-left transition-all duration-300 ${
+              isSoldOut 
+                ? 'bg-black/5 border-black/5 opacity-40 cursor-not-allowed grayscale' 
+                : 'bg-white border-black/5 hover:border-[#B91C1C]/30 hover:shadow-xl'
             }`}
             onClick={() => navigate('/ticketing', {
               state: {
@@ -160,16 +171,24 @@ export default function TimetablePage() {
               }
             })}
           >
-            <div className="text-[10px] text-gray-400 mb-1">{sc.screenName} | {sc.screenType}</div>
-            <div className="flex items-center gap-2 mb-1 font-bold text-gray-800">
-              {formatTime(sc.startTime)}
-              {sc.isMorning && <Sun size={12} className="text-orange-400" />}
-              {sc.isNight && <Moon size={12} className="text-indigo-400" />}
+            <div className="text-[9px] font-bold uppercase tracking-[0.2em] text-black/20 mb-3">{sc.screenName} | {sc.screenType}</div>
+            <div className="flex items-center gap-3 mb-2">
+              <span className="font-display text-3xl group-hover:text-[#B91C1C] transition-colors">{formatTime(sc.startTime)}</span>
+              {sc.isMorning && <Sun size={14} className="text-[#B91C1C]/40" />}
+              {sc.isNight && <Moon size={14} className="text-black/20" />}
             </div>
-            <div className="flex justify-between items-center w-full mt-1 text-[11px] font-bold">
-              <span className="text-gray-400">~{formatTime(sc.endTime)}</span>
-              <span className={sc.remainingSeats < 10 && !isSoldOut ? 'text-red-500' : 'text-[#eb4d32]'}>{sc.remainingSeats}석</span>
+            <div className="flex justify-between items-end w-full mt-2 pt-3 border-t border-black/5">
+              <span className="text-[10px] font-bold text-black/20 uppercase tracking-tighter">~{formatTime(sc.endTime)}</span>
+              <div className="text-[10px] font-bold">
+                <span className={sc.remainingSeats < 10 && !isSoldOut ? 'text-[#B91C1C]' : 'text-black/40'}>{sc.remainingSeats}석</span>
+                <span className="text-black/10 font-normal"> / {sc.totalSeats}</span>
+              </div>
             </div>
+            {isSoldOut && (
+              <div className="absolute inset-0 bg-black/60 flex items-center justify-center">
+                <span className="text-white text-[10px] font-bold border border-white px-2 py-1 uppercase tracking-widest font-sans">매진</span>
+              </div>
+            )}
           </button>
         );
       })}
@@ -177,21 +196,39 @@ export default function TimetablePage() {
   );
 
   return (
-    <div className="min-h-screen bg-[#fdf4e3] pt-12 pb-20 font-sans">
-      <div className="max-w-5xl mx-auto px-4">
-        <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-gray-800 mb-2">상영시간표</h1>
-          <p className="text-gray-600">관람하실 영화와 시간을 선택해주세요.</p>
+    <div className="bg-white text-[#1A1A1A] min-h-screen font-sans selection:bg-[#B91C1C] selection:text-white">
+      <style dangerouslySetInnerHTML={{ __html: modernStyles }} />
+      
+      {/* 1. 헤더 영역 (AI 스튜디오 디자인) */}
+      <div className="bg-[#1A1A1A] text-white pt-24 pb-12 relative overflow-hidden">
+        <div className="absolute inset-0 opacity-10 pointer-events-none">
+          <div className="absolute top-0 left-0 w-full h-full bg-[radial-gradient(circle_at_50%_50%,#B91C1C_0%,transparent_70%)]"></div>
         </div>
+        <div className="max-w-7xl mx-auto px-6 md:px-10 relative z-10">
+          <div className="flex flex-col items-center text-center space-y-6">
+            <div className="flex items-center gap-4">
+              <div className="h-px w-12 bg-[#B91C1C]"></div>
+              <p className="font-mono text-[10px] font-bold tracking-[0.5em] text-[#B91C1C] uppercase">Daily Manifest</p>
+              <div className="h-px w-12 bg-[#B91C1C]"></div>
+            </div>
+            <h1 className="font-display text-4xl md:text-4xl uppercase tracking-tighter leading-none">
+              상영 <span className="text-white/20">시간표</span>
+            </h1>
+            <p className="text-white/20">관람하실 영화와 시간을 선택해주세요.</p>
+          </div>
+        </div>
+      </div>
 
-        {/* 탭 버튼 */}
-        <div className="flex w-full mb-8 bg-white rounded-t-xl overflow-hidden shadow-sm">
+      <div className="max-w-7xl mx-auto px-6 md:px-10 py-20">
+        
+        {/* 2. 탭 버튼 (디자인 변경) */}
+        <div className="flex w-full mb-16 bg-[#FDFDFD] border border-black/5 rounded-sm overflow-hidden shadow-xl">
           {['theater', 'movie'].map((t) => (
             <button
               key={t}
               onClick={() => setActiveTab(t as any)}
-              className={`flex-1 py-4 text-lg font-bold transition-all border-b-4 ${
-                activeTab === t ? 'border-[#eb4d32] text-[#eb4d32]' : 'border-transparent text-gray-400 bg-gray-50'
+              className={`flex-1 py-6 text-xs font-bold uppercase tracking-[0.4em] transition-all ${
+                activeTab === t ? 'bg-[#1A1A1A] text-white' : 'hover:bg-black/5 text-black/40'
               }`}
             >
               {t === 'theater' ? '극장별' : '영화별'}
@@ -199,100 +236,172 @@ export default function TimetablePage() {
           ))}
         </div>
 
-        {/* 필터 카드 */}
-        <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100 mb-8 max-h-40.5 overflow-y-auto">
+        {/* 3. 필터 섹션 (모던 스타일) */}
+        <div className="bg-[#FDFDFD] border border-black/5 rounded-sm p-8 shadow-xl mb-16">
           {activeTab === 'movie' ? (
-            <div className="flex gap-2 flex-wrap">
-              {movieList.map(m => (
-                <button key={m.id} onClick={() => setSelectedMovieId(m.id)}
-                  className={`px-4 py-2 rounded-full text-sm font-medium border transition-all ${
-                    selectedMovieId === m.id ? 'bg-[#eb4d32] text-white border-[#eb4d32]' : 'bg-white text-gray-600 border-gray-200 hover:border-[#eb4d32]'
-                  }`}>{m.title}</button>
-              ))}
-            </div>
-          ) : (
-            <div className="flex flex-col gap-4">
-              <div className="flex gap-4 border-b border-gray-100 pb-3 overflow-x-auto scrollbar-hide">
-                {regionList.map(r => (
-                  <button key={r.id} onClick={() => {
-                    setSelectedRegionId(r.id);
-                    const tInR = theaterList.filter(t => String(t.regionId) === String(r.id));
-                    if (tInR.length > 0) setSelectedTheaterId(tInR[0].id);
-                  }}
-                  className={`text-sm font-bold whitespace-nowrap transition-colors ${String(selectedRegionId) === String(r.id) ? 'text-[#eb4d32]' : 'text-gray-400'}`}>{r.name}</button>
+            <div className="max-h-48 overflow-y-auto scrollbar-hide">
+              <div className="flex gap-3 flex-wrap p-1">
+                {movieList.map(m => (
+                  <button 
+                    key={m.id} 
+                    onClick={() => setSelectedMovieId(m.id)}
+                    className={`px-6 py-3 rounded-sm text-[11px] font-bold border transition-all ${
+                      selectedMovieId === m.id 
+                        ? 'bg-[#B91C1C] text-white border-[#B91C1C] shadow-lg scale-105' 
+                        : 'bg-white text-black/40 border-black/5 hover:border-[#B91C1C] hover:text-black'
+                    }`}
+                  >
+                    {m.title}
+                  </button>
                 ))}
               </div>
-              <div className="flex gap-2 flex-wrap">
-                {theaterList.filter(t => String(t.regionId) === String(selectedRegionId)).map(t => (
-                  <button key={t.id} onClick={() => setSelectedTheaterId(t.id)}
-                    className={`px-4 py-2 rounded-lg text-sm font-medium border transition-all ${String(selectedTheaterId) === String(t.id) ? 'bg-gray-800 text-white border-gray-800' : 'bg-white text-gray-600 border-gray-200'}`}>{t.name}</button>
+            </div>
+          ) : (
+            <div className="flex flex-col gap-8">
+              <div className="flex gap-8 border-b border-black/5 pb-4 overflow-x-auto scrollbar-hide font-sans">
+                {regionList.map(r => (
+                  <button 
+                    key={r.id} 
+                    onClick={() => {
+                      setSelectedRegionId(r.id);
+                      const tInR = theaterList.filter(t => String(t.regionId) === String(r.id));
+                      if (tInR.length > 0) setSelectedTheaterId(tInR[0].id);
+                    }}
+                    className={`text-[12px] font-bold uppercase tracking-[0.2em] whitespace-nowrap transition-colors ${
+                      String(selectedRegionId) === String(r.id) ? 'text-[#B91C1C]' : 'text-black/20 hover:text-black'
+                    }`}
+                  >
+                    {r.name}
+                  </button>
                 ))}
+              </div>
+              <div className="max-h-32 overflow-y-auto scrollbar-hide">
+                <div className="flex gap-3 flex-wrap p-1">
+                  {theaterList.filter(t => String(t.regionId) === String(selectedRegionId)).map(t => (
+                    <button 
+                      key={t.id} 
+                      onClick={() => setSelectedTheaterId(t.id)}
+                      className={`px-6 py-3 rounded-sm text-[11px] font-bold border transition-all ${
+                        String(selectedTheaterId) === String(t.id) 
+                          ? 'bg-[#1A1A1A] text-white border-[#1A1A1A] shadow-lg scale-105' 
+                          : 'bg-white text-black/40 border-black/5 hover:border-[#B91C1C] hover:text-black'
+                      }`}
+                    >
+                      {t.name}
+                    </button>
+                  ))}
+                </div>
               </div>
             </div>
           )}
         </div>
 
-        {/* 🗓️ 날짜 선택 섹션 (보정된 레이아웃) */}
-        <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100 mb-8 flex items-center">
-          <button onClick={handlePrevDates} disabled={dateStartIndex === 0} className="p-2 text-gray-400 hover:text-[#eb4d32] disabled:opacity-20 shrink-0">
-            <ChevronLeft size={28} />
-          </button>
-          
-          <div className="flex-1 flex gap-3 justify-center items-center overflow-hidden px-4">
-            {visibleDates.map((d, idx) => {
-              const isSelected = isSameDate(d, selectedDate);
-              const dayName = getDayName(d);
-              return (
-                <button
-                  key={idx}
-                  onClick={() => setSelectedDate(d)}
-                  className={`flex flex-col items-center justify-center min-w-[55px] py-3 rounded-xl transition-all ${
-                    isSelected ? 'bg-[#eb4d32] text-white shadow-md' : 'hover:bg-orange-50 text-gray-700'
-                  }`}
-                >
-                  <span className="text-[10px] font-bold opacity-80 mb-1">{d.getMonth() + 1}/{dayName}</span>
-                  <span className="text-xl font-black">{d.getDate()}</span>
-                </button>
-              );
-            })}
+        {/* 4. 날짜 선택 섹션 (모던 슬라이더 스타일) */}
+        <div className="mb-16">
+          <div className="flex items-center justify-between mb-8">
+            <div className="flex items-center gap-3 text-[#B91C1C] font-bold tracking-[0.4em] uppercase text-xs font-sans">
+              <div className="w-8 h-px bg-[#B91C1C]"></div>
+              <span>날짜 선택</span>
+            </div>
+            <button 
+              onClick={() => dateInputRef.current?.showPicker()}
+              className="flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-black/40 hover:text-[#B91C1C] transition-colors font-sans"
+            >
+              <Calendar size={16} />
+              <span>달력 보기</span>
+              <input ref={dateInputRef} type="date" className="absolute opacity-0 pointer-events-none" onChange={handleDateChangeFromPicker} />
+            </button>
           </div>
 
-          <div className="flex items-center gap-2 border-l pl-4 shrink-0">
-            <button onClick={() => dateInputRef.current?.showPicker()} className="p-2 text-gray-500 hover:text-[#eb4d32]">
-              <Calendar size={24} />
+          <div className="relative flex items-center bg-[#FDFDFD] border border-black/5 rounded-sm p-2 shadow-xl">
+            <button 
+              onClick={handlePrevDates} 
+              disabled={dateStartIndex === 0} 
+              className="p-4 hover:bg-black hover:text-white transition-all disabled:opacity-10 rounded-sm"
+            >
+              <ChevronLeft size={24} />
             </button>
-            <input type="date" ref={dateInputRef} onChange={handleDateChangeFromPicker} className="absolute opacity-0 pointer-events-none w-0 h-0" />
-            <button onClick={handleNextDates} disabled={dateStartIndex >= allDates.length - 8} className="p-2 text-gray-400 hover:text-[#eb4d32] disabled:opacity-20">
-              <ChevronRight size={28} />
+            
+            <div className="flex-1 flex items-center justify-between px-4 overflow-hidden">
+              {visibleDates.map((d, idx) => {
+                const isSelected = isSameDate(d, selectedDate);
+                const dayName = getDayName(d);
+                return (
+                  <button
+                    key={idx}
+                    onClick={() => setSelectedDate(d)}
+                    className={`flex flex-col items-center justify-center min-w-[90px] py-6 rounded-sm transition-all ${
+                      isSelected 
+                        ? 'bg-[#B91C1C] text-white shadow-lg scale-105 z-10' 
+                        : 'hover:bg-black/5'
+                    }`}
+                  >
+                    <span className="text-3xl font-display leading-none mb-1">{d.getDate()}</span>
+                    <span className="text-[10px] font-bold tracking-widest uppercase opacity-40 font-sans">{dayName}</span>
+                  </button>
+                );
+              })}
+            </div>
+
+            <button 
+              onClick={handleNextDates} 
+              disabled={dateStartIndex >= allDates.length - 10} 
+              className="p-4 hover:bg-black hover:text-white transition-all disabled:opacity-10 rounded-sm"
+            >
+              <ChevronRight size={24} />
             </button>
           </div>
         </div>
 
-        {/* 시간표 목록 */}
+        {/* 5. 상영시간표 목록 (모던 카드 스타일) */}
         {isLoading ? (
-          <div className="py-20 text-center text-gray-400 animate-pulse">일정을 불러오고 있습니다...</div>
+          <div className="py-40 flex flex-col items-center justify-center gap-6 opacity-20">
+            <div className="w-16 h-16 border-2 border-dashed border-black rounded-full animate-spin"></div>
+            <p className="font-display text-2xl uppercase tracking-tight">Synchronizing Archive...</p>
+          </div>
         ) : (
-          <div className="flex flex-col gap-6">
+          <div className="flex flex-col gap-12">
             {(activeTab === 'theater' ? timetableByTheater : timetableByMovie).map((item: any) => (
-              <div key={item.movieId || item.theaterId} className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
-                <div className="flex items-center gap-3 mb-6 border-b border-gray-50 pb-4">
-                  <img
-                    src={ratingImages[toAgeRatingType(item.ageRating)]}
-                    alt={`관람등급 ${item.ageRating ?? 'ALL'}`}
-                    className="w-6 h-6 object-contain"
-                  />
-                  <h3 className="text-xl font-bold text-gray-800">{item.movieTitle || item.theaterName}</h3>
-                  {item.durationMin && <span className="text-sm text-gray-400">{item.durationMin}분</span>}
+              <div key={item.movieId || item.theaterId} className="bg-[#FDFDFD] border border-black/5 rounded-sm p-10 shadow-xl">
+                <div className="flex items-center justify-between mb-10 border-b border-black/5 pb-8">
+                  <div className="flex items-center gap-6">
+                    <img
+                      src={ratingImages[toAgeRatingType(item.ageRating)]}
+                      alt={item.ageRating}
+                      className="w-10 h-10 object-contain"
+                    />
+                    <div className="space-y-1">
+                      <h3 className="font-display text-4xl uppercase tracking-tight text-[#1A1A1A]">{item.movieTitle || item.theaterName}</h3>
+                      {item.durationMin && (
+                        <div className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest text-black/40 font-sans">
+                          <Clock size={12} />
+                          <span>{item.durationMin}분</span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                  <div className="hidden md:flex items-center gap-3 text-[#B91C1C] opacity-20">
+                    <Film size={32} />
+                  </div>
                 </div>
-                {renderScreeningBoxes(item.screenings, item.movieId || selectedMovieId, item.theaterId || selectedTheaterId!)}
+                {renderScreeningBoxes(item.screenings, item.movieId || selectedMovieId!, item.theaterId || selectedTheaterId!)}
               </div>
             ))}
             {(activeTab === 'theater' ? timetableByTheater : timetableByMovie).length === 0 && (
-              <div className="py-20 text-center bg-white rounded-xl border-2 border-dashed border-gray-200 text-gray-400">상영 일정이 없습니다.</div>
+              <div className="py-40 flex flex-col items-center justify-center text-center space-y-6 opacity-20">
+                <div className="w-24 h-24 border-2 border-dashed border-black rounded-full flex items-center justify-center">
+                  <Clock size={40} />
+                </div>
+                <div className="space-y-2">
+                  <p className="font-display text-2xl uppercase tracking-tight">상영 일정이 없습니다</p>
+                  <p className="text-[10px] font-bold uppercase tracking-[0.3em] max-w-[200px] leading-relaxed font-sans">날짜를 변경하거나 다른 극장을 선택해보세요</p>
+                </div>
+              </div>
             )}
           </div>
         )}
       </div>
+
     </div>
   );
 }
