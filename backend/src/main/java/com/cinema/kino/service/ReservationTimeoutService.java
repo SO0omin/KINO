@@ -13,9 +13,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Objects;
-import java.util.Set;
-import java.util.stream.Collectors;
 
 import static com.cinema.kino.entity.enums.PaymentStatus.FAILED;
 import static com.cinema.kino.entity.enums.PaymentStatus.READY;

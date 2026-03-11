@@ -36,8 +36,6 @@ type ReservationsSectionProps = {
   onClickPay: (reservationId: number) => void; 
   purchaseSelectType: "all" | "movie";
   setPurchaseSelectType: (value: "all" | "movie") => void;
-  purchaseStatusType: "all" | "purchase" | "cancel";
-  setPurchaseStatusType: (value: "all" | "purchase" | "cancel") => void;
   purchaseRange: "week" | "month1" | "month3" | "month6";
   applyPurchaseRange: (value: "week" | "month1" | "month3" | "month6") => void;
   purchaseFrom: string;
@@ -45,7 +43,6 @@ type ReservationsSectionProps = {
   purchaseTo: string;
   setPurchaseTo: (value: string) => void;
   setAppliedPurchaseSelectType: (value: "all" | "movie") => void;
-  setAppliedPurchaseStatusType: (value: "all" | "purchase" | "cancel") => void;
   setAppliedPurchaseFrom: (value: string) => void;
   setAppliedPurchaseTo: (value: string) => void;
   purchaseRows: PurchaseRow[];
@@ -96,8 +93,6 @@ export function ReservationsSection({
   onClickPay,
   purchaseSelectType,
   setPurchaseSelectType,
-  purchaseStatusType,
-  setPurchaseStatusType,
   purchaseRange,
   applyPurchaseRange,
   purchaseFrom,
@@ -105,7 +100,6 @@ export function ReservationsSection({
   purchaseTo,
   setPurchaseTo,
   setAppliedPurchaseSelectType,
-  setAppliedPurchaseStatusType,
   setAppliedPurchaseFrom,
   setAppliedPurchaseTo,
   purchaseRows,
@@ -655,18 +649,6 @@ export function ReservationsSection({
                 <option value="all">전체</option>
                 <option value="movie">영화예매</option>
               </select>
-              <label className="flex items-center gap-1.5 text-[#1A1A1A]">
-                <input type="radio" checked={purchaseStatusType === "all"} onChange={() => setPurchaseStatusType("all")} />
-                전체
-              </label>
-              <label className="flex items-center gap-1.5 text-[#1A1A1A]">
-                <input type="radio" checked={purchaseStatusType === "purchase"} onChange={() => setPurchaseStatusType("purchase")} />
-                구매내역
-              </label>
-              <label className="flex items-center gap-1.5 text-[#1A1A1A]">
-                <input type="radio" checked={purchaseStatusType === "cancel"} onChange={() => setPurchaseStatusType("cancel")} />
-                취소내역
-              </label>
             </div>
 
             <div className="mt-3 flex flex-wrap items-center gap-2 text-sm">
@@ -682,7 +664,6 @@ export function ReservationsSection({
                 className="flex items-center gap-1 rounded-sm border border-black/10 bg-white px-3 py-1 font-semibold text-[#1A1A1A] transition-colors hover:border-[#B91C1C] hover:text-[#B91C1C]"
                 onClick={() => {
                   setAppliedPurchaseSelectType(purchaseSelectType);
-                  setAppliedPurchaseStatusType(purchaseStatusType);
                   setAppliedPurchaseFrom(purchaseFrom);
                   setAppliedPurchaseTo(purchaseTo);
                 }}
@@ -695,8 +676,8 @@ export function ReservationsSection({
           <div className="mt-6 overflow-hidden rounded-sm border border-black/5 bg-white shadow-xl">
             <div className="p-5">
               <p className="text-base font-semibold text-[#1A1A1A]">전체 {purchaseRows.length}건</p>
-              <div className="mt-2">
-                <div className="grid grid-cols-6 border-y border-black/5 bg-[#FDFDFD] px-4 py-4 text-center text-[11px] font-bold uppercase tracking-[0.18em] text-black/35">
+              <div className="mt-3">
+                <div className="grid grid-cols-[1.2fr_1.1fr_0.9fr_1.3fr_0.95fr_0.8fr] border-y border-black/5 bg-[#FDFDFD] px-4 py-4 text-center text-[11px] font-bold uppercase tracking-[0.18em] text-black/35">
                   <span>예매번호</span>
                   <span>결제일시</span>
                   <span>구분</span>
@@ -707,16 +688,30 @@ export function ReservationsSection({
                 {purchaseRows.length === 0 ? (
                   <div className="border-b border-black/5 py-10 text-center text-black/45">결제내역이 없습니다.</div>
                 ) : (
-                  purchaseRows.map((row) => (
-                    <div key={row.id} className="grid grid-cols-6 border-b border-black/5 px-4 py-4 text-center text-sm text-[#1A1A1A]">
-                      <span>{row.reservationNumber}</span>
-                      <span>{formatDateTime(row.paymentDate.toISOString())}</span>
-                      <span>{row.category}</span>
-                      <span>{row.productName}</span>
-                      <span>{formatMoney(row.amount)}</span>
-                      <span className={row.isCancelled ? "text-[#B91C1C]" : "text-[#1A1A1A]"}>{row.statusLabel}</span>
-                    </div>
-                  ))
+                  purchaseRows.map((row) => {
+                    const [paymentDate, paymentTime] = formatCompactDateTime(row.paymentDate.toISOString());
+
+                    return (
+                      <div
+                        key={row.id}
+                        className="grid grid-cols-[1.2fr_1.1fr_0.9fr_1.3fr_0.95fr_0.8fr] items-center border-t border-black/5 px-4 py-4 text-center text-sm text-[#1A1A1A]"
+                      >
+                        <span className="px-2 break-all">{row.reservationNumber}</span>
+                        <span className="leading-relaxed">
+                          <span className="block">{paymentDate}</span>
+                          <span className="block">{paymentTime}</span>
+                        </span>
+                        <span className="px-2">{row.category}</span>
+                        <span className="px-2 leading-relaxed break-keep">{row.productName}</span>
+                        <span className="whitespace-nowrap font-medium">{formatMoney(row.amount)}</span>
+                        <span className="flex justify-center">
+                          <span className={`rounded-full px-3 py-1 text-xs font-medium ${row.isCancelled ? "bg-[#B91C1C]/8 text-[#B91C1C]" : "bg-black/5 text-black/55"}`}>
+                            {row.statusLabel}
+                          </span>
+                        </span>
+                      </div>
+                    );
+                  })
                 )}
               </div>
             </div>

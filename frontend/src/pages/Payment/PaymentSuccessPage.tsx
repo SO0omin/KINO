@@ -4,6 +4,10 @@ import { confirmPayment } from '../../api/paymentApi';
 import { CheckCircle2, XCircle, Ticket, Clock, CreditCard, ArrowRight } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 
+function sleep(ms: number) {
+  return new Promise((resolve) => window.setTimeout(resolve, ms));
+}
+
 /*function formatDisplayBookingNo(id: number, date = new Date()) {
   const yy = String(date.getFullYear()).slice(-2);
   const mm = String(date.getMonth() + 1).padStart(2, '0');
@@ -40,31 +44,46 @@ export default function PaymentSuccessPage() {
         setIsConfirming(false);
         return;
       }
-      const cachedResult = sessionStorage.getItem(`payment_result_${orderId}`); //멱등성 보장
-      if (cachedResult) {
-        const { payId, resNum } = JSON.parse(cachedResult);
-        setPaymentId(payId);
-        setReservationNumber(resNum);
-        setIsConfirming(false);
-        return; // API 호출 없이 종료
-      }
 
       try {
-        const result = await confirmPayment({
-          paymentKey,
-          orderId,
-          amount: parseInt(amount),
-        });
+        let lastError: unknown = null;
+        let result: Awaited<ReturnType<typeof confirmPayment>> | null = null;
+
+        for (let attempt = 0; attempt < 3; attempt += 1) {
+          try {
+            result = await confirmPayment({
+              paymentKey,
+              orderId,
+              amount: parseInt(amount, 10),
+            });
+            break;
+          } catch (confirmError: any) {
+            lastError = confirmError;
+
+            const message = String(confirmError?.message ?? '');
+            const isTransient =
+              message.includes('timeout') ||
+              message.includes('Network Error') ||
+              message.includes('ERR_NETWORK') ||
+              message.includes('ECONNABORTED') ||
+              message.includes('최종 결제 승인에 실패했습니다');
+
+            if (!isTransient || attempt === 2) {
+              throw confirmError;
+            }
+
+            await sleep(1200);
+          }
+        }
+
+        if (!result) {
+          throw lastError instanceof Error ? lastError : new Error('결제 승인 확인에 실패했습니다.');
+        }
 
         // 2. 결과 처리 (paymentId 추출)
         // result가 { paymentId: 123 } 형태라고 가정
         setPaymentId(result.paymentId);
         setReservationNumber(result.reservationNumber);
-
-        sessionStorage.setItem(`payment_result_${orderId}`, JSON.stringify({
-          payId: result.paymentId,
-          resNum: result.reservationNumber
-        }));
 
         setIsConfirming(false);
       } catch (err) {
