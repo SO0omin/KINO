@@ -110,6 +110,17 @@ public class AuthController {
         }
     }
 
+    @GetMapping("/reset-password-info")
+    public ResponseEntity<?> getResetPasswordInfo(@RequestParam String token) {
+        try {
+            ResetPwResponseDTO response = authService.validateTokenAndGetUserInfo(token);
+            return ResponseEntity.ok(response);
+        } catch (IllegalArgumentException e) {
+            // 만료되었거나 유효하지 않은 경우 400 에러와 함께 메시지 반환
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+        }
+    }
+
     // 2. 이메일 링크를 통한 실제 비밀번호 '변경' 요청
     @PostMapping("/reset-password")
     public ResponseEntity<?> resetPassword(@RequestBody Map<String, String> request) {
@@ -146,6 +157,7 @@ public class AuthController {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("비밀번호가 일치하지 않습니다.");
         }
     }
+
     // 💡 소셜(카카오) 로그인 엔드포인트
     @PostMapping("/kakao")
     public ResponseEntity<?> kakaoLogin(@RequestBody KakaoDTO.LoginRequest request) {

@@ -6,6 +6,7 @@ import java.time.LocalDateTime;
 
 @Entity
 @Getter
+@Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
@@ -16,12 +17,16 @@ public class PasswordResetToken {
     private Long id;
 
     @Column(nullable = false, unique = true)
-    private String token; // 💡 메일로 보낼 길고 복잡한 UUID
+    private String token;
 
     @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "member_id", nullable = false)
-    private Member member; // 💡 누구의 비밀번호를 바꿀 것인가?
+    private Member member;
 
     @Column(nullable = false)
-    private LocalDateTime expiryDate; // 💡 언제 만료되는가?
+    private LocalDateTime expiryDate;
+
+    @Column(nullable = false)
+    private boolean isUsed = false;
+
 }

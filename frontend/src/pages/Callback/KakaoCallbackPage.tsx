@@ -2,6 +2,7 @@ import { useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { useAuth } from '../../contexts/AuthContext';
+import { cinemaAlert } from '../../utils/alert';
 
 const KakaoCallbackPage = () => {
   const navigate = useNavigate();

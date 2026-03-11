@@ -34,10 +34,15 @@ const ResetPasswordPage: React.FC = () => {
       setUserInfo({
         username: response.data.username || '',
         tel: response.data.tel || '',
-        birth_date: response.data.birth_date || ''
+        // 백엔드 DTO 필드명(birthDate)에 맞게 매핑
+        birth_date: response.data.birthDate || response.data.birth_date || '' 
       });
-    } catch (error) {
-      console.error("사용자 정보를 불러올 수 없어 개인정보 검증이 제한됩니다.");
+    } catch (error: any) {
+      const errorMessage = error.response?.data?.error || "만료되거나 유효하지 않은 링크입니다.";
+      
+      cinemaAlert(errorMessage, "알림", () => {
+        navigate('/login');
+      });
     }
   };
 
@@ -128,6 +133,8 @@ const ResetPasswordPage: React.FC = () => {
       );
     }
   };
+
+  console.log(userInfo);
 
   const inputClass = "w-full border border-black/10 rounded-sm p-4 text-sm focus:border-[#B91C1C] focus:ring-1 focus:ring-[#B91C1C] outline-none transition-all placeholder:text-black/20 bg-white";
   const labelClass = "block text-[10px] font-bold uppercase tracking-widest text-black/40 mb-2";

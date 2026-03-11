@@ -1,5 +1,6 @@
 import { type MemberProfile, deleteMember} from "../../../api/myPageApi";
 import { useAuth } from "../../../contexts/AuthContext";
+import { cinemaAlert } from "../../../utils/alert";
 
 type ProfileSectionProps = {
   profileImageUrl: string;
