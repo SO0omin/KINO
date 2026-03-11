@@ -36,17 +36,12 @@ const MovieDetail = () => {
     scoreOst: 10,
   });
 
-  // 💡 [해결책] useEffect를 사용해 head에 스타일을 딱 한 번만 주입합니다!
-  // 이렇게 하면 리렌더링 시 스타일이 덮어씌워지지 않아 깜빡임이 사라집니다.
   useEffect(() => {
     const styleId = 'kino-modern-styles';
     if (!document.getElementById(styleId)) {
       const style = document.createElement('style');
       style.id = styleId;
       style.innerHTML = `
-        @import url('https://fonts.googleapis.com/css2?family=Anton&family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap');
-        .font-display { font-family: 'Anton', sans-serif; }
-        .font-sans { font-family: 'Inter', sans-serif; }
         body { scrollbar-gutter: stable; }
       `;
       document.head.appendChild(style);

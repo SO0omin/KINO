@@ -27,12 +27,6 @@ const TheaterListPage = () => {
   const [selectedRegionId, setSelectedRegionId] = useState<number | string | null>(null);
   const [loading, setLoading] = useState(true);
 
-  // --- 모던 스타일 정의 ---
-  const modernStyles = `
-    @import url('https://fonts.googleapis.com/css2?family=Anton&family=Inter:wght@400;500;600;700;800&display=swap');
-    .font-display { font-family: 'Anton', sans-serif; }
-    .font-sans { font-family: 'Inter', sans-serif; }
-  `;
 
   // --- 데이터 패칭 (원본 로직 유지) ---
   useEffect(() => {
@@ -62,23 +56,21 @@ const TheaterListPage = () => {
     fetchTheatersData();
   }, []);
 
-  // 💡 타입 불일치 방지를 위한 필터링 (원본 유지)
+  // 타입 불일치 방지를 위한 필터링 (원본 유지)
   const filteredTheaters = theaters.filter(t => String(t.regionId) === String(selectedRegionId));
 
   // 1. 로딩 상태 디자인
   if (loading) return (
     <div className="min-h-screen bg-white flex flex-col items-center justify-center gap-8">
-      <style dangerouslySetInnerHTML={{ __html: modernStyles }} />
       <div className="w-16 h-16 border-4 border-[#B91C1C] border-t-transparent rounded-full animate-spin"></div>
-      <p className="font-display text-2xl text-[#1A1A1A] uppercase tracking-[0.4em] animate-pulse font-sans">Loading Archives...</p>
+      <p className="font-display text-2xl text-[#1A1A1A] uppercase tracking-[0.4em] animate-pulse">Loading Archives...</p>
     </div>
   );
 
   return (
     <div className="bg-white text-[#1A1A1A] min-h-screen font-sans selection:bg-[#B91C1C] selection:text-white pb-40">
-      <style dangerouslySetInnerHTML={{ __html: modernStyles }} />
       
-      {/* 2. 헤더 섹션 (AI 스튜디오 스타일) */}
+      {/* 2. 헤더 섹션 */}
       <div className="bg-[#1A1A1A] text-white pt-24 pb-12 relative overflow-hidden">
         <div className="absolute inset-0 opacity-10 pointer-events-none">
           <div className="absolute top-0 left-0 w-full h-full bg-[radial-gradient(circle_at_50%_50%,#B91C1C_0%,transparent_70%)]"></div>
@@ -101,7 +93,7 @@ const TheaterListPage = () => {
 
       <div className="max-w-7xl mx-auto px-6 md:px-10 py-20">
         
-        {/* 3. 지역 선택 탭 (모던 스타일) */}
+        {/* 3. 지역 선택 탭 */}
         <div className="flex flex-wrap w-full mb-16 bg-[#FDFDFD] border border-black/5 rounded-sm overflow-hidden shadow-xl">
           {regions.map((region) => (
             <button

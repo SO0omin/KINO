@@ -55,6 +55,7 @@ export interface MyReservationItem {
   theaterName: string;
   screenName: string;
   startTime: string;
+  ticketPrintableUntil?: string;
   finalAmount: number;
   reservationStatus: string;
   reservationNumber: string;
@@ -62,6 +63,7 @@ export interface MyReservationItem {
   cancelReason?: string | null;
   seatNames: string[];
   cancellable: boolean;
+  ticketPrintable: boolean;
   paidAt?: string;
   cancelledAt?: string;
   holdExpiresAt?: string;

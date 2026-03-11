@@ -1,3 +1,4 @@
+import React from 'react';
 import type { MyCouponItem } from "../../../api/myPageApi";
 import ReviewVerifyModal from '../../common/review/ReviewVerifyModal';
 import ReviewWriteModal from '../../common/review/ReviewWriteModal';
@@ -10,6 +11,7 @@ import { PointPhoneModal } from "./PointPhoneModal";
 import { VoucherRegisterModal } from "./VoucherRegisterModal";
 import { WatchedMovieModal } from "./WatchedMovieModal";
 
+// 💡 기능은 1번 기본 코드의 모든 props를 그대로 전달합니다.
 export function MyPageModals(
   props: {
     selectedCoupon: MyCouponItem | null;
@@ -17,6 +19,10 @@ export function MyPageModals(
   }
 ) {
   const {
+    username,
+    tel,
+    birth_date,
+
     showPasswordChangeModal,
     currentPasswordInput,
     setCurrentPasswordInput,
@@ -117,6 +123,9 @@ export function MyPageModals(
         passwordChanging={passwordChanging}
         setShowPasswordChangeModal={setShowPasswordChangeModal}
         handlePasswordChange={handlePasswordChange}
+        username={username}
+        tel={tel}
+        birth_date={birth_date}
       />
 
       <CancelReservationModal
@@ -173,7 +182,6 @@ export function MyPageModals(
         handleRegisterWatchedMovie={handleRegisterWatchedMovie}
       />
 
-      {/* １. 1단계: 예매 번호 확인 모달 (공통 컴포넌트 호출) */}
       <ReviewVerifyModal 
           isOpen={showVerifyModal}
           onClose={() => setShowVerifyModal(false)}
@@ -182,7 +190,6 @@ export function MyPageModals(
           setReservationNumber={setReviewReservationNumberInput}
       />
 
-      {/* ２. 2단계: 리뷰 작성 모달 (공통 컴포넌트 호출) */}
       <ReviewWriteModal 
         isOpen={showReviewModal}
         onClose={() => setShowReviewModal(false)}
@@ -192,9 +199,7 @@ export function MyPageModals(
         content={reviewContentInput}
         setContent={setReviewContentInput}
         onSubmit={handleReviewSubmit}
-        scores={{
-            scoreDirection, scoreStory, scoreVisual, scoreActor, scoreOst
-        }}
+        scores={{ scoreDirection, scoreStory, scoreVisual, scoreActor, scoreOst }}
         setScores={(newScores: any) => {
             if (newScores.scoreDirection !== undefined) setScoreDirection(newScores.scoreDirection);
             if (newScores.scoreStory !== undefined) setScoreStory(newScores.scoreStory);
@@ -202,7 +207,8 @@ export function MyPageModals(
             if (newScores.scoreActor !== undefined) setScoreActor(newScores.scoreActor);
             if (newScores.scoreOst !== undefined) setScoreOst(newScores.scoreOst);
         }}
-    />
+      />
+
       <MembershipCardModal
         isOpen={showCardRegisterModal}
         closeCardRegisterModal={closeCardRegisterModal}

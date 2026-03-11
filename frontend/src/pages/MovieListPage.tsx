@@ -4,7 +4,6 @@ import ratingImages, { type AgeRatingType } from "../utils/getRatingImage";
 import axios from 'axios';
 import { Heart, Search, Film, Clock, Star, ChevronRight } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
-import FilmStrip from '../components/ticketing/FilmStrip';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cinemaAlert } from '../utils/alert';
 
@@ -36,21 +35,12 @@ export default function MovieListPage() {
   const [appliedSearch, setAppliedSearch] = useState(stateKeyword);
   const [sortOrder, setSortOrder] = useState<'RELEASE_DATE' | 'TITLE_ASC'>('RELEASE_DATE');
 
-  // --- 모던 스타일 정의 ---
-  const modernStyles = `
-    @import url('https://fonts.googleapis.com/css2?family=Anton&family=Inter:wght@400;500;600;700;800&display=swap');
-    .font-display { font-family: 'Anton', sans-serif; }
-    .font-sans { font-family: 'Inter', sans-serif; }
-  `;
-
-  // 💡 기존 검색 상태 초기화 로직 유지
   useEffect(() => {
     if (location.state?.keyword) {
       navigate(location.pathname, { replace: true, state: {} });
     }
   }, [location.pathname, navigate]);
-  
-  // 💡 원본 데이터 패칭 로직 (Axios 방식 유지)
+
   useEffect(() => {
     const fetchMovies = async () => {
       const storedMemberId = localStorage.getItem('memberId');
@@ -88,7 +78,6 @@ export default function MovieListPage() {
     setSortOrder('RELEASE_DATE');
   };
 
-  // 💡 원본의 Optimistic UI 찜하기 로직 유지
   const handleLikeToggle = async (movieId: number, currentIsLiked: boolean) => {
     if (!isLoggedIn || isGuest || !memberId) {
       cinemaAlert("로그인 상태의 회원만 사용 가능한 기능입니다.","알림");
@@ -116,7 +105,6 @@ export default function MovieListPage() {
 
   return (
     <div className="bg-white text-[#1A1A1A] min-h-screen font-sans selection:bg-[#B91C1C] selection:text-white">
-      <style dangerouslySetInnerHTML={{ __html: modernStyles }} />
       
       {/* 1. 헤더 영역 (AI 스튜디오 스타일) */}
       <div className="bg-[#1A1A1A] text-white pt-24 pb-12 relative overflow-hidden">

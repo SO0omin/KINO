@@ -239,10 +239,15 @@ public class MyPageService {
             if (!seats.isEmpty()) {
                 holdExpiresAt = seats.get(0).getHoldExpiresAt();
             }
+            LocalDateTime ticketPrintableUntil = reservation.getScreening().getEndTime();
 
             // 상영 시작 전이고, 아직 취소되지 않은 예약이면 모두 취소 가능 (결제 대기 상태 포함)
             boolean cancellable = reservation.getScreening().getStartTime().isAfter(LocalDateTime.now())
                     && reservation.getStatus() != ReservationStatus.CANCELED;
+            boolean ticketPrintable = payment != null
+                    && payment.getPaymentStatus() == PaymentStatus.PAID
+                    && ticketPrintableUntil != null
+                    && ticketPrintableUntil.isAfter(LocalDateTime.now());
 
             List<MyPageDTO.ReservationItem.TicketInfo> ticketInfos = reservation.getTickets().stream()
                     .map(ticket -> {
@@ -265,6 +270,7 @@ public class MyPageService {
                     .theaterName(reservation.getScreening().getScreen().getTheater().getName())
                     .screenName(reservation.getScreening().getScreen().getName())
                     .startTime(reservation.getScreening().getStartTime())
+                    .ticketPrintableUntil(ticketPrintableUntil)
                     .paidAt(payment != null ? payment.getPaidAt() : null)
                     .cancelledAt(resolveCancelledAt(reservation, payment, holdExpiresAt))
                     .finalAmount(payment != null ? payment.getFinalAmount() : reservation.getTotalPrice())
@@ -275,6 +281,7 @@ public class MyPageService {
                     .cancelReason(resolveCancelReason(reservation.getStatus(), payment))
                     .seatNames(seatNames)
                     .cancellable(cancellable)
+                    .ticketPrintable(ticketPrintable)
                     .holdExpiresAt(holdExpiresAt)
                     .tickets(ticketInfos)
                     .build());

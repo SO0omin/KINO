@@ -1,3 +1,4 @@
+import React from 'react';
 import type { MyCouponItem } from "../../../api/myPageApi";
 import { ModalFrame, SecondaryButton } from "./modalPrimitives";
 
@@ -20,33 +21,54 @@ export function CouponInfoModal({
 
   return (
     <ModalFrame
+      category="Coupon Ledger"
       title="쿠폰 정보"
       subtitle="선택한 쿠폰의 상세 정보입니다."
       onClose={closeCouponInfoModal}
       footer={
-        <div className="flex justify-end">
-          <SecondaryButton onClick={closeCouponInfoModal}>닫기</SecondaryButton>
-        </div>
+        <SecondaryButton onClick={closeCouponInfoModal}>닫기</SecondaryButton>
       }
     >
-      <div className="rounded-sm border border-black/5 bg-white px-6 py-7 text-center">
-        <p className="text-[10px] font-bold uppercase tracking-[0.22em] text-black/35">Coupon Name</p>
-        <h4 className="mt-3 text-4xl font-semibold tracking-tight text-[#1A1A1A]">{selectedCoupon.couponName}</h4>
-      </div>
-      <div className="rounded-sm border border-[#B91C1C]/15 bg-[#B91C1C]/5 py-5 text-center text-3xl font-semibold tracking-[0.08em] text-[#B91C1C]">
-        {formatCouponCodeForModal(selectedCoupon.couponCode)}
-      </div>
-      <div className="grid gap-x-8 gap-y-4 rounded-sm border border-black/5 bg-white p-5 text-base text-[#1A1A1A] md:grid-cols-[140px_1fr]">
-        <p className="font-semibold text-black/45">구분</p><p>{selectedCoupon.couponKind || "기타"}</p>
-        <p className="font-semibold text-black/45">사용상태</p><p>{mapCouponStatusLabel(selectedCoupon.status)}</p>
-        <p className="font-semibold text-black/45">발급일</p><p>{selectedCoupon.issuedAt ? formatDateTime(selectedCoupon.issuedAt) : "-"}</p>
-        <p className="font-semibold text-black/45">유효기간</p><p>{selectedCoupon.expiresAt ? formatDateTime(selectedCoupon.expiresAt) : "-"}</p>
-        <p className="font-semibold text-black/45">할인정보</p>
-        <p>
-          {selectedCoupon.discountType === "RATE"
-            ? `${selectedCoupon.discountValue}% 할인`
-            : `${selectedCoupon.discountValue.toLocaleString()}원 할인`}
-        </p>
+      <div className="space-y-8">
+        {/* 1. 쿠폰 이름 영역 (강조) */}
+        <div className="rounded-sm border border-black/5 bg-[#FDFDFD] px-8 py-10 text-center shadow-inner">
+          <p className="font-mono text-[9px] font-bold uppercase tracking-[0.4em] text-black/20 mb-4">Verified Benefit</p>
+          <h4 className="text-3xl font-display uppercase tracking-tighter text-[#1A1A1A] leading-tight">
+            {selectedCoupon.couponName}
+          </h4>
+        </div>
+        
+        {/* 2. 쿠폰 코드 영역 (레드 포인트) */}
+        <div className="rounded-sm border border-[#B91C1C]/10 bg-[#B91C1C]/5 py-8 text-center text-2xl font-display uppercase tracking-widest text-[#B91C1C] shadow-sm">
+          {formatCouponCodeForModal(selectedCoupon.couponCode)}
+        </div>
+
+        {/* 3. 상세 정보 그리드 */}
+        <div className="grid gap-x-10 gap-y-6 rounded-sm border border-black/5 bg-white p-10 text-sm text-[#1A1A1A] md:grid-cols-[160px_1fr] shadow-sm">
+          <p className="font-mono text-[9px] font-bold uppercase tracking-widest text-black/30">구분 (Category)</p>
+          <p className="font-mono font-bold uppercase tracking-widest text-[10px]">{selectedCoupon.couponKind || "기타"}</p>
+          
+          <p className="font-mono text-[9px] font-bold uppercase tracking-widest text-black/30">사용상태 (Status)</p>
+          <p className={`font-mono font-bold uppercase tracking-widest text-[10px] ${selectedCoupon.status === 'USED' ? 'text-black/30' : 'text-[#B91C1C]'}`}>
+            {mapCouponStatusLabel(selectedCoupon.status)}
+          </p>
+          
+          <p className="font-mono text-[9px] font-bold uppercase tracking-widest text-black/30">발급일 (Issued At)</p>
+          <p className="font-mono text-xs text-black/60">{selectedCoupon.issuedAt ? formatDateTime(selectedCoupon.issuedAt) : "-"}</p>
+          
+          <p className="font-mono text-[9px] font-bold uppercase tracking-widest text-black/30">유효기간 (Expires At)</p>
+          <p className="font-mono text-xs text-black/60">{selectedCoupon.expiresAt ? formatDateTime(selectedCoupon.expiresAt) : "-"}</p>
+          
+          {/* 구분선 */}
+          <div className="h-px w-full bg-black/5 md:col-span-2"></div>
+
+          <p className="font-mono text-[9px] font-bold uppercase tracking-widest text-black/30">할인정보 (Benefit)</p>
+          <p className="font-display uppercase tracking-tight text-[#B91C1C]">
+            {selectedCoupon.discountType === "RATE"
+              ? `${selectedCoupon.discountValue}% OFF`
+              : `${selectedCoupon.discountValue.toLocaleString()} KRW OFF`}
+          </p>
+        </div>
       </div>
     </ModalFrame>
   );
