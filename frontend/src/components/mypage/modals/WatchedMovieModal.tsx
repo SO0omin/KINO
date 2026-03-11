@@ -30,7 +30,7 @@ export function WatchedMovieModal({
 
         <div className="space-y-6">
           <div className="space-y-2">
-            <label htmlFor="watched-movie-code" className="font-mono text-[9px] font-bold uppercase tracking-widest text-black/20">
+            <label htmlFor="watched-movie-code" className="font-mono text-[11px] font-bold uppercase tracking-widest text-black/20">
               Ticket Or Reservation Number
             </label>
             <input
@@ -43,7 +43,7 @@ export function WatchedMovieModal({
               className="w-full rounded-sm border border-black/10 bg-[#FDFDFD] p-5 font-mono text-xl text-[#1A1A1A] shadow-inner outline-none transition-all focus:border-[#B91C1C]"
             />
           </div>
-          <p className="text-center font-mono text-[9px] uppercase tracking-widest text-black/20">
+          <p className="text-center font-mono text-[10px] uppercase tracking-widest text-black/50">
             Register past screenings to build your archive.
           </p>
         </div>
