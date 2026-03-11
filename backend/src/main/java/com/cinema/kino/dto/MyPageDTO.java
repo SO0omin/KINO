@@ -90,6 +90,7 @@ public class MyPageDTO {
         private String theaterName;
         private String screenName;
         private LocalDateTime startTime;
+        private LocalDateTime ticketPrintableUntil;
         private LocalDateTime paidAt;
         private LocalDateTime cancelledAt;
         private Integer finalAmount;
@@ -99,6 +100,7 @@ public class MyPageDTO {
         private String cancelReason;
         private List<String> seatNames;
         private boolean cancellable;
+        private boolean ticketPrintable;
         private LocalDateTime holdExpiresAt;
         private List<TicketInfo> tickets;
 
