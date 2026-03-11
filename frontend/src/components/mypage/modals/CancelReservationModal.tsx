@@ -1,3 +1,4 @@
+import React from 'react';
 import { ModalField, ModalFrame, PrimaryButton, SecondaryButton } from "./modalPrimitives";
 
 type CancelReservationModalProps = {
@@ -23,6 +24,7 @@ export function CancelReservationModal({
 }: CancelReservationModalProps) {
   if (!isOpen) return null;
 
+  // 닫을 때 상태 리셋 기능 유지
   const closeModal = () => {
     setShowCancelModal(false);
     setCancelTargetId(null);
@@ -31,12 +33,13 @@ export function CancelReservationModal({
 
   return (
     <ModalFrame
+      category="Refund Request"
       title="환불 사유 입력"
       subtitle="취소 사유를 남기면 해당 내용으로 환불 요청이 접수됩니다."
       onClose={closeModal}
       size="md"
       footer={
-        <div className="flex justify-end gap-3">
+        <>
           <SecondaryButton disabled={isCancelling !== null} onClick={closeModal}>
             닫기
           </SecondaryButton>
@@ -49,17 +52,24 @@ export function CancelReservationModal({
           >
             {isCancelling !== null ? "처리 중..." : "환불 확정"}
           </PrimaryButton>
-        </div>
+        </>
       }
     >
-      <ModalField label="환불 사유">
-        <textarea
-          className="h-36 w-full resize-none rounded-sm border border-black/10 bg-white p-4 text-sm text-[#1A1A1A] outline-none transition-colors focus:border-[#B91C1C]"
-          placeholder="예: 일정 변경으로 취소합니다."
-          value={cancelReason}
-          onChange={(e) => setCancelReason(e.target.value)}
-        />
-      </ModalField>
+      <div className="space-y-6">
+        <ModalField label="환불 사유 (Cancellation Reason)">
+          <textarea
+            className="h-40 w-full resize-none rounded-sm border border-black/10 bg-[#FDFDFD] p-6 font-mono text-sm text-[#1A1A1A] outline-none transition-all focus:border-[#B91C1C] shadow-inner"
+            placeholder="예매를 취소하시는 사유를 입력해 주세요."
+            value={cancelReason}
+            onChange={(e) => setCancelReason(e.target.value)}
+          />
+        </ModalField>
+
+        <p className="font-mono text-[10px] text-black/50 text-center uppercase tracking-widest leading-relaxed">
+          ※ 환불 처리는 영업일 기준 3-5일 정도 소요될 수 있습니다.<br/>
+          * Refund processing may take 3-5 business days.
+        </p>
+      </div>
     </ModalFrame>
   );
 }
