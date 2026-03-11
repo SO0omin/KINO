@@ -66,6 +66,7 @@ export interface MyReservationItem {
   theaterName: string;
   screenName: string;
   startTime: string;
+  ticketPrintableUntil?: string;
   finalAmount: number;
   reservationStatus: string;
   reservationNumber: string;
@@ -73,6 +74,7 @@ export interface MyReservationItem {
   cancelReason?: string | null;
   seatNames: string[];
   cancellable: boolean;
+  ticketPrintable: boolean;
   paidAt?: string;
   cancelledAt?: string;
   holdExpiresAt?: string; // "2026-03-08T14:30:00" 형태의 ISO 문자열

@@ -149,6 +149,11 @@ export function ReservationsSection({
   };
 
   const openPrintVoucher = (item: MyReservationItem) => {
+    if (!item.ticketPrintable) {
+      alert("교환권 출력 가능 시간이 지나 출력할 수 없습니다.");
+      return;
+    }
+
     const bookingNo = formatGuestBookingNo(item.reservationId, item.paidAt);
     const paidAtText = formatDateTime(item.paidAt ?? item.startTime);
     const startTimeText = formatDateTime(item.startTime);
@@ -410,7 +415,7 @@ export function ReservationsSection({
                         </button>
                       )}
                       
-                      {!canPay && item.paymentStatus === "PAID" && (
+                      {!canPay && item.ticketPrintable && (
                         <button
                           className="rounded-sm border border-[#B91C1C] bg-white px-5 py-2 text-sm font-semibold text-[#B91C1C] transition-colors hover:bg-[#B91C1C] hover:text-white"
                           onClick={() => openPrintVoucher(item)}
@@ -608,7 +613,7 @@ export function ReservationsSection({
                             </button>
                           )}
 
-                          {!canPay && item.paymentStatus === "PAID" && (
+                          {!canPay && item.ticketPrintable && (
                             <button
                               className="rounded-sm border border-[#B91C1C] bg-white px-5 py-2 text-sm font-semibold text-[#B91C1C] transition-colors hover:bg-[#B91C1C] hover:text-white"
                               onClick={() => openPrintVoucher(item)}
