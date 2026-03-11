@@ -3,7 +3,7 @@ import { useNavigate, useLocation, Link } from 'react-router-dom';
 import axios from "axios";
 import { CommonModal } from '../components/common/CommonModal';
 import { useAuth } from '../contexts/AuthContext';
-// 💡 카카오, 네이버, 구글 인증 URL을 한 곳에서 관리하는 것을 추천합니다.
+import { cinemaAlert } from '../utils/alert';
 import { KAKAO_AUTH_URL, NAVER_AUTH_URL, GOOGLE_AUTH_URL } from '../constants/socialAuth'; 
 
 const LoginPage: React.FC = () => {
@@ -24,15 +24,15 @@ const LoginPage: React.FC = () => {
     guestPassword: '',
   });
 
-  const [isAlertOpen, setIsAlertOpen] = useState(false);
-  const [alertMessage, setAlertMessage] = useState("");
+  const [isOpen, setIsOpen] = useState(false);
+  const [Message, setMessage] = useState("");
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
-  const handleCloseModal = () => setIsAlertOpen(false);
+  const handleCloseModal = () => setIsOpen(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -48,8 +48,7 @@ const LoginPage: React.FC = () => {
         login(token, username, name, memberId);
         navigate(returnTo, { state: location.state }); 
       } catch (error) {
-        setAlertMessage("아이디 또는 비밀번호가 일치하지 않습니다.");
-        setIsAlertOpen(true);
+        cinemaAlert("아이디 또는 비밀번호가 일치하지 않습니다.", "알림");
       }
     } 
     else {
@@ -67,8 +66,7 @@ const LoginPage: React.FC = () => {
 
       } catch (error: any) {
         const errMsg = error.response?.data?.error || "비회원 정보가 일치하지 않거나 등록되지 않았습니다.";
-        setAlertMessage(errMsg);
-        setIsAlertOpen(true);
+        cinemaAlert(errMsg, "알림");
       }
     }
   };
@@ -261,26 +259,6 @@ const LoginPage: React.FC = () => {
           </form>
         </div>
       </div>
-
-      {/* 모달 디자인 (회원가입과 동일한 테마) */}
-      <CommonModal isOpen={isAlertOpen} onClose={handleCloseModal}>
-        <div className="bg-white rounded-sm shadow-2xl overflow-hidden min-w-[320px]">
-          <div className="bg-[#B91C1C] text-white px-6 py-4 flex items-center justify-center border-b border-[#991B1B]">
-            <h3 className="text-[10px] font-bold uppercase tracking-[0.3em]">Notice</h3>
-          </div>
-          <div className="p-8 flex flex-col items-center">
-            <p className="text-sm font-medium text-[#1A1A1A] text-center mb-8 leading-relaxed">
-              {alertMessage}
-            </p>
-            <button 
-              onClick={handleCloseModal} 
-              className="w-full bg-[#1A1A1A] text-white text-[10px] font-bold uppercase tracking-[0.2em] py-4 rounded-sm hover:bg-[#B91C1C] transition-colors"
-            >
-              Confirm
-            </button>
-          </div>
-        </div>
-      </CommonModal>
     </div>
   );
 };

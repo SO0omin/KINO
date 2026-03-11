@@ -5,7 +5,7 @@ type TimelineRow = {
   movieTitle: string;
   theaterName: string;
   screenName: string;
-  reservationNumber:string;
+  reservationNumber?:string;
   watchedAt: string;
 };
 

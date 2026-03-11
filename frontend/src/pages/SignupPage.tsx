@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import axios from 'axios';
-import { CommonModal } from '../components/common/CommonModal';
+import { cinemaAlert } from '../utils/alert';
 
 const SignupPage: React.FC = () => {
   const navigate = useNavigate();
@@ -44,8 +44,6 @@ const SignupPage: React.FC = () => {
   });
 
   const [isUsernameChecked, setIsUsernameChecked] = useState(false);
-  const [isAlertOpen, setIsAlertOpen] = useState(false);
-  const [alertMessage, setAlertMessage] = useState("");
   const [isDuplicateModalOpen, setIsDuplicateModalOpen] = useState(false);
 
   const getProviderNameKOR = (provider?: string) => {
@@ -58,17 +56,9 @@ const SignupPage: React.FC = () => {
   useEffect(() => {
     if (socialData && socialData.provider) {
       const providerName = getProviderNameKOR(socialData.provider);
-      showAlert(`${providerName} 계정 정보가 입력되었습니다. 나머지 정보를 입력해주세요!`);
+      cinemaAlert(`${providerName} 계정 정보가 입력되었습니다. 나머지 정보를 입력해주세요!`, "알림");
     }
   }, [socialData]);
-
-  const closeAlert = () => setIsAlertOpen(false);
-  const closeDuplicateModal = () => setIsDuplicateModalOpen(false);
-
-  const showAlert = (message: string) => {
-    setAlertMessage(message);
-    setIsAlertOpen(true);
-  };
 
   const formatTel = (value: string) => {
     const target = value.replace(/[^0-9]/g, '').slice(0, 11);
@@ -139,7 +129,7 @@ const SignupPage: React.FC = () => {
 
   const handleUsernameCheck = async () => {
     if (!memberData.username) {
-      showAlert("아이디를 입력해주세요.");
+      cinemaAlert("아이디를 입력해주세요.","알림");
       return;
     }
     try {
@@ -147,14 +137,14 @@ const SignupPage: React.FC = () => {
         params: { username: memberData.username }
       });
       if (response.data.available) {
-        showAlert("사용 가능한 아이디입니다.");
+        cinemaAlert("사용 가능한 아이디입니다.","알림");
         setIsUsernameChecked(true);
       } else {
-        showAlert("이미 사용 중인 아이디입니다.");
+        cinemaAlert("이미 사용 중인 아이디입니다.","알림");
         setIsUsernameChecked(false);
       }
     } catch (error) {
-      showAlert("중복 체크 중 오류가 발생했습니다.");
+      cinemaAlert("중복 체크 중 오류가 발생했습니다.","알림");
     }
   };
 
@@ -163,24 +153,24 @@ const SignupPage: React.FC = () => {
 
     if (activeTab === 'MEMBER') {
       if (!isUsernameChecked) {
-        showAlert("아이디 중복 체크를 진행해주세요.");
+        cinemaAlert("아이디 중복 체크를 진행해주세요.","알림");
         return;
       }
 
       const { length, english, number, special, noPersonal } = pwValidation;
       if (!length || !english || !number || !special || !noPersonal) {
-        showAlert("비밀번호 설정 조건을 모두 만족해야 합니다.");
+        cinemaAlert("비밀번호 설정 조건을 모두 만족해야 합니다.","알림");
         return;
       }
 
       if (memberData.password !== memberData.confirmPassword) {
-        showAlert("비밀번호가 일치하지 않습니다.");
+        cinemaAlert("비밀번호가 일치하지 않습니다.","알림");
         return;
       }
 
       try {
         await axios.post('/api/auth/signup', memberData);
-        showAlert("회원가입이 완료되었습니다.");
+        cinemaAlert("회원가입이 완료되었습니다.","알림");
         setTimeout(() => navigate('/login'), 1500); 
       } catch (error: any) {
         if (error.response && error.response.status === 400) {
@@ -188,15 +178,15 @@ const SignupPage: React.FC = () => {
           if (errorMessage.includes("이메일")) {
             setIsDuplicateModalOpen(true); 
           } else {
-            showAlert(errorMessage);
+            cinemaAlert(errorMessage,"알림");
           }
         } else {
-          showAlert("회원가입 중 오류가 발생했습니다.");
+          cinemaAlert("회원가입 중 오류가 발생했습니다.","알림");
         }
       }
     } else {
       if (guestData.guestPassword !== guestData.guestConfirmPassword) {
-        showAlert("비밀번호가 일치하지 않습니다.");
+        cinemaAlert("비밀번호가 일치하지 않습니다.","알림");
         return;
       }
       try {
@@ -205,10 +195,10 @@ const SignupPage: React.FC = () => {
           tel: guestData.guestTel,
           password: guestData.guestPassword
         });
-        showAlert("비회원 정보 등록이 완료되었습니다.");
+        cinemaAlert("비회원 정보 등록이 완료되었습니다.","알림");
         setTimeout(() => navigate('/login'), 1500);
       } catch (error) {
-        showAlert("비회원 등록 중 오류가 발생했습니다.");
+        cinemaAlert("비회원 등록 중 오류가 발생했습니다.","알림");
       }
     }
   };
@@ -426,55 +416,6 @@ const SignupPage: React.FC = () => {
           </form>
         </div>
       </div>
-
-      {/* 기본 알림 모달 */}
-      <CommonModal isOpen={isAlertOpen} onClose={closeAlert}>
-        <div className="bg-white rounded-sm shadow-2xl overflow-hidden min-w-[320px]">
-          <div className="bg-[#B91C1C] text-white px-6 py-4 flex items-center justify-center border-b border-[#991B1B]">
-            <h3 className="text-[10px] font-bold uppercase tracking-[0.3em]">Notice</h3>
-          </div>
-          <div className="p-8 flex flex-col items-center">
-            <p className="text-sm font-medium text-[#1A1A1A] text-center mb-8 leading-relaxed">
-              {alertMessage}
-            </p>
-            <button 
-              onClick={closeAlert} 
-              className="w-full bg-[#1A1A1A] text-white text-[10px] font-bold uppercase tracking-[0.2em] py-4 rounded-sm hover:bg-[#B91C1C] transition-colors"
-            >
-              Confirm
-            </button>
-          </div>
-        </div>
-      </CommonModal>
-
-      {/* 이메일 중복 시 안내 모달 */}
-      <CommonModal isOpen={isDuplicateModalOpen} onClose={closeDuplicateModal}>
-        <div className="bg-white rounded-sm shadow-2xl overflow-hidden min-w-[340px]">
-          <div className="bg-[#B91C1C] text-white px-6 py-4 flex items-center justify-center border-b border-[#991B1B]">
-            <h3 className="text-[10px] font-bold uppercase tracking-[0.3em]">Account Exists</h3>
-          </div>
-          <div className="p-8 flex flex-col items-center">
-            <p className="text-sm font-medium text-[#1A1A1A] text-center mb-8 leading-relaxed">
-              이미 해당 이메일로 가입된 이력이 있습니다.<br/>로그인 페이지로 이동하시겠습니까?
-            </p>
-            <div className="flex w-full gap-3">
-              <button 
-                onClick={() => navigate('/login')} 
-                className="flex-1 bg-[#1A1A1A] text-white text-[10px] font-bold uppercase tracking-[0.2em] py-4 rounded-sm hover:bg-[#B91C1C] transition-colors"
-              >
-                Sign In
-              </button>
-              <button 
-                onClick={() => navigate('/find-account')} 
-                className="flex-1 bg-white border border-black/10 text-[#1A1A1A] text-[10px] font-bold uppercase tracking-[0.2em] py-4 rounded-sm hover:border-black/30 transition-colors"
-              >
-                Find Account
-              </button>
-            </div>
-          </div>
-        </div>
-      </CommonModal>
-
     </div>
   );
 };

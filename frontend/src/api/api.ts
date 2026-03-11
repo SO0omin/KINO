@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { cinemaAlert } from '../utils/alert';
 
 export const api = axios.create({
   baseURL: 'http://localhost:8080', // 백엔드 주소
@@ -34,11 +35,9 @@ api.interceptors.response.use(
       if (!isRedirecting) {
         isRedirecting = true; // 자물쇠 잠금
 
-        alert("로그인이 만료되었거나 권한이 없습니다. 다시 로그인해 주세요.");
+        cinemaAlert("세션이 만료되었습니다. 다시 로그인해 주세요.", "알림");
 
-        localStorage.removeItem('jwt_token');
-        localStorage.removeItem('username');
-        // ... (나머지 스토리지 삭제 로직)
+        localStorage.clear();
         
         setTimeout(() => {
           window.location.href = '/login';

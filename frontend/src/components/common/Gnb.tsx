@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../../contexts/AuthContext";
 import { Search, User, X } from "lucide-react";
+import { cinemaAlert } from '../../utils/alert';
 
 export const Gnb: React.FC = () => {
   const location = useLocation();
@@ -21,7 +22,7 @@ export const Gnb: React.FC = () => {
 
   const handleLogout = () => {
     logout();
-    alert("로그아웃 되었습니다.");
+    cinemaAlert("안전하게 로그아웃 되었습니다.", "알림");
     navigate("/"); 
   };
 

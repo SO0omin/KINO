@@ -27,11 +27,8 @@ const SeatBooking = () => {
     selectedSeats,
     personnel,
     totalPersonnelCount,
-    isAlertOpen,
-    alertMessage,
     showCoupleNotice,
     totalPrice,
-    setIsAlertOpen,
     setShowCoupleNotice,
     handleCountChange,
     toggleSeat,
@@ -346,26 +343,6 @@ const SeatBooking = () => {
         </div>
       </div>
 
-      {/* 모달 */}
-      <CommonModal isOpen={isAlertOpen} onClose={() => setIsAlertOpen(false)}>
-        <div className="bg-white rounded-sm shadow-2xl overflow-hidden min-w-[320px]">
-          <div className="bg-[#B91C1C] text-white px-6 py-4 flex items-center gap-3">
-            <AlertCircle size={18} />
-            <h3 className="text-xs font-bold uppercase tracking-widest">Notice</h3>
-          </div>
-          <div className="p-8">
-            <p className="text-sm font-medium text-[#1A1A1A] leading-relaxed text-center mb-8">
-              {alertMessage}
-            </p>
-            <button 
-              onClick={() => setIsAlertOpen(false)} 
-              className="w-full bg-[#1A1A1A] text-white text-xs font-bold uppercase tracking-[0.2em] py-4 rounded-sm hover:bg-[#B91C1C] transition-colors"
-            >
-              Confirm
-            </button>
-          </div>
-        </div>
-      </CommonModal>
     </div>
   );
 };

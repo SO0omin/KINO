@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { cancelReservation, type MyReservationItem } from "../../api/myPageApi";
 import { formatYmd, shiftDays, splitReservations, toMonthKey, toPurchaseRows } from "../../mappers/myPageMapper";
+import { cinemaAlert } from "../../utils/alert";
 
 type UseReservationSectionOptions = {
   memberId: number;
@@ -69,9 +70,9 @@ export function useReservationSection({
       setShowCancelModal(false);
       setCancelTargetId(null);
       setCancelReason("");
-      alert("환불(취소) 처리가 완료되었습니다.");
+      cinemaAlert("환불(취소) 처리가 완료되었습니다.","알림");
     } catch (error: any) {
-      alert(error?.message ?? "환불 처리 중 오류가 발생했습니다.");
+      cinemaAlert(error?.message ?? "환불 처리 중 오류가 발생했습니다.","알림");
     } finally {
       setIsCancelling(null);
     }

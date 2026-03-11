@@ -6,6 +6,7 @@ import type { Screening, Seat } from '../../types/ticketing';
 import { useAuth } from '../../contexts/AuthContext';
 import ratingImages, { type AgeRatingType } from "../../utils/getRatingImage";
 import { X, Users, Armchair } from 'lucide-react';
+import { cinemaAlert } from '../../utils/alert';
 
 interface Props {
   isOpen: boolean;
@@ -46,7 +47,7 @@ const SeatPreviewModal: React.FC<Props> = ({ isOpen, onClose, screening, seats: 
   const handleBookingClick = () => {
     if (!screening) return;
     if (!isLoggedIn && !isGuest) {
-      alert("예매를 하기 위해서는 로그인이 필요합니다.");
+      cinemaAlert("예매를 하기 위해서는 로그인이 필요합니다.","알람");
       navigate('/login', {
         state: {
           returnTo: '/seat-booking',

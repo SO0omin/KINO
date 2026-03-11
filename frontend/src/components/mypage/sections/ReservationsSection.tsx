@@ -2,6 +2,7 @@ import { useState } from "react"; // ✨ 필수 추가!
 import { Search } from "lucide-react";
 import type { MyReservationItem } from "../../../api/myPageApi";
 import { ReservationTimer } from "../modals/ReservationTimer";
+import { cinemaAlert } from "../../../utils/alert";
 
 type PurchaseRow = {
   id: number;
@@ -182,7 +183,7 @@ export function ReservationsSection({
 
     const printWindow = window.open("", "_blank", "width=860,height=900");
     if (!printWindow) {
-      alert("팝업이 차단되어 교환권을 열 수 없습니다. 팝업을 허용해 주세요.");
+      cinemaAlert("팝업이 차단되어 교환권을 열 수 없습니다. 팝업을 허용해 주세요.","알림");
       return;
     }
 

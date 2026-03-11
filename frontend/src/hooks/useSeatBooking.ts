@@ -14,6 +14,8 @@ import { seatSocketService } from "../services/seatSocketService";
 import { seatBookingApi } from "../api/seatBookingApi";
 import { reservationApi } from "../api/reservationApi";
 
+import { cinemaAlert } from "../utils/alert";
+
 // ✨ AuthContext 가져오기
 import { useAuth } from "../contexts/AuthContext";
 
@@ -26,18 +28,11 @@ export const useSeatBooking = (screeningId: number) => {
   const [screeningInfo, setScreeningInfo] = useState<ScreeningInfoViewModel | null>(null);
   const [selectedSeats, setSelectedSeats] = useState<SeatViewModel[]>([]);
   const [personnel, setPersonnel] = useState({ adult: 0, youth: 0, senior: 0, special: 0 });
-  const [isAlertOpen, setIsAlertOpen] = useState(false);
-  const [alertMessage, setAlertMessage] = useState("");
   const [showCoupleNotice, setShowCoupleNotice] = useState(false);
 
   const totalPersonnelCount = Object.values(personnel).reduce((a, b) => a + b, 0);
   const realSeats = seats.filter((s) => s.isRealSeat);
   const entranceSeats = seats.filter((s) => s.isEntrance);
-
-  const showAlert = (msg: string) => {
-    setAlertMessage(msg);
-    setIsAlertOpen(true);
-  };
 
   //2) 규칙(좌석 선택, 커플석 관리)
   const getPartnerNumber = useCallback((currentSeat: SeatViewModel) => {
@@ -86,11 +81,11 @@ export const useSeatBooking = (screeningId: number) => {
     if (nextCount < 0) return;
     
     if (delta > 0 && totalPersonnelCount >= 8) {
-      showAlert("최대 8명까지만 선택 가능합니다.");
+      cinemaAlert("최대 8명까지만 선택 가능합니다.","알람");
       return;
     }
     if (delta < 0 && selectedSeats.length > (totalPersonnelCount - 1)) {
-      showAlert("선택된 좌석보다 인원수가 적을 수 없습니다.");
+      cinemaAlert("선택된 좌석보다 인원수가 적을 수 없습니다.","알람");
       return;
     }
     setPersonnel({ ...personnel, [type]: nextCount });
@@ -98,7 +93,7 @@ export const useSeatBooking = (screeningId: number) => {
 
   const toggleSeat = (seat: SeatViewModel) => {
     if (totalPersonnelCount === 0) {
-      showAlert("관람하실 인원을 먼저 선택해주세요.");
+      cinemaAlert("관람하실 인원을 먼저 선택해주세요.","알람");
       return;
     }
 
@@ -124,7 +119,7 @@ export const useSeatBooking = (screeningId: number) => {
 
     // [선택 로직]
     if (remainingCount <= 0) {
-      showAlert("이미 모든 좌석을 선택하셨습니다.");
+      cinemaAlert("이미 모든 좌석을 선택하셨습니다.","알림");
       return;
     }
 
@@ -168,7 +163,7 @@ export const useSeatBooking = (screeningId: number) => {
         if (myChunk) {
           const indexInGroup = myChunk.findIndex(s => s.id === seat.id);
           if (indexInGroup % 2 !== 0) {
-            showAlert("해당 좌석은 단독으로 선택할 수 없습니다.");
+            cinemaAlert("해당 좌석은 단독으로 선택할 수 없습니다.","알림");
             return;
           }
         }
@@ -218,17 +213,17 @@ export const useSeatBooking = (screeningId: number) => {
   // 매개변수에서 memberId를 빼고, 훅 안에서 꺼낸 값을 바로 씁니다.
   const handleProceedToPayment = async (navigate: any) => {
     if (selectedSeats.length === 0 || selectedSeats.length !== totalPersonnelCount) {
-      showAlert("인원수에 맞게 좌석을 선택해주세요.");
+      cinemaAlert("인원수에 맞게 좌석을 선택해주세요.","알림");
       return;
     }
 
     if (!isGuest && !memberId) {
-      showAlert("로그인 정보가 없습니다. 다시 로그인해 주세요.");
+      cinemaAlert("로그인 정보가 없습니다. 다시 로그인해 주세요.","알림");
       return;
     }
 
     if (isGuest && !guestId) {
-      showAlert("비회원 인증 정보가 없습니다. 비회원 로그인 후 다시 시도해 주세요.");
+      cinemaAlert("비회원 인증 정보가 없습니다. 비회원 로그인 후 다시 시도해 주세요.","알림");
       return;
     }
 
@@ -256,7 +251,7 @@ export const useSeatBooking = (screeningId: number) => {
         error?.response?.data?.error ||
         error?.message ||
         "좌석 선점에 실패했습니다.";
-      showAlert(message);
+      cinemaAlert(message,"알림");
     }
   };
 
@@ -276,9 +271,7 @@ export const useSeatBooking = (screeningId: number) => {
 
         setShowCoupleNotice(mappedSeats.some(s => s.type === "COUPLE"));
       } catch (err) {
-        console.error("좌석 로딩 에러:", err);
-        setAlertMessage("데이터를 불러오는 중 오류가 발생했습니다.");
-        setIsAlertOpen(true);
+        cinemaAlert("데이터를 불러오는 중 오류가 발생했습니다.", "알림");
       }
     };
 
@@ -314,11 +307,8 @@ export const useSeatBooking = (screeningId: number) => {
     selectedSeats,
     personnel,
     totalPersonnelCount,
-    isAlertOpen,
-    alertMessage,
     showCoupleNotice,
     totalPrice,
-    setIsAlertOpen,
     setShowCoupleNotice,
     handleCountChange,
     toggleSeat,

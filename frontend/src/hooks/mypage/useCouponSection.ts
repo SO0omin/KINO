@@ -15,6 +15,7 @@ import {
   type CouponSourceFilter,
   type CouponStatusFilter,
 } from "../../mappers/myPageMapper";
+import { cinemaAlert } from "../../utils/alert";
 
 type UseCouponSectionOptions = {
   memberId: number;
@@ -99,7 +100,7 @@ export function useCouponSection({
       await redeemCoupon(memberId, couponRegisterCode);
       await Promise.all([loadCoupons(), load()]);
       closeCouponRegisterModal();
-      alert("할인쿠폰 등록이 완료되었습니다.");
+      cinemaAlert("할인쿠폰 등록이 완료되었습니다.","알림");
     } catch (error: any) {
       setCouponRegisterError(error?.message ?? "쿠폰 등록에 실패했습니다.");
     } finally {

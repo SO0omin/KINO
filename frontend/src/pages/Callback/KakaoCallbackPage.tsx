@@ -49,7 +49,7 @@ const KakaoCallbackPage = () => {
         })
         .catch(err => {
           console.error(err);
-          alert("카카오 로그인 인증에 실패했습니다.");
+          cinemaAlert("카카오 로그인 인증에 실패했습니다.","알림");
           navigate('/login', { replace: true });
         });
     }

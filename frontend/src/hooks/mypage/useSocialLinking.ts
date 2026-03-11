@@ -5,6 +5,7 @@ import {
   unlinkSocialAccountApi,
   type MemberProfile,
 } from "../../api/myPageApi";
+import { cinemaAlert } from "../../utils/alert";
 
 type SocialProvider = "naver" | "kakao" | "google";
 
@@ -62,10 +63,10 @@ export function useSocialLinking({
 
       try {
         await unlinkSocialAccountApi(provider.toUpperCase());
-        alert(`${providerKoName} 연동이 해제되었습니다.`);
+        cinemaAlert(`${providerKoName} 연동이 해제되었습니다.`,"알림");
         await loadMemberProfile();
       } catch (error: any) {
-        alert(error.response?.data?.message || "해제 중 오류 발생");
+        cinemaAlert(error.response?.data?.message || "해제 중 오류 발생","알림");
       }
       return;
     }
@@ -78,10 +79,10 @@ export function useSocialLinking({
       if (!authCode) return;
 
       await linkSocialAccountApi(provider.toUpperCase(), authCode);
-      alert("성공적으로 연동되었습니다!");
+      cinemaAlert("성공적으로 연동되었습니다!");
       await loadMemberProfile();
     } catch (error: any) {
-      alert(error.response?.data?.message || "연동 중 오류 발생");
+      cinemaAlert(error.response?.data?.message || "연동 중 오류 발생");
     }
   };
 

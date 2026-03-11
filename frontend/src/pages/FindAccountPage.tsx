@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { CommonModal } from '../components/common/CommonModal';
 import axios from 'axios';
+import { cinemaAlert } from '../utils/alert';
 
 type TabType = 'FIND_ID' | 'RESET_PW';
 
@@ -15,24 +16,9 @@ const FindAccountPage: React.FC = () => {
     username: '', 
   });
 
-  const [isAlertOpen, setIsAlertOpen] = useState(false);
-  const [alertMessage, setAlertMessage] = useState("");
   const [onModalClose, setOnModalClose] = useState<(() => void) | null>(null);
 
   const [isLoading, setIsLoading] = useState(false);
-
-  const showAlert = (msg: string, callback?: () => void) => {
-    setAlertMessage(msg);
-    setOnModalClose(() => callback || null); 
-    setIsAlertOpen(true);
-  };
-
-  const handleCloseModal = () => {
-    setIsAlertOpen(false);
-    if (onModalClose) {
-      onModalClose(); 
-    }
-  };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -46,9 +32,10 @@ const FindAccountPage: React.FC = () => {
         name: formData.name,
         email: formData.email
       });
-      showAlert(`회원님의 아이디는 [ ${response.data.username} ] 입니다.`);
+      // 💡 전역 모달 사용
+      cinemaAlert(`회원님의 아이디는 [ ${response.data.username} ] 입니다.`, "ID FOUND");
     } catch (error: any) {
-      showAlert(error.response?.data?.error || "일치하는 회원 정보가 없습니다.");
+      cinemaAlert(error.response?.data?.error || "일치하는 회원 정보가 없습니다.", "FIND ERROR");
     }
   };
 
@@ -63,12 +50,15 @@ const FindAccountPage: React.FC = () => {
       });
       
       setIsLoading(false);
-      showAlert(`입력하신 이메일로 비밀번호 재설정 링크가 발송되었습니다.\n메일을 확인해 주세요.`, () => {
-        navigate('/login');
-      });
+      // 💡 세 번째 인자로 콜백(navigate)을 전달합니다.
+      cinemaAlert(
+        `입력하신 이메일로 비밀번호 재설정 링크가 발송되었습니다.\n메일을 확인해 주세요.`, 
+        "EMAIL SENT", 
+        () => navigate('/login')
+      );
     } catch (error: any) {
       setIsLoading(false);
-      showAlert(error.response?.data?.error || "입력하신 정보와 일치하는 계정이 없습니다.");
+      cinemaAlert(error.response?.data?.error || "입력하신 정보와 일치하는 계정이 없습니다.", "REQUEST FAILED");
     }
   };
 
@@ -202,25 +192,6 @@ const FindAccountPage: React.FC = () => {
         </div>
       </div>
 
-      {/* Kino 테마 공통 모달 */}
-      <CommonModal isOpen={isAlertOpen} onClose={handleCloseModal}>
-        <div className="bg-white rounded-sm shadow-2xl overflow-hidden min-w-[320px]">
-          <div className="bg-[#B91C1C] text-white px-6 py-4 flex items-center justify-center border-b border-[#991B1B]">
-            <h3 className="text-[10px] font-bold uppercase tracking-[0.3em]">Notice</h3>
-          </div>
-          <div className="p-8 flex flex-col items-center">
-            <p className="text-sm font-medium text-[#1A1A1A] text-center mb-8 leading-relaxed whitespace-pre-line">
-              {alertMessage}
-            </p>
-            <button 
-              onClick={handleCloseModal} 
-              className="w-full bg-[#1A1A1A] text-white text-[10px] font-bold uppercase tracking-[0.2em] py-4 rounded-sm hover:bg-[#B91C1C] transition-colors"
-            >
-              Confirm
-            </button>
-          </div>
-        </div>
-      </CommonModal>
     </div>
   );
 };

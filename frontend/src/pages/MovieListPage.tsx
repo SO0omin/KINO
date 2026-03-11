@@ -6,6 +6,7 @@ import { Heart, Search, Film, Clock, Star, ChevronRight } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import FilmStrip from '../components/ticketing/FilmStrip';
 import { motion, AnimatePresence } from 'framer-motion';
+import { cinemaAlert } from '../utils/alert';
 
 // 영화 데이터 타입 정의 (원본 유지)
 interface Movie {
@@ -90,7 +91,7 @@ export default function MovieListPage() {
   // 💡 원본의 Optimistic UI 찜하기 로직 유지
   const handleLikeToggle = async (movieId: number, currentIsLiked: boolean) => {
     if (!isLoggedIn || isGuest || !memberId) {
-      alert("로그인 상태의 회원만 사용 가능한 기능입니다.");
+      cinemaAlert("로그인 상태의 회원만 사용 가능한 기능입니다.","알림");
       return;
     }
 
@@ -109,7 +110,7 @@ export default function MovieListPage() {
     try {
       await axios.post(`/api/movies/${movieId}/likes`, { memberId });
     } catch (error) {
-      alert("찜하기 처리에 실패했습니다.");
+      cinemaAlert("찜하기 처리에 실패했습니다.","알림");
     }
   };
 

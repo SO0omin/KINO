@@ -17,6 +17,7 @@ import {
 import { getMyMembershipCards, type MyMembershipCardItem } from '../../api/myPageApi';
 
 import type { PriceType, TicketRequest } from '../../types/dtos/payment.dto';
+import { cinemaAlert } from '../../utils/alert';
 
 function normalizePriceType(pt?: PriceType): PriceType {
   return pt ?? 'ADULT';
@@ -152,7 +153,7 @@ export default function PaymentPage() {
     const memberId = reservationDetail?.memberId ?? null;
 
     if (!memberId) {
-      alert('회원만 쿠폰 등록이 가능합니다.');
+      cinemaAlert('회원만 쿠폰 등록이 가능합니다.','알림');
       return;
     }
 
@@ -162,7 +163,7 @@ export default function PaymentPage() {
       const list = await getMyCoupons(memberId, '매표');
       setCoupons(list);
     } catch (e: any) {
-      alert(e?.message ?? '쿠폰 등록에 실패했습니다.');
+      cinemaAlert(e?.message ?? '쿠폰 등록에 실패했습니다.','알림');
     } finally {
       setCouponLoading(false);
     }
@@ -250,7 +251,7 @@ export default function PaymentPage() {
 
   const handlePayment = async () => {
     if (!agreeTerms) {
-      alert('취소/환불 정책에 동의해주세요.');
+      cinemaAlert('취소/환불 정책에 동의해주세요.','알림');
       return;
     }
 

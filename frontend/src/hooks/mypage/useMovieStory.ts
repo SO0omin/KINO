@@ -6,6 +6,7 @@ import {
   getMyReviews,
   verifyReservationForReview,
 } from "../../api/myPageApi";
+import { cinemaAlert } from "../../utils/alert";
 
 type WatchedMovie = {
   id: string;
@@ -18,6 +19,7 @@ type TimelineRow = {
   movieTitle: string;
   theaterName: string;
   screenName: string;
+  reservationNumber?:string;
   watchedAt: string;
 };
 
@@ -83,7 +85,7 @@ export function useMovieStory({ memberId, isLoggedIn, reservations }: UseMovieSt
 
   const reservationWatchedMovies = useMemo(() => {
     return reservations
-      .filter((item) => item.paymentStatus !== "CANCELLED" && item.paymentStatus !== "FAILED")
+      .filter((item) => item.paymentStatus === "PAID")
       .map((item) => ({
         id: `r-${item.reservationId}`,
         movieTitle: item.movieTitle,
@@ -133,7 +135,7 @@ export function useMovieStory({ memberId, isLoggedIn, reservations }: UseMovieSt
     const resNum = reviewReservationNumberInput.trim();
 
     if (!resNum) {
-      alert("예매 번호를 입력해주세요.");
+      cinemaAlert("예매 번호를 입력해주세요.","알림");
       return;
     }
 
@@ -146,14 +148,14 @@ export function useMovieStory({ memberId, isLoggedIn, reservations }: UseMovieSt
       setShowVerifyModal(false);
       setShowReviewModal(true);
     } catch (error: any) {
-      alert(error?.message ?? "유효하지 않은 예매 번호입니다. 번호를 확인해주세요.");
+      cinemaAlert(error?.message ?? "유효하지 않은 예매 번호입니다. 번호를 확인해주세요.","알림");
       setShowVerifyModal(false);
     }
   };
 
   const handleReviewSubmit = async () => {
     if (!reviewContentInput.trim()) {
-      alert("관람평 내용을 입력해 주세요.");
+      cinemaAlert("관람평 내용을 입력해 주세요.","알림");
       return;
     }
 
@@ -170,7 +172,7 @@ export function useMovieStory({ memberId, isLoggedIn, reservations }: UseMovieSt
         scoreOst,
       });
 
-      alert("관람평이 성공적으로 등록되었습니다!");
+      cinemaAlert("관람평이 성공적으로 등록되었습니다!","알림");
       setShowReviewModal(false);
       setReviewContentInput("");
       setScoreDirection(10);
@@ -181,14 +183,14 @@ export function useMovieStory({ memberId, isLoggedIn, reservations }: UseMovieSt
       const updatedReviews = await getMyReviews(memberId);
       setReviews(updatedReviews);
     } catch (error: any) {
-      alert(error?.message ?? "리뷰 등록 실패");
+      cinemaAlert(error?.message ?? "리뷰 등록 실패","알림");
     }
   };
 
   const handleRegisterWatchedMovie = () => {
     const code = watchedTicketCodeInput.trim();
     if (!code) {
-      alert("거래번호 또는 예매번호를 입력해 주세요.");
+      cinemaAlert("거래번호 또는 예매번호를 입력해 주세요.","알림");
       return;
     }
 

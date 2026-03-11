@@ -3,6 +3,7 @@ import { RotateCcw } from 'lucide-react';
 import type { DiscountTab } from '../../types/models/payment';
 import type { MyCouponResponse } from '../../api/paymentApi';
 import { api } from '../../api/api';
+import { cinemaAlert } from '../../utils/alert';
 
 interface DiscountSectionProps {
   discountTab: DiscountTab;
@@ -79,7 +80,7 @@ export function DiscountSection({
   const handleRedeem = async () => {
     const code = couponCode.trim();
     if (!code) {
-      alert('쿠폰 코드를 입력해주세요.');
+      cinemaAlert('쿠폰 코드를 입력해주세요.',"알림");
       return;
     }
     setRedeemBusy(true);
@@ -87,7 +88,7 @@ export function DiscountSection({
       await onRedeemCoupon(code);
       setCouponCode('');
     } catch (e: any) {
-      alert(e?.message ?? '쿠폰 등록 실패');
+      cinemaAlert(e?.message ?? '쿠폰 등록 실패',"알림");
     } finally {
       setRedeemBusy(false);
     }
@@ -100,7 +101,7 @@ export function DiscountSection({
       await api.post('/api/auth/verify-point-password', { pointPassword: pointPwInput });
       setIsPointVerified(true); // 통과!
     } catch (error) {
-      alert("포인트 비밀번호가 틀렸습니다.");
+      cinemaAlert("포인트 비밀번호가 틀렸습니다.","알람");
       setPointPwInput("");
     } finally {
       setIsVerifying(false);

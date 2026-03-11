@@ -2,6 +2,7 @@ import { useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { useAuth } from '../../contexts/AuthContext';
+import { cinemaAlert } from '../../utils/alert';
 
 const NaverCallbackPage = () => {
   const navigate = useNavigate();
@@ -59,12 +60,12 @@ const NaverCallbackPage = () => {
         })
         .catch(err => {
           console.error("네이버 로그인 에러:", err);
-          alert("네이버 로그인 인증에 실패했습니다.");
+          cinemaAlert("네이버 로그인 인증에 실패했습니다.","알림");
           navigate('/login', { replace: true });
         });
     } else {
       // code나 state가 없는 비정상적인 접근일 경우
-      alert("비정상적인 로그인 접근입니다.");
+      cinemaAlert("비정상적인 로그인 접근입니다.","알림");
       navigate('/login', { replace: true });
     }
   }, [navigate]);

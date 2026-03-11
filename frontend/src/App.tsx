@@ -21,6 +21,8 @@ import PaymentFailPage from "./pages/Payment/PaymentFailPage";
 import TheaterListPage from "./pages/TheaterListPage";
 import TimetablePage from "./pages/TimetablePage";
 
+import { GlobalModal } from './components/common/GlobalModal';
+
 
 function AppRoutes() {
     return (
@@ -75,6 +77,7 @@ function App() {
         <AuthProvider>
             <Router>
                 <AppRoutes />
+                <GlobalModal />
             </Router>
         </AuthProvider>
     );

@@ -38,6 +38,7 @@ import { DashboardSection } from "../components/mypage/sections/DashboardSection
 import { PointPasswordSection } from "../components/mypage/sections/PointPasswordSection";
 import { MembershipCardsSection } from "../components/mypage/sections/MembershipCardsSection";
 import { MyPageModals } from "../components/mypage/modals/MyPageModals";
+import { cinemaAlert } from "../utils/alert";
 
 export default function MyPage() {
     const navigate = useNavigate();
@@ -368,7 +369,7 @@ export default function MyPage() {
             await removeMovieLike(movieId, memberId);
             await loadWishMovies();
         } catch (error: any) {
-            alert(error?.message ?? "삭제에 실패했습니다.");
+            cinemaAlert(error?.message ?? "삭제에 실패했습니다.","알림");
         }
     };
 

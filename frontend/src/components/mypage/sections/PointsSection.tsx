@@ -1,5 +1,6 @@
 import { Search } from "lucide-react";
 import type { MyPageSummary, MyPointHistoryItem } from "../../../api/myPageApi";
+import { cinemaAlert } from "../../../utils/alert";
 
 type PointsSectionProps = {
   summary: MyPageSummary | null;
@@ -82,11 +83,11 @@ export function PointsSection({
             className="flex items-center gap-1 rounded-sm border border-black/10 bg-white px-4 py-2 whitespace-nowrap font-semibold text-[#1A1A1A] transition-colors hover:border-[#B91C1C] hover:text-[#B91C1C]"
             onClick={() => {
               if (!pointFrom || !pointTo) {
-                alert("조회 시작일/종료일을 선택해 주세요.");
+                cinemaAlert("조회 시작일/종료일을 선택해 주세요.","알림");
                 return;
               }
               if (new Date(pointFrom).getTime() > new Date(pointTo).getTime()) {
-                alert("조회 시작일은 종료일보다 이후일 수 없습니다.");
+                cinemaAlert("조회 시작일은 종료일보다 이후일 수 없습니다.","알림");
                 return;
               }
               setAppliedPointFrom(pointFrom);
