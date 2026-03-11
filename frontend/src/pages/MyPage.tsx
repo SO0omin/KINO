@@ -642,6 +642,9 @@ export default function MyPage() {
             </div>
 
             <MyPageModals
+                username={memberProfile?.username || ""}
+                tel={memberProfile?.tel || ""}
+                birth_date={memberProfile?.birthDate || ""}
                 showPasswordChangeModal={showPasswordChangeModal}
                 currentPasswordInput={currentPasswordInput}
                 setCurrentPasswordInput={setCurrentPasswordInput}

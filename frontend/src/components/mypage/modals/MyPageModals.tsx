@@ -19,6 +19,10 @@ export function MyPageModals(
   }
 ) {
   const {
+    username,
+    tel,
+    birth_date,
+
     showPasswordChangeModal,
     currentPasswordInput,
     setCurrentPasswordInput,
@@ -119,6 +123,9 @@ export function MyPageModals(
         passwordChanging={passwordChanging}
         setShowPasswordChangeModal={setShowPasswordChangeModal}
         handlePasswordChange={handlePasswordChange}
+        username={username}
+        tel={tel}
+        birth_date={birth_date}
       />
 
       <CancelReservationModal
