@@ -7,6 +7,7 @@ export * from './mypage/membershipApi';
 export * from './mypage/pointApi';
 export * from './mypage/movieStoryApi';
 export * from './mypage/socialApi';
+import type { AgeRatingType } from '../utils/getRatingImage';
 import { api } from './api';
 
 export interface MyPageSummary {
@@ -205,6 +206,10 @@ export interface MyWishMovieItem {
   movieId: number;
   title: string;
   posterUrl?: string;
+  ageRating?: AgeRatingType;
+  bookingRate?: number;
+  releaseDate?: string;
+  userScore?: number;
 }
 
 export interface PointPasswordSmsVerifyResponse {

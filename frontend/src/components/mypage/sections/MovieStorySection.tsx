@@ -1,4 +1,7 @@
 import type { MyWishMovieItem } from "../../../api/myPageApi";
+import { Heart } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import ratingImages, { type AgeRatingType } from "../../../utils/getRatingImage";
 
 type TimelineRow = {
   id: string;
@@ -61,6 +64,17 @@ export function MovieStorySection({
   wishMovies,
   onRemoveWishMovie,
 }: MovieStorySectionProps) {
+
+  const navigate = useNavigate(); // 2. navigate 함수 초기화
+
+  // 3. 핸들러 함수 수정
+  const handleBooking = (movieId: number) => {
+    navigate('/ticketing', { 
+      state: { preSelectedMovieId: movieId } 
+    });
+  };
+
+
   return (
     <section>
       <h1 className="text-5xl font-semibold tracking-tight text-[#1A1A1A]">나의 무비스토리</h1>
@@ -198,28 +212,75 @@ export function MovieStorySection({
 
       {movieStoryTab === "wish" ? (
         <div className="mt-6">
-          <div className="mb-3 flex items-center justify-between">
+          <div className="mb-5 flex items-center justify-between">
             <p className="text-2xl font-semibold text-[#1A1A1A]">총 <span className="text-[#B91C1C]">{wishCount}</span>건</p>
-            <span className="text-sm text-black/55">영화 목록에서 찜하기로만 추가 가능합니다.</span>
           </div>
-          <div className="overflow-hidden rounded-sm border border-black/5 bg-white shadow-xl">
+
+          <div className="space-y-6">
             {wishLoading ? (
               <div className="py-20 text-center text-black/45">불러오는 중...</div>
             ) : wishMovies.length === 0 ? (
-              <div className="py-20 text-center text-black/45">보고싶은 영화를 담아주세요.</div>
+              <div className="py-20 text-center text-black/45 rounded-sm border border-black/5 bg-white shadow-sm">보고싶은 영화를 담아주세요.</div>
             ) : (
-              <div className="divide-y divide-black/5">
+              <div className="divide-y divide-black/10 border-t border-black/10">
                 {wishMovies.map((item) => (
-                  <div key={item.movieId} className="flex items-center justify-between px-5 py-4">
-                    <div>
-                      <p className="text-base font-semibold text-[#1A1A1A]">{item.title}</p>
+                  <div key={item.movieId} className="flex gap-6 py-8 relative group">
+                    {/* 1. 영화 포스터 영역 */}
+                    <div className="relative h-[180px] w-[130px] flex-shrink-0 overflow-hidden rounded-md shadow-md">
+                      <img 
+                        src={item.posterUrl || "https://via.placeholder.com/130x180?text=No+Image"} 
+                        alt={item.title} 
+                        className="h-full w-full object-cover"
+                      />
+                      {/* 연령 등급 배지 (이미지 좌측 하단) */}
+                      {item.ageRating && ratingImages[item.ageRating] && (
+                        <div className="absolute bottom-2 left-2 h-6 w-6">
+                          <img 
+                            src={ratingImages[item.ageRating]} 
+                            alt={item.ageRating} 
+                            className="h-full w-full object-contain drop-shadow-md" 
+                          />
+                        </div>
+                      )}
                     </div>
-                    <button
-                      className="rounded-sm border border-black/10 bg-white px-3 py-1 text-sm text-[#1A1A1A] transition-colors hover:border-[#B91C1C] hover:text-[#B91C1C]"
-                      onClick={() => onRemoveWishMovie(item.movieId)}
-                    >
-                      삭제
-                    </button>
+
+                    {/* 2. 영화 정보 영역 */}
+                    <div className="flex flex-1 flex-col justify-between py-1">
+                      <div>
+                        <div className="flex items-start justify-between">
+                          <h3 className="text-2xl font-bold text-[#1A1A1A]">{item.title}</h3>
+                          
+                          {/* 찜 해제 버튼 (우측 상단 하트) */}
+                          <button 
+                            onClick={() => onRemoveWishMovie(item.movieId)}
+                            className="fill-[#B91C1C] text-[#B91C1C] transition-transform hover:scale-110 active:scale-95"
+                            title="찜 해제"
+                          >
+                            <Heart className="h-7 w-7 fill-current" />
+                          </button>
+                        </div>
+
+
+                        {/* 예매율/개봉일/평점 정보 */}
+                        <div className="mt-10 space-y-1 text-sm text-black/50">
+                          <p>예매율 <span className="ml-1 font-medium text-black/80">{item.bookingRate || '0.0'}%</span></p>
+                          <p>개봉일 <span className="ml-1 font-medium text-black/80">
+                            {item.releaseDate ? formatDateSimple(item.releaseDate) : '개봉일 정보 없음'}
+                          </span></p>
+                          <p>실관람평 <span className="ml-1 font-medium text-black/80">{item.userScore || '0.0'}</span></p>
+                        </div>
+                      </div>
+
+                      {/* 3. 예매하기 버튼 (우측 하단) */}
+                      <div className="flex justify-end">
+                        <button
+                          className="rounded-sm border border-[#B91C1C] bg-white px-5 py-2 text-[11px] font-bold uppercase tracking-[0.18em] text-[#B91C1C] transition-colors hover:bg-[#B91C1C] hover:text-white"
+                          onClick={() => handleBooking(item.movieId)}
+                        >
+                          바로예매
+                        </button>
+                      </div>
+                    </div>
                   </div>
                 ))}
               </div>
