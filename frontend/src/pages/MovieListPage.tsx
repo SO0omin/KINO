@@ -1,12 +1,12 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import ratingImages, { type AgeRatingType } from "../utils/getRatingImage";
+import ratingImages, { type AgeRatingType, resolveRatingImage } from "../utils/getRatingImage";
 import axios from 'axios';
 import { Heart, Search, Film, Clock, Star, ChevronRight } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { motion, AnimatePresence } from 'framer-motion';
 
-// 영화 데이터 타입 정의 (원본 유지)
+// 영화 데이터 타입 정의
 interface Movie {
   id: number;
   title: string;
@@ -121,6 +121,7 @@ export default function MovieListPage() {
             <h1 className="font-display text-4xl md:text-4xl uppercase tracking-tighter leading-none">
               영화 <span className="text-white/20">라이브러리</span>
             </h1>
+            <p className="text-white/20">현재 상영작과 상영 예정작을 확인하세요.</p>
           </div>
         </div>
       </div>
@@ -204,9 +205,9 @@ export default function MovieListPage() {
               className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-10"
             >
               {movies.map((movie, index) => (
-                <div key={movie.id} className="group flex flex-col">
+                <div key={movie.id} className="flex flex-col">
                   {/* 포스터 영역 */}
-                  <div className="relative overflow-hidden rounded-sm shadow-2xl aspect-[2/3] mb-6 bg-black cursor-pointer" onClick={() => navigate(`/movies/${movie.id}`)}>
+                  <div className="group relative overflow-hidden rounded-sm shadow-2xl aspect-[2/3] mb-6 bg-black cursor-pointer" onClick={() => navigate(`/movies/${movie.id}`)}>
                     <img 
                       src={movie.posterUrl} 
                       alt={movie.title} 
@@ -255,7 +256,7 @@ export default function MovieListPage() {
                     <div className="flex items-start justify-between gap-4">
                       <div className="flex items-center gap-3">
                         <img 
-                          src={ratingImages[movie.ageRating as AgeRatingType] || ratingImages.ALL} 
+                          src={resolveRatingImage(movie.ageRating)} 
                           alt={movie.ageRating}
                           className="w-6 h-6 object-contain"
                         />

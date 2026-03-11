@@ -1,6 +1,7 @@
 package com.cinema.kino.service;
 
 import com.cinema.kino.dto.MovieDetailResponseDTO;
+import com.cinema.kino.dto.MovieLikeItemResponseDTO;
 import com.cinema.kino.dto.MovieResponseDTO;
 import com.cinema.kino.entity.Movie;
 import com.cinema.kino.entity.Review;
@@ -17,6 +18,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
@@ -123,6 +125,33 @@ public class MovieService {
                 .audienceTrend(trendData.stream().map(m -> MovieDetailResponseDTO.TrendDTO.builder()
                         .date((String) m.get("date")).count(((Number) m.get("count")).longValue()).build()).collect(Collectors.toList()))
                 .build();
+    }
+
+
+    /**
+     * [마이페이지] 사용자가 찜한 영화 목록 조회 (상세 정보 포함)
+     */
+    public List<MovieLikeItemResponseDTO> getMyWishMovies(Long memberId) {
+        // 1. Repository의 FETCH JOIN 쿼리를 사용하여 영화 정보까지 한 번에 가져옴
+        List<com.cinema.kino.entity.MovieLike> likes = movieLikeRepository.findAllByMemberIdWithMovie(memberId);
+
+        return likes.stream().map(like -> {
+            com.cinema.kino.entity.Movie movie = like.getMovie();
+
+            // 2. 해당 영화의 평균 평점 계산
+            Double avgRating = getAverageRating(movie.getId());
+
+            // 3. DTO로 변환
+            return MovieLikeItemResponseDTO.builder()
+                    .movieId(movie.getId())
+                    .title(movie.getTitle())
+                    .posterUrl(movie.getPosterUrl())
+                    .ageRating(movie.getAgeRating().name())
+                    .bookingRate(movie.getBookingRate() != null ? movie.getBookingRate() : BigDecimal.ZERO)
+                    .releaseDate(movie.getReleaseDate().toString())
+                    .userScore(avgRating)
+                    .build();
+        }).collect(Collectors.toList());
     }
 
     // --- Private Helper Methods ---
