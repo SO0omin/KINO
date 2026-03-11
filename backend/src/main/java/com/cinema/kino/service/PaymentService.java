@@ -303,6 +303,7 @@ public class PaymentService {
                     request.getOrderId(), reservation.getStatus());
             return PaymentDTO.ConfirmResponse.builder()
                     .paymentId(payment.getId())
+                    .reservationNumber(reservation.getReservationNumber())
                     .build();
         }
 
@@ -331,48 +332,23 @@ public class PaymentService {
             payment.setPgProvider("TOSS");
 
             reservation.setStatus(ReservationStatus.PAID);
-            String bookingNo = generateBookingNo(reservation.getId());
-            reservation.setReservationNumber(bookingNo);
-
-            if(payment.getMember() != null) mailService.sendPaymentCompleteEmail(payment.getMember(),reservation,bookingNo);
+            String bookingNo = reservation.getReservationNumber();
+            if (bookingNo == null || bookingNo.isBlank()) {
+                bookingNo = generateBookingNo(reservation.getId());
+                reservation.setReservationNumber(bookingNo);
+            }
 
             screeningSeatRepository.findByReservationId(reservation.getId())
                     .forEach(s -> {
-                        s.setStatus(SeatStatus.RESERVED); // 결제 완료 상태
-                        s.setHoldExpiresAt(null);     // 결제가 끝났으니 스케줄러가 못 건드리게 타이머 파괴!
+                        s.setStatus(SeatStatus.RESERVED);
+                        s.setHoldExpiresAt(null);
                     });
 
-            memberCouponRepository.findByReservation(reservation).ifPresent(mc -> {
-                if (mc.getStatus() == MemberCouponStatus.HELD) {
-                    mc.setStatus(MemberCouponStatus.USED);
-                    mc.setIsUsed(true);
-                    mc.setUsedAt(LocalDateTime.now());
-                    mc.setHoldExpiresAt(null);
-                }
-            });
+            applyCouponAndPoints(payment, reservation);
+            sendPaymentCompleteEmailSafely(payment, reservation, bookingNo);
 
-            if (payment.getUsedPoints() > 0 && payment.getMember() != null) {
-                memberPointRepository.save(MemberPoint.builder()
-                        .member(payment.getMember())
-                        .point(-payment.getUsedPoints())
-                        .pointType(PointType.USE)
-                        .createdAt(LocalDateTime.now())
-                        .build());
-            }
-
-            if (payment.getMember() != null) {
-                int earnPoints = calculateEarnPoints(payment.getFinalAmount());
-                if (earnPoints > 0) {
-                    memberPointRepository.save(MemberPoint.builder()
-                            .member(payment.getMember())
-                            .point(earnPoints)
-                            .pointType(PointType.EARN)
-                            .createdAt(LocalDateTime.now())
-                            .build());
-                }
-            }
-
-            log.info(bookingNo);
+            log.info("[결제확정완료] orderId={}, reservationId={}, bookingNo={}",
+                    request.getOrderId(), reservation.getId(), bookingNo);
             return PaymentDTO.ConfirmResponse.builder()
                     .paymentId(payment.getId())
                     .reservationNumber(bookingNo)
@@ -389,6 +365,58 @@ public class PaymentService {
 
             releaseHeldCouponIfAny(reservation);
             throw dbEx;
+        }
+    }
+
+    private void applyCouponAndPoints(Payment payment, Reservation reservation) {
+        memberCouponRepository.findByReservation(reservation).ifPresent(mc -> {
+            if (mc.getStatus() == MemberCouponStatus.HELD) {
+                mc.setStatus(MemberCouponStatus.USED);
+                mc.setIsUsed(true);
+                mc.setUsedAt(LocalDateTime.now());
+                mc.setHoldExpiresAt(null);
+            }
+        });
+
+        if (payment.getMember() == null) {
+            return;
+        }
+
+        try {
+            if (payment.getUsedPoints() > 0) {
+                memberPointRepository.save(MemberPoint.builder()
+                        .member(payment.getMember())
+                        .point(-payment.getUsedPoints())
+                        .pointType(PointType.USE)
+                        .createdAt(LocalDateTime.now())
+                        .build());
+            }
+
+            int earnPoints = calculateEarnPoints(payment.getFinalAmount());
+            if (earnPoints > 0) {
+                memberPointRepository.save(MemberPoint.builder()
+                        .member(payment.getMember())
+                        .point(earnPoints)
+                        .pointType(PointType.EARN)
+                        .createdAt(LocalDateTime.now())
+                        .build());
+            }
+        } catch (Exception e) {
+            log.error("[포인트/쿠폰 후처리 실패] paymentId={}, reservationId={}",
+                    payment.getId(), reservation.getId(), e);
+        }
+    }
+
+    private void sendPaymentCompleteEmailSafely(Payment payment, Reservation reservation, String bookingNo) {
+        if (payment.getMember() == null) {
+            return;
+        }
+
+        try {
+            mailService.sendPaymentCompleteEmail(payment.getMember(), reservation, bookingNo);
+        } catch (Exception e) {
+            log.error("[결제완료메일 실패] paymentId={}, reservationId={}",
+                    payment.getId(), reservation.getId(), e);
         }
     }
 
