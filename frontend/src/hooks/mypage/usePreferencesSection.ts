@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { getMyCoupons, getMyVouchers } from "../../api/myPageApi";
 import { ticketingApi } from "../../api/ticketingApi";
+import { cinemaAlert } from "../../utils/alert";
 
 type PreferenceSnapshot = {
   marketingPolicyAgreed: boolean;
@@ -185,7 +186,7 @@ export function usePreferencesSection({
         preferredCinemas: nextSnapshot.preferredTheaterId ? [nextSnapshot.preferredTheaterId] : [],
       })
     );
-    alert("선호정보가 저장되었습니다.");
+    cinemaAlert("선호정보가 저장되었습니다.","알림");
   };
 
   return {

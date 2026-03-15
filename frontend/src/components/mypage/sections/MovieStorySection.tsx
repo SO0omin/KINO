@@ -8,6 +8,7 @@ type TimelineRow = {
   movieTitle: string;
   theaterName: string;
   screenName: string;
+  reservationNumber?:string;
   watchedAt: string;
 };
 
@@ -135,6 +136,7 @@ export function MovieStorySection({
               {timelineRows.map((item) => (
                 <div key={item.id} className="px-5 py-4">
                   <p className="text-lg font-semibold text-[#1A1A1A]">{item.movieTitle}</p>
+                   <p className="text-sm font-semibold text-[#1A1A1A]">{item.reservationNumber}</p>
                   <p className="mt-1 text-sm text-black/55">
                     {formatDateSimple(item.watchedAt)} · {item.theaterName} {item.screenName}
                   </p>

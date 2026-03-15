@@ -8,6 +8,7 @@ import MediaTab from '../components/detail/MediaTab';
 import ReviewWriteModal from '../components/common/review/ReviewWriteModal';
 import ReviewVerifyModal from '../components/common/review/ReviewVerifyModal';
 import { Heart, Film, Star, Play, Clock, Info } from 'lucide-react';
+import { cinemaAlert } from '../utils/alert';
 
 const MovieDetail = () => {
   const { id } = useParams();
@@ -140,7 +141,7 @@ const MovieDetail = () => {
     try {
       const response = await axios.get(`http://localhost:8080/api/reservations/verify/${resNum}`);
       if (Number(response.data.movieId) !== Number(id)) { 
-        alert("해당 영화의 예매 내역이 아닙니다. 영화를 다시 확인해주세요.");
+        cinemaAlert("해당 영화의 예매 내역이 아닙니다. 영화를 다시 확인해주세요.","알림");
         setIsVerifyModalOpen(false);
         return;
       }
@@ -149,7 +150,7 @@ const MovieDetail = () => {
       setIsVerifyModalOpen(false); 
       setIsWriteModalOpen(true); 
     } catch (error: any) {
-      alert(error.response?.data?.error || "유효하지 않은 예매 번호입니다.");
+      cinemaAlert(error.response?.data?.error || "유효하지 않은 예매 번호입니다.","알림");
       setIsVerifyModalOpen(false); 
     }
   };
@@ -159,11 +160,11 @@ const MovieDetail = () => {
     try {
       const finalData = { movieId: Number(id), reservationNumber: verifiedResNum, content: reviewContent, ...scores, memberId: memberId };
       await axios.post('http://localhost:8080/api/reviews', finalData);
-      alert("리뷰가 성공적으로 등록되었습니다!");
+      cinemaAlert("리뷰가 성공적으로 등록되었습니다!");
       setIsWriteModalOpen(false); 
       fetchMovieData(); 
     } catch (err: any) {
-      alert(err.response?.data?.error || "리뷰 등록 중 오류가 발생했습니다.");
+      cinemaAlert(err.response?.data?.error || "리뷰 등록 중 오류가 발생했습니다.","알림");
     }
   };
 

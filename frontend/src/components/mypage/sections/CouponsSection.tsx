@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Search } from "lucide-react";
 import type { DownloadableCouponItem, DownloadSelectedCouponsResponse, MyCouponItem } from "../../../api/myPageApi";
+import { cinemaAlert } from '../../../utils/alert';
 
 type CouponsSectionProps = {
   couponTab: "megabox" | "partner";
@@ -85,7 +86,7 @@ export function CouponsSection({
       setDownloadableCoupons(rows);
       setSelectedCouponIds(selectable.map((item) => item.couponId));
     } catch (error: any) {
-      alert(error?.message ?? "다운로드 가능 쿠폰 조회에 실패했습니다.");
+      cinemaAlert(error?.message ?? "다운로드 가능 쿠폰 조회에 실패했습니다.", "알림");
       setShowDownloadModal(false);
     } finally {
       setDownloadLoading(false);
@@ -115,7 +116,7 @@ export function CouponsSection({
 
   const submitSelectedDownload = async () => {
     if (selectedCouponIds.length === 0) {
-      alert("다운로드할 쿠폰을 선택해 주세요.");
+      cinemaAlert("다운로드할 쿠폰을 선택해 주세요.", "알림");
       return;
     }
     setDownloadSubmitting(true);
@@ -124,11 +125,11 @@ export function CouponsSection({
       setShowDownloadModal(false);
       const pointText =
         result.pointAppliedCount > 0 ? ` / 포인트 즉시적립 ${result.pointAppliedCount}건` : "";
-      alert(
-        `선택 다운로드 완료: ${result.downloadedCount}건 (중복/제외 ${result.skippedCount}건${pointText})`
+      cinemaAlert(
+        `선택 다운로드 완료: ${result.downloadedCount}건 (중복/제외 ${result.skippedCount}건${pointText})`,"알림"
       );
     } catch (error: any) {
-      alert(error?.message ?? "선택 쿠폰 다운로드에 실패했습니다.");
+      cinemaAlert(error?.message ?? "선택 쿠폰 다운로드에 실패했습니다.","알림");
     } finally {
       setDownloadSubmitting(false);
     }

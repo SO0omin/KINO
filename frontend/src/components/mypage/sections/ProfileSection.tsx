@@ -1,5 +1,6 @@
 import { type MemberProfile, deleteMember} from "../../../api/myPageApi";
 import { useAuth } from "../../../contexts/AuthContext";
+import { cinemaAlert } from "../../../utils/alert";
 
 type ProfileSectionProps = {
   profileImageUrl: string;
@@ -65,7 +66,7 @@ export function ProfileSection({
       window.location.href = "/";
     } catch (error: any) {
       console.error("4. 에러 발생:", error);
-      alert(error.message);
+      cinemaAlert(error.message,"알림");
     }
   };
   return (

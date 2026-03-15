@@ -2,6 +2,7 @@ import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { updatePointPassword } from "../../api/myPageApi";
 import { formatYmd, shiftDays } from "../../mappers/myPageMapper";
+import { cinemaAlert } from "../../utils/alert";
 
 type UsePointSectionOptions = {
   memberId: number;
@@ -39,16 +40,16 @@ export function usePointSection({
     const newPassword = pointPasswordInput.replace(/\D/g, "");
     const confirmPassword = pointPasswordConfirmInput.replace(/\D/g, "");
     if (!verificationToken) {
-      alert("휴대폰 인증 정보가 없습니다. 다시 인증해 주세요.");
+      cinemaAlert("휴대폰 인증 정보가 없습니다. 다시 인증해 주세요.","알림");
       navigate(`/mypage/points?memberId=${memberId}`);
       return;
     }
     try {
       const response = await updatePointPassword(memberId, verificationToken, newPassword, confirmPassword);
-      alert(response?.message ?? "포인트 비밀번호가 설정되었습니다.");
+      cinemaAlert(response?.message ?? "포인트 비밀번호가 설정되었습니다.","알림");
       navigate(`/mypage/points?memberId=${memberId}`);
     } catch (error: any) {
-      alert(error?.message ?? "포인트 비밀번호 설정에 실패했습니다.");
+      cinemaAlert(error?.message ?? "포인트 비밀번호 설정에 실패했습니다.","알림");
     }
   };
 

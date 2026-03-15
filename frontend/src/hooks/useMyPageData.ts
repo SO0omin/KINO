@@ -19,6 +19,7 @@ import {
 } from "../api/myPageApi";
 import { mapVoucherStatusToApi, type UiVoucherStatus } from "../mappers/myPageMapper";
 import type { PageKey } from "../types/mypage";
+import { cinemaAlert } from "../utils/alert";
 
 type UseMyPageDataOptions = {
   memberId: number;
@@ -67,7 +68,7 @@ export function useMyPageData({
         onError(message);
         return;
       }
-      alert(message);
+      cinemaAlert(message,"알람");
     },
     [onError]
   );

@@ -7,6 +7,7 @@ import {
   verifyPointPasswordSms,
   type MemberProfile,
 } from "../../api/myPageApi";
+import { cinemaAlert } from "../../utils/alert";
 
 type UseProfileSectionOptions = {
   memberId: number;
@@ -64,15 +65,15 @@ export function useProfileSection({
   const sendPointPhoneAuthCode = async () => {
     const phoneDigits = pointPhoneNumber.replace(/\D/g, "");
     if (!/^01\d{8,9}$/.test(phoneDigits)) {
-      alert("휴대폰 번호를 올바르게 입력해 주세요. (예: 01012345678)");
+      cinemaAlert("휴대폰 번호를 올바르게 입력해 주세요. (예: 01012345678)","알림");
       return;
     }
     setPointAuthSending(true);
     try {
       const response = await sendPointPasswordSms(memberId, phoneDigits);
-      alert(response?.message ?? "인증번호가 발송되었습니다.");
+      cinemaAlert(response?.message ?? "인증번호가 발송되었습니다.","알림");
     } catch (error: any) {
-      alert(error?.message ?? "인증번호 발송에 실패했습니다.");
+      cinemaAlert(error?.message ?? "인증번호 발송에 실패했습니다.","알림");
     } finally {
       setPointAuthSending(false);
     }
@@ -82,11 +83,11 @@ export function useProfileSection({
     const phoneDigits = pointPhoneNumber.replace(/\D/g, "");
     const codeDigits = pointAuthCodeInput.replace(/\D/g, "");
     if (!/^01\d{8,9}$/.test(phoneDigits)) {
-      alert("휴대폰 번호를 올바르게 입력해 주세요.");
+      cinemaAlert("휴대폰 번호를 올바르게 입력해 주세요.","알림");
       return;
     }
     if (codeDigits.length !== 6) {
-      alert("인증번호 6자리를 입력해 주세요.");
+      cinemaAlert("인증번호 6자리를 입력해 주세요.","알림");
       return;
     }
     setPointAuthVerifying(true);
@@ -95,7 +96,7 @@ export function useProfileSection({
       closePointPhoneModal();
       navigate(`/mypage/point-password?memberId=${memberId}&verifyToken=${encodeURIComponent(response.verificationToken)}`);
     } catch (error: any) {
-      alert(error?.message ?? "휴대폰 인증에 실패했습니다.");
+      cinemaAlert(error?.message ?? "휴대폰 인증에 실패했습니다.","알림");
     } finally {
       setPointAuthVerifying(false);
     }
@@ -103,7 +104,7 @@ export function useProfileSection({
 
   const handleSaveProfile = async () => {
     if (!profileName.trim()) {
-      alert("이름을 입력해 주세요.");
+      cinemaAlert("이름을 입력해 주세요.","알림");
       return;
     }
     setProfileSaving(true);
@@ -117,10 +118,10 @@ export function useProfileSection({
         profileImage: profileImageUrl,
         pointPasswordUsing: false,
       });
-      alert(response?.message ?? "개인정보가 수정되었습니다.");
+      cinemaAlert(response?.message ?? "개인정보가 수정되었습니다.","알림");
       await loadMemberProfile();
     } catch (error: any) {
-      alert(error?.message ?? "개인정보 수정에 실패했습니다.");
+      cinemaAlert(error?.message ?? "개인정보 수정에 실패했습니다.","알림");
     } finally {
       setProfileSaving(false);
     }
@@ -129,7 +130,7 @@ export function useProfileSection({
   const handlePhoneChange = async () => {
     const digits = profileTel.replace(/\D/g, "");
     if (!/^01\d{8,9}$/.test(digits)) {
-      alert("휴대폰 번호 형식을 확인해 주세요. (예: 01012345678)");
+      cinemaAlert("휴대폰 번호 형식을 확인해 주세요. (예: 01012345678)");
       return;
     }
     setProfileTel(digits);
@@ -138,15 +139,15 @@ export function useProfileSection({
 
   const handlePasswordChange = async () => {
     if (!currentPasswordInput.trim()) {
-      alert("현재 비밀번호를 입력해 주세요.");
+      cinemaAlert("현재 비밀번호를 입력해 주세요.");
       return;
     }
     if (newPasswordInput.length < 8) {
-      alert("새 비밀번호는 8자리 이상 입력해 주세요.");
+      cinemaAlert("새 비밀번호는 8자리 이상 입력해 주세요.");
       return;
     }
     if (newPasswordInput !== newPasswordConfirmInput) {
-      alert("새 비밀번호와 확인 비밀번호가 일치하지 않습니다.");
+      cinemaAlert("새 비밀번호와 확인 비밀번호가 일치하지 않습니다.");
       return;
     }
     setPasswordChanging(true);
@@ -157,13 +158,13 @@ export function useProfileSection({
         newPassword: newPasswordInput,
         confirmPassword: newPasswordConfirmInput,
       });
-      alert(response?.message ?? "비밀번호가 변경되었습니다.");
+      cinemaAlert(response?.message ?? "비밀번호가 변경되었습니다.");
       setShowPasswordChangeModal(false);
       setCurrentPasswordInput("");
       setNewPasswordInput("");
       setNewPasswordConfirmInput("");
     } catch (error: any) {
-      alert(error?.message ?? "비밀번호 변경에 실패했습니다.");
+      cinemaAlert(error?.message ?? "비밀번호 변경에 실패했습니다.");
     } finally {
       setPasswordChanging(false);
     }

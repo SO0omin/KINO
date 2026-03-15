@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { registerMembershipCard } from "../../api/myPageApi";
+import { cinemaAlert } from "../../utils/alert";
 
 type UseMembershipSectionOptions = {
   memberId: number;
@@ -53,7 +54,7 @@ export function useMembershipSection({
       });
       await loadMembershipCards();
       closeCardRegisterModal();
-      alert(response.message || "멤버십 카드가 등록되었습니다.");
+      cinemaAlert(response.message || "멤버십 카드가 등록되었습니다.","알림");
     } catch (error: any) {
       setCardRegisterError(error?.message ?? "멤버십 카드 등록에 실패했습니다.");
     } finally {

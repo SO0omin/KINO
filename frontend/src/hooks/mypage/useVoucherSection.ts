@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { registerVoucher } from "../../api/myPageApi";
+import { cinemaAlert } from "../../utils/alert";
 
 type UseVoucherSectionOptions = {
   memberId: number;
@@ -46,7 +47,7 @@ export function useVoucherSection({
         code: digits,
       });
       await loadVouchers();
-      alert(response.message || "등록이 완료되었습니다.");
+      cinemaAlert(response.message || "등록이 완료되었습니다.","알림");
       closeVoucherRegisterModal();
     } catch (error: any) {
       setVoucherRegisterError(error?.message ?? "등록 처리 중 오류가 발생했습니다.");

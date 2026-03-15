@@ -2,6 +2,7 @@ import { useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { useAuth } from '../../contexts/AuthContext';
+import { cinemaAlert } from '../../utils/alert';
 
 const KakaoCallbackPage = () => {
   const navigate = useNavigate();
@@ -49,7 +50,7 @@ const KakaoCallbackPage = () => {
         })
         .catch(err => {
           console.error(err);
-          alert("카카오 로그인 인증에 실패했습니다.");
+          cinemaAlert("카카오 로그인 인증에 실패했습니다.","알림");
           navigate('/login', { replace: true });
         });
     }

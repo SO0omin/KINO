@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import axios from 'axios';
-import { CommonModal } from '../components/common/CommonModal';
+import { cinemaAlert } from '../utils/alert';
 
 const ResetPasswordPage: React.FC = () => {
   const navigate = useNavigate();
@@ -18,11 +18,7 @@ const ResetPasswordPage: React.FC = () => {
     birth_date: ''
   });
 
-  const [isAlertOpen, setIsAlertOpen] = useState(false);
-  const [alertMessage, setAlertMessage] = useState("");
-  const [onModalClose, setOnModalClose] = useState<(() => void) | null>(null);
-
-  // 1. 실시간 검증 상태 관리 (대소문자, 개인정보 항목 포함)
+  // 실시간 검증 상태 관리 (대소문자, 개인정보 항목 포함)
   const [pwValidation, setPwValidation] = useState({
     length: false,
     english: false, // 대소문자 혼용 여부
@@ -31,13 +27,32 @@ const ResetPasswordPage: React.FC = () => {
     noPersonal: false, // 아이디/전화/생일 포함 금지
   });
 
-  // 2. URL 토큰 확인 및 유저 정보 가져오기
+  // 토큰에 해당하는 사용자의 비교용 정보를 가져오는 API
+  const fetchUserInfo = async (urlToken: string) => {
+    try {
+      const response = await axios.get(`/api/auth/reset-password-info?token=${urlToken}`);
+      setUserInfo({
+        username: response.data.username || '',
+        tel: response.data.tel || '',
+        // 백엔드 DTO 필드명(birthDate)에 맞게 매핑
+        birth_date: response.data.birthDate || response.data.birth_date || '' 
+      });
+    } catch (error: any) {
+      const errorMessage = error.response?.data?.error || "만료되거나 유효하지 않은 링크입니다.";
+      
+      cinemaAlert(errorMessage, "알림", () => {
+        navigate('/login');
+      });
+    }
+  };
+
+  // 1. URL 토큰 확인 및 유저 정보 가져오기
   useEffect(() => {
     const urlParams = new URLSearchParams(location.search);
     const urlToken = urlParams.get('token');
     
     if (!urlToken) {
-      showAlert("유효하지 않은 접근입니다. 올바른 링크로 접속해주세요.", () => {
+      cinemaAlert("유효하지 않은 접근입니다. 올바른 링크로 접속해주세요.", "INVALID ACCESS", () => {
         navigate('/login');
       });
     } else {
@@ -46,21 +61,7 @@ const ResetPasswordPage: React.FC = () => {
     }
   }, [location, navigate]);
 
-  // 토큰에 해당하는 사용자의 비교용 정보를 가져오는 API (백엔드 협의 필요)
-  const fetchUserInfo = async (urlToken: string) => {
-    try {
-      const response = await axios.get(`/api/auth/reset-password-info?token=${urlToken}`);
-      setUserInfo({
-        username: response.data.username || '',
-        tel: response.data.tel || '',
-        birth_date: response.data.birth_date || ''
-      });
-    } catch (error) {
-      console.error("사용자 정보를 불러올 수 없어 개인정보 검증이 제한됩니다.");
-    }
-  };
-
-  // 3. 비밀번호 실시간 검사 로직 (SignupPage 로직 이식)
+  // 2. 비밀번호 실시간 검사 로직 (SignupPage 로직 이식)
   const validatePassword = (password: string) => {
     const specChars = /[`~!@#$%^&*|'";:\₩\\?]/;
     
@@ -92,33 +93,24 @@ const ResetPasswordPage: React.FC = () => {
     });
   };
 
+  // 비밀번호 입력 또는 유저 정보 로드 시 검증 실행
   useEffect(() => {
     validatePassword(newPassword);
   }, [newPassword, userInfo]);
 
-  const showAlert = (msg: string, callback?: () => void) => {
-    setAlertMessage(msg);
-    setOnModalClose(() => callback || null);
-    setIsAlertOpen(true);
-  };
-
-  const handleCloseModal = () => {
-    setIsAlertOpen(false);
-    if (onModalClose) onModalClose();
-  };
-
+  // 3. 폼 제출 로직
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     // 최종 유효성 검사
     const { length, english, number, special, noPersonal } = pwValidation;
     if (!length || !english || !number || !special || !noPersonal) {
-      showAlert("비밀번호 설정 조건을 모두 만족해야 합니다.");
+      cinemaAlert("비밀번호 설정 조건을 모두 만족해야 합니다.", "VALIDATION ERROR");
       return;
     }
 
     if (newPassword !== confirmPassword) {
-      showAlert("비밀번호가 서로 일치하지 않습니다.");
+      cinemaAlert("비밀번호가 서로 일치하지 않습니다.", "VALIDATION ERROR");
       return;
     }
 
@@ -128,13 +120,21 @@ const ResetPasswordPage: React.FC = () => {
         newPassword: newPassword
       });
       
-      showAlert("비밀번호가 성공적으로 변경되었습니다.\n새로운 비밀번호로 로그인해주세요!", () => {
-        navigate('/login');
-      });
+      // 성공 시 콜백으로 로그인 페이지 이동
+      cinemaAlert(
+        "비밀번호가 성공적으로 변경되었습니다.\n새로운 비밀번호로 로그인해주세요!", 
+        "SUCCESS", 
+        () => navigate('/login')
+      );
     } catch (error: any) {
-      showAlert(error.response?.data?.error || "비밀번호 변경에 실패했습니다.");
+      cinemaAlert(
+        error.response?.data?.error || "비밀번호 변경에 실패했습니다. 링크가 만료되었을 수 있습니다.", 
+        "ERROR"
+      );
     }
   };
+
+  console.log(userInfo);
 
   const inputClass = "w-full border border-black/10 rounded-sm p-4 text-sm focus:border-[#B91C1C] focus:ring-1 focus:ring-[#B91C1C] outline-none transition-all placeholder:text-black/20 bg-white";
   const labelClass = "block text-[10px] font-bold uppercase tracking-widest text-black/40 mb-2";
@@ -237,18 +237,6 @@ const ResetPasswordPage: React.FC = () => {
           </form>
         </div>
       </div>
-
-      <CommonModal isOpen={isAlertOpen} onClose={handleCloseModal}>
-        <div className="bg-white rounded-sm shadow-2xl overflow-hidden min-w-[320px]">
-          <div className="bg-[#B91C1C] text-white px-6 py-4 flex items-center justify-center border-b border-[#991B1B]">
-            <h3 className="text-[10px] font-bold uppercase tracking-[0.3em]">Notice</h3>
-          </div>
-          <div className="p-8 flex flex-col items-center">
-            <p className="text-sm font-medium text-[#1A1A1A] text-center mb-8 leading-relaxed whitespace-pre-line">{alertMessage}</p>
-            <button onClick={handleCloseModal} className="w-full bg-[#1A1A1A] text-white text-[10px] font-bold uppercase tracking-[0.2em] py-4 rounded-sm hover:bg-[#B91C1C] transition-colors">Confirm</button>
-          </div>
-        </div>
-      </CommonModal>
     </div>
   );
 };

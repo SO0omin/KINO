@@ -38,6 +38,7 @@ import { DashboardSection } from "../components/mypage/sections/DashboardSection
 import { PointPasswordSection } from "../components/mypage/sections/PointPasswordSection";
 import { MembershipCardsSection } from "../components/mypage/sections/MembershipCardsSection";
 import { MyPageModals } from "../components/mypage/modals/MyPageModals";
+import { cinemaAlert } from "../utils/alert";
 
 export default function MyPage() {
     const navigate = useNavigate();
@@ -365,7 +366,7 @@ export default function MyPage() {
             await removeMovieLike(movieId, memberId);
             await loadWishMovies();
         } catch (error: any) {
-            alert(error?.message ?? "삭제에 실패했습니다.");
+            cinemaAlert(error?.message ?? "삭제에 실패했습니다.","알림");
         }
     };
 
@@ -544,7 +545,7 @@ export default function MyPage() {
             timelineYears={timelineYears}
             selectedTimelineYear={selectedTimelineYear}
             setSelectedTimelineYear={setSelectedTimelineYear}
-            timelineRows={timelineRows}
+            timelineRows={timelineRows} //오류는 나는데 실행은됨
             formatDateSimple={formatDateSimple}
             reviewCount={reviewCount}
             setShowReviewModal={setShowVerifyModal}

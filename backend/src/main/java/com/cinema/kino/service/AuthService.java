@@ -117,8 +117,8 @@ public class AuthService {
         member.setPassword(passwordEncoder.encode(newPassword));
         memberRepository.save(member);
 
-        // 5. 사용한 토큰 삭제
-        passwordResetTokenRepository.delete(resetToken);
+        // 5. 사용한 토큰 사용함으로 변경
+        resetToken.setUsed(true);
         log.info("🔑 비밀번호 재설정 완료: {}", member.getUsername());
     }
 
@@ -205,7 +205,6 @@ public class AuthService {
 
     @Transactional
     public void sendPasswordResetLink(String username, String email) {
-        // 1. 회원 검증 (아이디와 이메일이 모두 일치하는지 확인)
         Member member = memberRepository.findByUsername(username)
                 .orElseThrow(() -> new RuntimeException("일치하는 회원 정보가 없습니다."));
 
@@ -213,22 +212,61 @@ public class AuthService {
             throw new RuntimeException("일치하는 회원 정보가 없습니다.");
         }
 
-        // 3. 기존에 발급받은 안 쓴 토큰들이 있다면 싹 지워버립니다. (최신 1개만 유지)
-        passwordResetTokenRepository.deleteByMemberId(member.getId());
-
-        // 4. 아주 길고 복잡한 랜덤 토큰(UUID) 생성
         String token = UUID.randomUUID().toString();
+        LocalDateTime newExpiryDate = LocalDateTime.now().plusMinutes(30);
 
-        // 5. 생성한 토큰을 DB에 저장 (만료 시간은 현재 시간으로부터 30분 뒤로 설정)
-        PasswordResetToken resetToken = PasswordResetToken.builder()
-                .token(token)
-                .member(member)
-                .expiryDate(LocalDateTime.now().plusMinutes(30)) // 💡 30분 유효
-                .build();
+        // 3. 기존 토큰이 있는지 찾아옵니다. (없으면 빈 객체 생성)
+        PasswordResetToken resetToken = passwordResetTokenRepository.findByMemberId(member.getId())
+                .orElse(PasswordResetToken.builder().member(member).build());
+
+        // 4. 새로운 토큰 값과 만료 시간으로 덮어씌웁니다. (엔티티에 @Setter가 있다고 가정)
+        resetToken.setToken(token);
+        resetToken.setExpiryDate(newExpiryDate);
+        resetToken.setUsed(false);
+
+        // 5. 저장 (JPA가 알아서 기존에 있었으면 Update, 없었으면 Insert 쿼리를 날려줍니다)
         passwordResetTokenRepository.save(resetToken);
 
-        // 6. 진짜 이메일 발송!
+        // 6. 메일 발송
         mailService.sendPasswordResetEmail(member, token);
+    }
+
+    @Transactional
+    public ResetPwResponseDTO validateTokenAndGetUserInfo(String token) {
+        // 1. 토큰이 DB에 있는지 확인
+        PasswordResetToken resetToken = passwordResetTokenRepository.findByToken(token)
+                .orElseThrow(() -> new IllegalArgumentException("유효하지 않거나 이미 사용된 링크입니다."));
+
+        // 2. 만료 시간 확인 (1번 요구사항: 만료 시 에러 발생)
+        if (resetToken.getExpiryDate().isBefore(LocalDateTime.now()) || resetToken.isUsed()) {
+            // (선택) 만료된 토큰은 DB에서 지워버려도 좋습니다.
+            passwordResetTokenRepository.delete(resetToken);
+            throw new IllegalArgumentException("만료된 링크입니다. 비밀번호 재설정을 다시 요청해 주세요.");
+        }
+
+        // 3. 토큰이 유효하다면 회원 정보 꺼내기 (2번 요구사항: 개인정보 반환)
+        Member member = resetToken.getMember();
+
+        return ResetPwResponseDTO.builder()
+                .username(member.getUsername())
+                .tel(member.getTel())
+                // 생일 필드명(birthDate 등)은 실제 엔티티에 맞게 수정하세요.
+                // String 타입으로 변환해서 주는 것이 프론트에서 쓰기 편합니다.
+                .birthDate(member.getBirthDate() != null ? member.getBirthDate().toString() : "")
+                .build();
+    }
+
+    //포인트 비밀번호
+    @Transactional(readOnly = true)
+    public boolean checkPointPassword(Long memberId, String inputPassword) {
+        Member member = memberRepository.findById(memberId)
+                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 회원입니다."));
+
+        if (member.getPointPassword() == null || member.getPointPassword().isEmpty()) {
+            throw new IllegalStateException("포인트 비밀번호가 설정되어 있지 않습니다.");
+        }
+
+        return passwordEncoder.matches(inputPassword, member.getPointPassword());
     }
 
 }

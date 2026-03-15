@@ -12,6 +12,7 @@ import type {
   ConfirmRequest,
   ReservationDetailResponse,
 } from '../types/dtos/payment.dto';
+import { cinemaAlert } from '../utils/alert';
 
 const CLIENT_KEY = import.meta.env.VITE_TOSS_CLIENT_KEY ?? '';
 
@@ -68,7 +69,7 @@ export function usePayment() {
         return;
       }
 
-      alert(`결제 실패: ${error?.message ?? '알 수 없는 오류'}`);
+      cinemaAlert(`결제 실패: ${error?.message ?? '알 수 없는 오류'}`,"알람");
     } finally {
       setIsLoading(false);
     }
