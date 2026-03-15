@@ -40,7 +40,9 @@ export async function confirmPayment(
   request: ConfirmRequest
 ): Promise<ConfirmResponse> {
   try {
-    const response = await api.post(`/api/payments/confirm`, request);
+    const response = await api.post(`/api/payments/confirm`, request, {
+      timeout: 15000,
+    });
     return response.data;
   } catch (error: any) {
     throw new Error(error.response?.data?.message || '최종 결제 승인에 실패했습니다. 고객센터에 문의해주세요.');

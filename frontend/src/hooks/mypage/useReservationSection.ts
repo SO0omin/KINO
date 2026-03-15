@@ -32,12 +32,10 @@ export function useReservationSection({
   const [appliedHistoryType, setAppliedHistoryType] = useState<"current" | "past">("current");
   const [appliedMonth, setAppliedMonth] = useState<string>("");
   const [purchaseSelectType, setPurchaseSelectType] = useState<"all" | "movie">("all");
-  const [purchaseStatusType, setPurchaseStatusType] = useState<"all" | "purchase" | "cancel">("all");
   const [purchaseRange, setPurchaseRange] = useState<"week" | "month1" | "month3" | "month6">("month1");
   const [purchaseFrom, setPurchaseFrom] = useState(formatYmd(shiftDays(today, -30).toISOString()));
   const [purchaseTo, setPurchaseTo] = useState(formatYmd(today.toISOString()));
   const [appliedPurchaseSelectType, setAppliedPurchaseSelectType] = useState<"all" | "movie">("all");
-  const [appliedPurchaseStatusType, setAppliedPurchaseStatusType] = useState<"all" | "purchase" | "cancel">("all");
   const [appliedPurchaseFrom, setAppliedPurchaseFrom] = useState(formatYmd(shiftDays(today, -30).toISOString()));
   const [appliedPurchaseTo, setAppliedPurchaseTo] = useState(formatYmd(today.toISOString()));
 
@@ -113,11 +111,10 @@ export function useReservationSection({
     () =>
       toPurchaseRows(reservations, {
         selectType: appliedPurchaseSelectType,
-        statusType: appliedPurchaseStatusType,
         from: appliedPurchaseFrom,
         to: appliedPurchaseTo,
       }),
-    [reservations, appliedPurchaseSelectType, appliedPurchaseStatusType, appliedPurchaseFrom, appliedPurchaseTo]
+    [reservations, appliedPurchaseSelectType, appliedPurchaseFrom, appliedPurchaseTo]
   );
 
   const recentPaidPurchases = useMemo(
@@ -164,15 +161,12 @@ export function useReservationSection({
     setAppliedMonth,
     purchaseSelectType,
     setPurchaseSelectType,
-    purchaseStatusType,
-    setPurchaseStatusType,
     purchaseRange,
     purchaseFrom,
     setPurchaseFrom,
     purchaseTo,
     setPurchaseTo,
     setAppliedPurchaseSelectType,
-    setAppliedPurchaseStatusType,
     setAppliedPurchaseFrom,
     setAppliedPurchaseTo,
     activeReservations,

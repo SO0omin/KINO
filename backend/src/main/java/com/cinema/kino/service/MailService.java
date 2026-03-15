@@ -8,7 +8,7 @@ import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.boot.mail.autoconfigure.MailProperties;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
@@ -24,6 +24,7 @@ public class MailService {
     private final JavaMailSender javaMailSender;
     private final ScreeningSeatRepository screeningSeatRepository;
 
+    @Async
     public void sendPaymentCompleteEmail(Member member, Reservation reservation, String bookingNo) {
         MimeMessage message = javaMailSender.createMimeMessage();
         try {

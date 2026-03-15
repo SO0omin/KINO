@@ -262,15 +262,12 @@ export default function MyPage() {
         setAppliedMonth,
         purchaseSelectType,
         setPurchaseSelectType,
-        purchaseStatusType,
-        setPurchaseStatusType,
         purchaseRange,
         purchaseFrom,
         setPurchaseFrom,
         purchaseTo,
         setPurchaseTo,
         setAppliedPurchaseSelectType,
-        setAppliedPurchaseStatusType,
         setAppliedPurchaseFrom,
         setAppliedPurchaseTo,
         activeReservations,
@@ -425,8 +422,6 @@ export default function MyPage() {
             onClickPay={handlePayAgain}
             purchaseSelectType={purchaseSelectType}
             setPurchaseSelectType={setPurchaseSelectType}
-            purchaseStatusType={purchaseStatusType}
-            setPurchaseStatusType={setPurchaseStatusType}
             purchaseRange={purchaseRange}
             applyPurchaseRange={applyPurchaseRange}
             purchaseFrom={purchaseFrom}
@@ -434,7 +429,6 @@ export default function MyPage() {
             purchaseTo={purchaseTo}
             setPurchaseTo={setPurchaseTo}
             setAppliedPurchaseSelectType={setAppliedPurchaseSelectType}
-            setAppliedPurchaseStatusType={setAppliedPurchaseStatusType}
             setAppliedPurchaseFrom={setAppliedPurchaseFrom}
             setAppliedPurchaseTo={setAppliedPurchaseTo}
             purchaseRows={purchaseRows}
