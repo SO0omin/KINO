@@ -88,4 +88,13 @@ public interface ScreeningSeatRepository extends JpaRepository<ScreeningSeat, Lo
         WHERE ss.holdExpiresAt < :now
     """)
     int releaseExpiredSeatsAndClearReservation(@Param("now") LocalDateTime now);
+
+    // 8. [수민] 해제 직전의 만료 좌석을 (screeningId, seatId)로 뽑아옵니다.
+    //    해제 후에는 어떤 좌석이 풀렸는지 알 수 없으므로, 실시간 방송용으로 미리 확보합니다.
+    @Query("""
+        SELECT ss.screening.id, ss.seat.id
+        FROM ScreeningSeat ss
+        WHERE ss.holdExpiresAt < :now
+    """)
+    List<Object[]> findExpiredSeatKeys(@Param("now") LocalDateTime now);
 }

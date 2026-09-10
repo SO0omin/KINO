@@ -1,26 +1,24 @@
 /* ========================
-프론트 → 서버로 보내는 데이터
-누가 좌석을 선택했는지 확인하는 입력용 Dto
+좌석 선점 요청 DTO
+예약 주체(회원/비회원)는 JWT에서 추출하므로 요청 본문에 담지 않습니다.
 ======================== */
 package com.cinema.kino.dto;
 
+import com.cinema.kino.entity.enums.PriceType;
 import lombok.Getter;
 import lombok.Setter;
 
 import java.util.List;
 
-@Getter
-@Setter
+@Getter @Setter
 public class SeatSelectRequestDTO {
-    private Long screeningId;
-    private Long memberId;
-    private Long guestId;
 
-    private List<TicketRequest> tickets; //좌석정보(좌석번호+가격타입)
+    private Long screeningId;
+    private List<TicketRequest> tickets;
 
     @Getter @Setter
     public static class TicketRequest {
         private Long seatId;
-        private String priceType; // "ADULT", "YOUTH" 등
+        private PriceType priceType;
     }
 }

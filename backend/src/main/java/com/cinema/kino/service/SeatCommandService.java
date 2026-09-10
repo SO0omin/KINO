@@ -7,53 +7,43 @@
 package com.cinema.kino.service;
 
 import com.cinema.kino.dto.SeatSelectRequestDTO;
-import com.cinema.kino.dto.SeatStatusResponseDTO;
 import com.cinema.kino.entity.ScreeningSeat;
 import com.cinema.kino.repository.ScreeningSeatRepository;
+import com.cinema.kino.util.AuthenticatedActor;
 import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
-import java.util.Map;
 import java.util.stream.Collectors;
 
 @Service
-@Transactional // 여기는 상태를 변경해야 하므로 readOnly를 쓰면 안 됩니다!
+@Transactional
 @RequiredArgsConstructor
 public class SeatCommandService {
 
     private final ScreeningSeatRepository screeningSeatRepository;
 
-    // 💡 가격 정보를 빌려오기 위해 Query 서비스(SeatService)를 주입받습니다.
-    private final SeatService seatService;
-
     // 좌석 선점 로직
-    public List<SeatStatusResponseDTO> holdSeats(SeatSelectRequestDTO request) {
+    public void holdSeats(SeatSelectRequestDTO request, AuthenticatedActor actor) {
 
-        // 💡 1. 티켓 리스트에서 seatId만 뽑아내기 (Stream API 활용)
+        //티켓 리스트에서 seatId만 뽑아내기
         List<Long> requestedSeatIds = request.getTickets().stream()
                 .map(SeatSelectRequestDTO.TicketRequest::getSeatId)
                 .collect(Collectors.toList());
 
-        // 💡 2. 추출한 ID 리스트로 DB 조회 (비관적 락 유지)
+        //추출한 ID 리스트로 DB 조회
         List<ScreeningSeat> seats = screeningSeatRepository.findAllByScreeningIdAndSeatIdsWithLock(
                 request.getScreeningId(),
                 requestedSeatIds
         );
 
-        // 💡 3. 검증 로직도 추출한 리스트 사이즈와 비교하도록 수정
+        //검증 로직도 추출한 리스트 사이즈와 비교하도록 수정
         if (seats.size() != requestedSeatIds.size()) {
             throw new IllegalArgumentException("요청한 좌석 중 일부를 찾을 수 없거나 이미 선택된 좌석입니다.");
         }
 
-        // 💡 중복 코드를 지우고, 주입받은 seatService에서 깔끔하게 가격 맵을 꺼내옵니다.
-        Map<String, Integer> prices = seatService.getPricesForScreening(request.getScreeningId());
-
-        return seats.stream().map(ss -> {
-            ss.hold(request.getMemberId(), request.getGuestId()); // 도메인 메서드 실행
-
-            return SeatStatusResponseDTO.from(ss, prices);
-        }).collect(Collectors.toList());
+        //선점 주체는 토큰에서 해석된 값만 사용
+        seats.forEach(ss -> ss.hold(actor.memberId(), actor.guestId()));
     }
 }
