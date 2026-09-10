@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import axios from 'axios';
+import { api } from '../api/api';
 import { cinemaAlert } from '../utils/alert';
 
 const ResetPasswordPage: React.FC = () => {
@@ -30,7 +30,7 @@ const ResetPasswordPage: React.FC = () => {
   // 토큰에 해당하는 사용자의 비교용 정보를 가져오는 API
   const fetchUserInfo = async (urlToken: string) => {
     try {
-      const response = await axios.get(`/api/auth/reset-password-info?token=${urlToken}`);
+      const response = await api.get(`/api/auth/reset-password-info?token=${urlToken}`);
       setUserInfo({
         username: response.data.username || '',
         tel: response.data.tel || '',
@@ -115,7 +115,7 @@ const ResetPasswordPage: React.FC = () => {
     }
 
     try {
-      await axios.post('/api/auth/reset-password', {
+      await api.post('/api/auth/reset-password', {
         token: token,
         newPassword: newPassword
       });

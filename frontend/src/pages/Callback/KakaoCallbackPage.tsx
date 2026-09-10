@@ -1,6 +1,6 @@
 import { useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import axios from 'axios';
+import { api } from '../../api/api';
 import { useAuth } from '../../contexts/AuthContext';
 import { cinemaAlert } from '../../utils/alert';
 
@@ -26,7 +26,7 @@ const KakaoCallbackPage = () => {
         return; // 밑에 있는 axios(일반 로그인) 실행 안 되게 막기!
       }
       
-      axios.post('/api/auth/kakao', { code })
+      api.post('/api/auth/kakao', { code })
         .then(res => {
           const data = res.data;
 

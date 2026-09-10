@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
-import axios from "axios";
+import { api } from '../api/api';
 import { CommonModal } from '../components/common/CommonModal';
 import { useAuth } from '../contexts/AuthContext';
 import { cinemaAlert } from '../utils/alert';
@@ -39,7 +39,7 @@ const LoginPage: React.FC = () => {
     
     if (activeTab === 'MEMBER') {
       try {
-        const response = await axios.post('/api/auth/login', {
+        const response = await api.post('/api/auth/login', {
           username: formData.username,
           password: formData.password
         });
@@ -58,7 +58,7 @@ const LoginPage: React.FC = () => {
           tel: formData.guestTel,
           password: formData.guestPassword
         };
-        const response = await axios.post('/api/auth/guest-login', payload);
+        const response = await api.post('/api/auth/guest-login', payload);
         const { token, guestId, name } = response.data;
         
         guestLogin(token, guestId, name);

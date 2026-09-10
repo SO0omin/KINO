@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { CommonModal } from '../components/common/CommonModal';
-import axios from 'axios';
+import { api } from '../api/api';
 import { cinemaAlert } from '../utils/alert';
 
 type TabType = 'FIND_ID' | 'RESET_PW';
@@ -28,7 +28,7 @@ const FindAccountPage: React.FC = () => {
   const handleFindId = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      const response = await axios.post('/api/auth/find-id', {
+      const response = await api.post('/api/auth/find-id', {
         name: formData.name,
         email: formData.email
       });
@@ -44,7 +44,7 @@ const FindAccountPage: React.FC = () => {
     setIsLoading(true);
 
     try {
-      await axios.post('/api/auth/reset-password-request', {
+      await api.post('/api/auth/reset-password-request', {
         username: formData.username,
         email: formData.email
       });

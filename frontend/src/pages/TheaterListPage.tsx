@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { MapPin, Ticket } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import axios from 'axios';
+import { api } from '../api/api';
 import FilmStrip from '../components/ticketing/FilmStrip';
 
 // --- 타입 정의 (원본 유지) ---
@@ -33,8 +33,8 @@ const TheaterListPage = () => {
     const fetchTheatersData = async () => {
       try {
         const [regionsRes, theatersRes] = await Promise.all([
-          axios.get('/api/theaters/regions'),
-          axios.get('/api/theaters')
+          api.get('/api/theaters/regions'),
+          api.get('/api/theaters')
         ]);
 
         setRegions(regionsRes.data);

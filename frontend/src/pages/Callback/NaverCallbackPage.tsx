@@ -1,6 +1,6 @@
 import { useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import axios from 'axios';
+import { api } from '../../api/api';
 import { useAuth } from '../../contexts/AuthContext';
 import { cinemaAlert } from '../../utils/alert';
 
@@ -33,7 +33,7 @@ const NaverCallbackPage = () => {
       }
       
       // 💡 네이버는 code와 함께 state 값도 필수로 보내야 합니다.
-      axios.post('/api/auth/naver', { code, state })
+      api.post('/api/auth/naver', { code, state })
         .then(res => {
           const data = res.data;
           //console.log("네이버 서버 응답 데이터:", data);
