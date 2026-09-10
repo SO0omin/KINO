@@ -18,10 +18,10 @@ import java.util.stream.Collectors;
 @AllArgsConstructor
 public class SeatBookingResponseDTO {
 
-    private ScreeningInfo screeningInfo; // 💡 상영/영화/가격 정보 (단 1번만 전송)
-    private List<SeatInfo> seats;        // 💡 좌석 목록 배열
+    private ScreeningInfo screeningInfo; //상영/영화/가격 정보 (단 1번만 전송)
+    private List<SeatInfo> seats;        //좌석 목록 배열
 
-    // 팩토리 메서드: 서비스 단에서 호출하기 쉽게 만듦
+    // 팩토리 메서드, 서비스 단에서 호출하기 쉽게 만듦
     public static SeatBookingResponseDTO of(Screening screening, List<ScreeningSeat> screeningSeats, Map<String, Integer> prices) {
         ScreeningInfo info = ScreeningInfo.from(screening, prices);
         List<SeatInfo> seatList = screeningSeats.stream()
@@ -30,9 +30,7 @@ public class SeatBookingResponseDTO {
         return new SeatBookingResponseDTO(info, seatList);
     }
 
-    /* ========================
-       1. 공통 상영 정보 (Inner Class)
-       ======================== */
+    //공통 상영 정보
     @Getter
     @AllArgsConstructor
     public static class ScreeningInfo {
@@ -72,9 +70,7 @@ public class SeatBookingResponseDTO {
         }
     }
 
-    /* ========================
-       2. 개별 좌석 정보 (Inner Class)
-       ======================== */
+    //개별 좌석 정보
     @Getter
     @AllArgsConstructor
     public static class SeatInfo {

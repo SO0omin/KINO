@@ -6,14 +6,11 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
 public interface ReservationRepository extends JpaRepository<Reservation, Long> {
-    Optional<Reservation> findByOrderId(String orderId);
-
     Optional<Reservation> findByReservationNumber(String reservationNumber);
 
     // 1. 특정 영화의 누적 관객수 (total_num 합산)

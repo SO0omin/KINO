@@ -7,7 +7,6 @@
 package com.cinema.kino.service;
 
 import com.cinema.kino.dto.SeatBookingResponseDTO;
-import com.cinema.kino.dto.SeatStatusResponseDTO;
 import com.cinema.kino.entity.Screening;
 import com.cinema.kino.entity.ScreeningSeat;
 import com.cinema.kino.entity.TicketPrice;
@@ -32,25 +31,23 @@ public class SeatService {
     private final ScreeningRepository screeningRepository;
     private final TicketPriceRepository ticketPriceRepository;
 
-    // 1. 프론트엔드로 좌석 상태 목록 반환
-    // 💡 반환 타입이 List<DTO>에서 단일 객체(SeatBookingResponseDTO)로 변경되었습니다.
+    //좌석 상태 목록 반환
     public SeatBookingResponseDTO getSeatStatus(Long screeningId) {
 
-        // 1. 공통 상영 정보 원본(Entity) 조회
+        //공통 상영 정보 원본(Entity) 조회
         Screening screening = screeningRepository.findById(screeningId)
                 .orElseThrow(() -> new IllegalArgumentException("상영 정보를 찾을 수 없습니다."));
 
-        // 2. 가격 맵 계산
+        //가격 맵 계산
         Map<String, Integer> prices = getPricesForScreening(screeningId);
 
-        // 3. 해당 상영의 좌석 리스트 조회
+        //해당 상영의 좌석 리스트 조회
         List<ScreeningSeat> screeningSeats = screeningSeatRepository.findByScreeningId(screeningId);
 
-        // 4. 새롭게 만든 DTO의 of 메서드를 통해 하나로 예쁘게 포장해서 반환!
         return SeatBookingResponseDTO.of(screening, screeningSeats, prices);
     }
 
-    // 2. 💡 타 서비스(Command)에서도 쓸 수 있도록 public으로 개방!
+    //가격 정보 목록 반환
     public Map<String, Integer> getPricesForScreening(Long screeningId) {
         Screening screening = screeningRepository.findById(screeningId)
                 .orElseThrow(() -> new IllegalArgumentException("상영 정보를 찾을 수 없습니다."));
