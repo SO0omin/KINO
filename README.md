@@ -19,7 +19,7 @@
 
 ## 이런 걸 만들었습니다
 
-멀티플렉스 영화관의 온라인 예매 시스템을 재현했습니다. 단순 CRUD가 아니라,
+멀티플렉스 영화관의 온라인 예매 시스템을 재현했습니다. 단순 CRUD가 아니라
 **여러 사람이 같은 좌석을 동시에 누르는 상황**과 **결제 도중 실패하는 상황**을
 어떻게 안전하게 처리할지에 초점을 뒀습니다.
 
@@ -42,19 +42,20 @@ mysql -u root -p kino_db < backend/src/main/resources/sql/coupons_kino_partner_s
 ```
 
 ```bash
-cd backend && ./gradlew bootRun            # http://localhost:8080
+cd backend && ./gradlew bootRun            # localhost:8080
 ```
 
 ```bash
-cd frontend && npm install && npm run dev  # http://localhost:5173
+cd frontend && npm install && npm run dev  # localhost:5173
 ```
 
-API 문서는 서버 기동 후 [Swagger UI](http://localhost:8080/swagger-ui/index.html)에서 확인할 수 있습니다.
-소셜 로그인·결제·메일 발송에 필요한 환경변수는 [로컬 개발 환경](https://github.com/SO0omin/KINO/wiki/로컬-개발-환경) 문서를 참고하세요.
+API 명세는 서버 기동 후 `localhost:8080/swagger-ui/index.html` 에서 확인할 수 있습니다.
+
+[![로컬 개발 환경](https://img.shields.io/badge/환경변수_설정_가이드-1A1A1A?style=for-the-badge)](https://github.com/SO0omin/KINO/wiki/로컬-개발-환경)
 
 ## 기술 스택
 
-**Backend** &nbsp; Java 17 · Spring Boot 4 · JPA · MySQL · Spring Security + JWT · WebSocket(STOMP)
+**Backend** &nbsp; Java 17 · Spring Boot 4 · JPA · MySQL · Spring Security + JWT · WebSocket STOMP
 
 **Frontend** &nbsp; React 19 · TypeScript · Vite · Tailwind CSS · shadcn/ui
 
@@ -63,18 +64,18 @@ API 문서는 서버 기동 후 [Swagger UI](http://localhost:8080/swagger-ui/in
 ## 문서
 
 | | |
-|---|---|
-| [아키텍처](https://github.com/SO0omin/KINO/wiki/아키텍처) | 시스템 구성과 요청 흐름 |
-| [도메인 모델](https://github.com/SO0omin/KINO/wiki/도메인-모델) | ERD와 좌석·예약·결제 상태 전이 |
-| [핵심 구현](https://github.com/SO0omin/KINO/wiki/핵심-구현) | 동시성 제어 · 결제 안전장치 · 인증 설계 |
-| [트러블슈팅](https://github.com/SO0omin/KINO/wiki/트러블슈팅) | 막혔던 문제와 해결 과정 |
-| [API](https://github.com/SO0omin/KINO/wiki/API) | 엔드포인트 명세 |
-| [배포](https://github.com/SO0omin/KINO/wiki/배포) | Docker 구성과 CI/CD 파이프라인 |
+|:--|:--|
+| [![Architecture](https://img.shields.io/badge/ARCHITECTURE-1A1A1A?style=for-the-badge)](https://github.com/SO0omin/KINO/wiki/아키텍처) | 시스템 구성과 요청 흐름 |
+| [![Domain](https://img.shields.io/badge/DOMAIN_MODEL-1A1A1A?style=for-the-badge)](https://github.com/SO0omin/KINO/wiki/도메인-모델) | ERD와 좌석·예약·결제 상태 전이 |
+| [![Implementation](https://img.shields.io/badge/IMPLEMENTATION-1A1A1A?style=for-the-badge)](https://github.com/SO0omin/KINO/wiki/핵심-구현) | 동시성 제어 · 결제 안전장치 · 인증 설계 |
+| [![Troubleshooting](https://img.shields.io/badge/TROUBLESHOOTING-B91C1C?style=for-the-badge)](https://github.com/SO0omin/KINO/wiki/트러블슈팅) | 막혔던 문제와 해결 과정 |
+| [![API](https://img.shields.io/badge/API-1A1A1A?style=for-the-badge)](https://github.com/SO0omin/KINO/wiki/API) | 엔드포인트 명세 |
+| [![Deployment](https://img.shields.io/badge/DEPLOYMENT-1A1A1A?style=for-the-badge)](https://github.com/SO0omin/KINO/wiki/배포) | Docker 구성과 CI/CD 파이프라인 |
 
 ## 팀
 
 | 담당 | 영역 |
-|---|---|
-| [정수민](https://github.com/SO0omin) | 좌석 지정 예매 · 인증/소셜로그인 · 극장/상영시간표 · 공통 인프라 |
-| [함한솔](https://github.com/h-ns-l0) | 결제 · 마이페이지 · 쿠폰 |
-| [이류진](https://github.com/ryurujxx) | 예매 필터 · 메인 페이지 · 영화 목록/상세 · 리뷰 |
+|:--|:--|
+| **정수민** [![SO0omin](https://img.shields.io/badge/@SO0omin-1A1A1A?style=flat-square&logo=github&logoColor=white)](https://github.com/SO0omin) | 좌석 지정 예매 · 인증/소셜로그인 · 극장/상영시간표 · 공통 인프라 |
+| **함한솔** [![h-ns-l0](https://img.shields.io/badge/@h--ns--l0-1A1A1A?style=flat-square&logo=github&logoColor=white)](https://github.com/h-ns-l0) | 결제 · 마이페이지 · 쿠폰 |
+| **이류진** [![ryurujxx](https://img.shields.io/badge/@ryurujxx-1A1A1A?style=flat-square&logo=github&logoColor=white)](https://github.com/ryurujxx) | 예매 필터 · 메인 페이지 · 영화 목록/상세 · 리뷰 |
