@@ -48,7 +48,7 @@ const QuickMenuSection = () => {
           <div className="flex-[1.5] w-full grid grid-cols-1 sm:grid-cols-3 gap-6">
             
             {/* 상영시간표 링크 */}
-            <Link to="/timetables" className="group flex items-center gap-5 p-6 bg-black/5 hover:bg-[#B91C1C] transition-all duration-300 rounded-sm border border-black/5 hover:border-[#B91C1C] hover:shadow-[0_10px_20px_rgba(185,28,28,0.2)]">
+            <Link to="/timetables" className="group flex flex-col items-start gap-4 p-6 bg-black/5 hover:bg-[#B91C1C] transition-all duration-300 rounded-sm border border-black/5 hover:border-[#B91C1C] hover:shadow-[0_10px_20px_rgba(185,28,28,0.2)]">
               <div className="p-3 bg-black/10 group-hover:bg-white/20 rounded-sm transition-colors text-[#1A1A1A] group-hover:text-white">
                 <Calendar size={24} strokeWidth={2} />
               </div>
@@ -59,7 +59,7 @@ const QuickMenuSection = () => {
             </Link>
 
             {/* 박스오피스 링크 */}
-            <Link to="/movie-list" className="group flex items-center gap-5 p-6 bg-black/5 hover:bg-[#B91C1C] transition-all duration-300 rounded-sm border border-black/5 hover:border-[#B91C1C] hover:shadow-[0_10px_20px_rgba(185,28,28,0.2)]">
+            <Link to="/movie-list" className="group flex flex-col items-start gap-4 p-6 bg-black/5 hover:bg-[#B91C1C] transition-all duration-300 rounded-sm border border-black/5 hover:border-[#B91C1C] hover:shadow-[0_10px_20px_rgba(185,28,28,0.2)]">
               <div className="p-3 bg-black/10 group-hover:bg-white/20 rounded-sm transition-colors text-[#1A1A1A] group-hover:text-white">
                 <Film size={24} strokeWidth={2} />
               </div>
@@ -70,7 +70,7 @@ const QuickMenuSection = () => {
             </Link>
 
             {/* 빠른예매 링크 */}
-            <Link to="/ticketing" className="group flex items-center gap-5 p-6 bg-black/5 hover:bg-[#B91C1C] transition-all duration-300 rounded-sm border border-black/5 hover:border-[#B91C1C] hover:shadow-[0_10px_20px_rgba(185,28,28,0.2)]">
+            <Link to="/ticketing" className="group flex flex-col items-start gap-4 p-6 bg-black/5 hover:bg-[#B91C1C] transition-all duration-300 rounded-sm border border-black/5 hover:border-[#B91C1C] hover:shadow-[0_10px_20px_rgba(185,28,28,0.2)]">
               <div className="p-3 bg-black/10 group-hover:bg-white/20 rounded-sm transition-colors text-[#1A1A1A] group-hover:text-white">
                 <Ticket size={24} strokeWidth={2} />
               </div>
