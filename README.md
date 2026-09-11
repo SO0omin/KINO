@@ -55,15 +55,33 @@ API 명세는 서버 기동 후 `localhost:8080/swagger-ui/index.html` 에서 �
 
 ## 기술 스택
 
-**Backend** &nbsp; Java 17 · Spring Boot 4 · JPA · MySQL · Spring Security + JWT · WebSocket STOMP
+**Backend**
 
-**Frontend** &nbsp; React 19 · TypeScript · Vite · Tailwind CSS · shadcn/ui
+![Java](https://img.shields.io/badge/Java_17-1A1A1A?style=flat-square&logo=openjdk&logoColor=B91C1C)
+![Spring Boot](https://img.shields.io/badge/Spring_Boot_4-1A1A1A?style=flat-square&logo=springboot&logoColor=B91C1C)
+![JPA](https://img.shields.io/badge/JPA_·_Hibernate-1A1A1A?style=flat-square&logo=hibernate&logoColor=B91C1C)
+![MySQL](https://img.shields.io/badge/MySQL_8-1A1A1A?style=flat-square&logo=mysql&logoColor=B91C1C)
+![Spring Security](https://img.shields.io/badge/Spring_Security-1A1A1A?style=flat-square&logo=springsecurity&logoColor=B91C1C)
+![JWT](https://img.shields.io/badge/JWT-1A1A1A?style=flat-square&logo=jsonwebtokens&logoColor=B91C1C)
+![STOMP](https://img.shields.io/badge/WebSocket_STOMP-1A1A1A?style=flat-square&logo=socketdotio&logoColor=B91C1C)
 
-**Infra** &nbsp; Docker · GitHub Actions · AWS EC2 / RDS
+**Frontend**
+
+![React](https://img.shields.io/badge/React_19-1A1A1A?style=flat-square&logo=react&logoColor=B91C1C)
+![TypeScript](https://img.shields.io/badge/TypeScript-1A1A1A?style=flat-square&logo=typescript&logoColor=B91C1C)
+![Vite](https://img.shields.io/badge/Vite_7-1A1A1A?style=flat-square&logo=vite&logoColor=B91C1C)
+![Tailwind](https://img.shields.io/badge/Tailwind_CSS_4-1A1A1A?style=flat-square&logo=tailwindcss&logoColor=B91C1C)
+![shadcn/ui](https://img.shields.io/badge/shadcn%2Fui-1A1A1A?style=flat-square&logo=shadcnui&logoColor=B91C1C)
+
+**Infra**
+
+![Docker](https://img.shields.io/badge/Docker-1A1A1A?style=flat-square&logo=docker&logoColor=B91C1C)
+![GitHub Actions](https://img.shields.io/badge/GitHub_Actions-1A1A1A?style=flat-square&logo=githubactions&logoColor=B91C1C)
+![AWS](https://img.shields.io/badge/AWS_EC2_·_RDS-1A1A1A?style=flat-square)
 
 ## 문서
 
-| | |
+| 문서 | 내용 |
 |:--|:--|
 | [![Architecture](https://img.shields.io/badge/ARCHITECTURE-1A1A1A?style=for-the-badge)](https://github.com/SO0omin/KINO/wiki/아키텍처) | 시스템 구성과 요청 흐름 |
 | [![Domain](https://img.shields.io/badge/DOMAIN_MODEL-1A1A1A?style=for-the-badge)](https://github.com/SO0omin/KINO/wiki/도메인-모델) | ERD와 좌석·예약·결제 상태 전이 |
