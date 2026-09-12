@@ -43,21 +43,22 @@ const SeatBooking = () => {
     <div className="bg-white text-[#1A1A1A] min-h-screen font-sans selection:bg-[#B91C1C] selection:text-white">
       
       {/* Header Area */}
-      <div className="bg-[#1A1A1A] text-white pt-15 pb-10 relative overflow-hidden mb-12">
+      <div className="bg-[#1A1A1A] text-white pt-24 pb-12 relative overflow-hidden mb-12">
         <div className="absolute inset-0 opacity-10 pointer-events-none">
           <div className="absolute top-0 left-0 w-full h-full bg-[radial-gradient(circle_at_50%_50%,#B91C1C_0%,transparent_70%)]"></div>
         </div>
-        
+
         <div className="max-w-7xl mx-auto px-6 md:px-10 relative z-10">
           <div className="flex flex-col items-center text-center space-y-6">
             <div className="flex items-center gap-4">
               <div className="h-px w-12 bg-[#B91C1C]"></div>
-              <p className="font-sans text-[10px] font-bold tracking-[0.5em] text-[#B91C1C] uppercase">Kino Cinema</p>
+              <p className="font-mono text-[10px] font-bold tracking-[0.5em] text-[#B91C1C] uppercase">Kino Cinema Archive</p>
               <div className="h-px w-12 bg-[#B91C1C]"></div>
             </div>
-            <h1 className="font-display text-6xl md:text-8xl uppercase tracking-tighter leading-none">
-              좌석 선택<span className="text-white/20"></span>
+            <h1 className="font-display text-4xl md:text-4xl uppercase tracking-tighter leading-none">
+              좌석 <span className="text-white/20">선택</span>
             </h1>
+            <p className="text-white/20">관람 인원과 좌석을 선택하세요.</p>
           </div>
         </div>
       </div>
