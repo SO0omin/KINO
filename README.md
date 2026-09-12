@@ -92,8 +92,10 @@ API 명세는 서버 기동 후 `localhost:8080/swagger-ui/index.html` 에서 �
 
 ## 팀
 
+세 명이 도메인을 나눠 맡고, 경계가 닿는 화면은 함께 만들었습니다.
+
 | 담당 | 영역 |
 |:--|:--|
-| **정수민** [![SO0omin](https://img.shields.io/badge/@SO0omin-1A1A1A?style=flat-square&logo=github&logoColor=white)](https://github.com/SO0omin) | 좌석 지정 예매 · 인증/소셜로그인 · 극장/상영시간표 · 공통 인프라 |
-| **함한솔** [![h-ns-l0](https://img.shields.io/badge/@h--ns--l0-1A1A1A?style=flat-square&logo=github&logoColor=white)](https://github.com/h-ns-l0) | 결제 · 마이페이지 · 쿠폰 |
-| **이류진** [![ryurujxx](https://img.shields.io/badge/@ryurujxx-1A1A1A?style=flat-square&logo=github&logoColor=white)](https://github.com/ryurujxx) | 예매 필터 · 메인 페이지 · 영화 목록/상세 · 리뷰 |
+| **정수민** [![SO0omin](https://img.shields.io/badge/@SO0omin-1A1A1A?style=flat-square&logo=github&logoColor=white)](https://github.com/SO0omin) | 좌석 지정 예매 · 실시간 좌석 동기화 · 회원·비회원 인증 · 소셜 로그인 · 극장·상영시간표 |
+| **함한솔** [![h-ns-l0](https://img.shields.io/badge/@h--ns--l0-1A1A1A?style=flat-square&logo=github&logoColor=white)](https://github.com/h-ns-l0) | 결제 및 PG 연동 · 쿠폰·포인트 · 마이페이지 전 섹션 · 예매 내역 및 취소 |
+| **이류진** [![ryurujxx](https://img.shields.io/badge/@ryurujxx-1A1A1A?style=flat-square&logo=github&logoColor=white)](https://github.com/ryurujxx) | 예매 필터 · 영화 목록·상세 · 리뷰 · 메인 페이지 · 박스오피스 랭킹 |
