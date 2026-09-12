@@ -9,6 +9,8 @@ services:
       - RDS_USERNAME=${RDS_USERNAME}
       - RDS_PASSWORD=${RDS_PASSWORD}
       - JWT_SECRET=${JWT_SECRET}
+      - JPA_DDL_AUTO=${JPA_DDL_AUTO:-update}
+      - JPA_SHOW_SQL=${JPA_SHOW_SQL:-false}
     restart: unless-stopped
 
   frontend:
