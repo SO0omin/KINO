@@ -22,10 +22,10 @@ export default function PaymentFailPage() {
         <div className="max-w-7xl mx-auto px-6 md:px-10 relative z-10 flex flex-col items-center">
           <div className="flex items-center gap-4 mb-6">
             <div className="h-px w-12 bg-[#B91C1C]"></div>
-            <p className="font-sans text-[10px] font-bold tracking-[0.5em] text-[#B91C1C] uppercase">Kino Cinema</p>
+            <p className="font-mono text-[10px] font-bold tracking-[0.5em] text-[#B91C1C] uppercase">Kino Cinema</p>
             <div className="h-px w-12 bg-[#B91C1C]"></div>
           </div>
-          <h1 className="font-display text-5xl md:text-6xl uppercase tracking-tighter leading-none mb-4">
+          <h1 className="font-display text-4xl md:text-4xl uppercase tracking-tighter leading-none mb-4">
             Payment <span className="text-white/20">Failed</span>
           </h1>
           <p className="text-xs font-bold uppercase tracking-widest text-white/40">
