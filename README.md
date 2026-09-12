@@ -81,6 +81,15 @@ API 명세는 서버 기동 후 `localhost:8080/swagger-ui/index.html` 에서 �
 ![GitHub Actions](https://img.shields.io/badge/GitHub_Actions-1A1A1A?style=flat-square&logo=githubactions&logoColor=B91C1C)
 ![AWS](https://img.shields.io/badge/AWS_EC2_·_RDS-1A1A1A?style=flat-square)
 
+**External API**
+
+![TossPayments](https://img.shields.io/badge/토스페이먼츠-1A1A1A?style=flat-square)
+![Kakao](https://img.shields.io/badge/Kakao_OAuth-1A1A1A?style=flat-square&logo=kakao&logoColor=B91C1C)
+![Naver](https://img.shields.io/badge/Naver_OAuth-1A1A1A?style=flat-square&logo=naver&logoColor=B91C1C)
+![Google](https://img.shields.io/badge/Google_OAuth-1A1A1A?style=flat-square&logo=google&logoColor=B91C1C)
+![Solapi](https://img.shields.io/badge/Solapi_SMS-1A1A1A?style=flat-square)
+![SMTP](https://img.shields.io/badge/Gmail_SMTP-1A1A1A?style=flat-square&logo=gmail&logoColor=B91C1C)
+
 ## 문서
 
 | 문서 | 내용 |
