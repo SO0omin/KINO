@@ -46,6 +46,9 @@ jobs:
             echo "RDS_USERNAME=${{ secrets.RDS_USERNAME }}" >> .env
             echo "RDS_HOST=${{ secrets.RDS_HOST }}" >> .env
             echo "JWT_SECRET=${{ secrets.JWT_SECRET }}" >> .env
+            # 스키마는 첫 배포 때 한 번만 update 로 생성하고, 이후에는 validate 로 검증만 합니다.
+            echo "JPA_DDL_AUTO=${{ vars.JPA_DDL_AUTO || 'validate' }}" >> .env
+            echo "JPA_SHOW_SQL=false" >> .env
             
             # 최신 이미지 받고 컨테이너 재시작
             sudo docker pull so0omin/backend

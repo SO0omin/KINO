@@ -9,6 +9,7 @@ import jakarta.mail.internet.MimeMessage;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Async;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
@@ -23,6 +24,10 @@ public class MailService {
 
     private final JavaMailSender javaMailSender;
     private final ScreeningSeatRepository screeningSeatRepository;
+
+    // 메일 본문의 링크가 가리킬 서비스 주소. 배포 도메인이 생기면 APP_BASE_URL로 넘깁니다.
+    @Value("${app.base-url}")
+    private String baseUrl;
 
     @Async
     public void sendPaymentCompleteEmail(Member member, Reservation reservation, String bookingNo) {
@@ -55,7 +60,7 @@ public class MailService {
                             "      <p style='margin: 0;'><b>💺 좌석:</b> %s</p>" +
                             "    </div>" +
                             "    <div style='margin-top: 32px; text-align: center;'>" +
-                            "      <a href='https://your-kino-domain.com/mypage' style='background: #111827; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: bold;'>나의 예매내역 확인하기</a>" +
+                            "      <a href='" + baseUrl + "/mypage' style='background: #111827; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: bold;'>나의 예매내역 확인하기</a>" +
                             "    </div>" +
                             "  </div>" +
                             "  <div style='background: #f3f4f6; padding: 16px; text-align: center; font-size: 12px; color: #6b7280;'>" +
@@ -85,7 +90,7 @@ public class MailService {
         MimeMessage message = javaMailSender.createMimeMessage();
 
         // 프론트엔드 비밀번호 재설정 페이지 주소
-        String resetUrl = "http://localhost:5173/reset-password?token=" + token;
+        String resetUrl = baseUrl + "/reset-password?token=" + token;
 
         try {
             MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
