@@ -31,6 +31,10 @@
 > [!NOTE]
 > 학습용 프로젝트입니다. 결제는 토스페이먼츠 테스트 키로 동작하며 실제 결제가 발생하지 않습니다.
 
+## 구조
+
+<img src="docs/images/architecture.svg" width="100%" alt="시스템 아키텍처">
+
 ## 빠른 실행
 
 > 사전 준비 — JDK 17+ · Node 20+ · MySQL 8+
