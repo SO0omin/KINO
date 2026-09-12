@@ -323,11 +323,11 @@ export default function PaymentPage() {
           <div className="flex flex-col items-center text-center space-y-6">
             <div className="flex items-center gap-4">
               <div className="h-px w-12 bg-[#B91C1C]"></div>
-              <p className="font-sans text-[10px] font-bold tracking-[0.5em] text-[#B91C1C] uppercase">Kino Cinema</p>
+              <p className="font-mono text-[10px] font-bold tracking-[0.5em] text-[#B91C1C] uppercase">Kino Cinema Archive</p>
               <div className="h-px w-12 bg-[#B91C1C]"></div>
             </div>
-            <h1 className="font-display text-6xl md:text-8xl uppercase tracking-tighter leading-none">
-              결제<span className="text-white/20"></span>
+            <h1 className="font-display text-4xl md:text-4xl uppercase tracking-tighter leading-none">
+              결제 <span className="text-white/20">확인</span>
             </h1>
           </div>
         </div>

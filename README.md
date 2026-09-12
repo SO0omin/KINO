@@ -9,9 +9,7 @@
 
 <br>
 
-<!-- 데모 GIF를 docs/images/demo.gif 에 추가한 뒤 아래 주석을 해제하세요.
-<img src="docs/images/demo.gif" width="720" alt="좌석 선택 데모">
--->
+<img src="docs/images/reservation.png" width="860" alt="좌석 선택 화면">
 
 </div>
 
@@ -87,6 +85,7 @@ API 명세는 서버 기동 후 `localhost:8080/swagger-ui/index.html` 에서 �
 
 | 문서 | 내용 |
 |:--|:--|
+| [![Screens](https://img.shields.io/badge/SCREENS-1A1A1A?style=for-the-badge)](https://github.com/SO0omin/KINO/wiki/화면) | 예매 흐름을 따라 보는 실제 화면 |
 | [![Architecture](https://img.shields.io/badge/ARCHITECTURE-1A1A1A?style=for-the-badge)](https://github.com/SO0omin/KINO/wiki/아키텍처) | 시스템 구성과 요청 흐름 |
 | [![Domain](https://img.shields.io/badge/DOMAIN_MODEL-1A1A1A?style=for-the-badge)](https://github.com/SO0omin/KINO/wiki/도메인-모델) | ERD와 좌석·예약·결제 상태 전이 |
 | [![Implementation](https://img.shields.io/badge/IMPLEMENTATION-1A1A1A?style=for-the-badge)](https://github.com/SO0omin/KINO/wiki/핵심-구현) | 동시성 제어 · 결제 안전장치 · 인증 설계 |
