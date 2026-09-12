@@ -1,51 +1,60 @@
 package com.cinema.kino.controller;
 
-
 import com.cinema.kino.dto.ReservationResponseDTO;
 import com.cinema.kino.dto.SeatSelectRequestDTO;
+import com.cinema.kino.entity.Reservation;
+import com.cinema.kino.repository.ReservationRepository;
 import com.cinema.kino.service.ReservationCommandService;
+import com.cinema.kino.util.AuthenticatedActor;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Optional;
+
 @RestController
-@RequestMapping("/api/reservations") // 💡 기본 주소 세팅
+@RequestMapping("/api/reservations")
 @RequiredArgsConstructor
 public class ReservationController {
 
     private final ReservationCommandService reservationCommandService;
-    private final com.cinema.kino.repository.ReservationRepository reservationRepository;
+    private final ReservationRepository reservationRepository;
 
+    //예약번호 확인
     @GetMapping("/verify/{reservationNumber}")
     public ResponseEntity<?> verifyReservation(@PathVariable String reservationNumber) {
-        // 1. 먼저 Optional로 예매 정보를 가져옵니다.
-        java.util.Optional<com.cinema.kino.entity.Reservation> reservationOpt =
-                reservationRepository.findByReservationNumber(reservationNumber);
 
-        // 2. 데이터가 존재할 때 (성공)
+        Optional<Reservation> reservationOpt = reservationRepository.findByReservationNumber(reservationNumber);
+
         if (reservationOpt.isPresent()) {
-            com.cinema.kino.entity.Reservation res = reservationOpt.get();
+            Reservation res = reservationOpt.get();
 
-            java.util.Map<String, Object> data = new java.util.HashMap<>();
+            Map<String, Object> data = new HashMap<>();
             data.put("movieId", res.getScreening().getMovie().getId());
             data.put("movieTitle", res.getScreening().getMovie().getTitle());
 
-            return ResponseEntity.ok(data); // Map을 담아서 보냄
+            return ResponseEntity.ok(data);
         }
 
-        // 3. 데이터가 없을 때 (실패)
-        // body에 String을 담아도 ResponseEntity<?> 덕분에 에러 없이 잘 나갑니다.
         return ResponseEntity.status(404).body("유효하지 않은 예매 번호입니다.");
     }
 
-    // 💡 프론트가 POST 요청으로 찌를 엔드포인트: /api/reservations/hold
+    //예약생성
     @PostMapping("/hold")
-    public ResponseEntity<ReservationResponseDTO> holdSeats(@RequestBody SeatSelectRequestDTO request) {
+    public ResponseEntity<ReservationResponseDTO> createReservation(
+            @AuthenticationPrincipal Object principal,
+            @RequestBody SeatSelectRequestDTO request) {
 
-        // 1. 서비스에게 일 시키기 (좌석 찜 + 예약 껍데기 생성)
-        ReservationResponseDTO response = reservationCommandService.createPendingReservation(request);
+        // 1. 예약 주체는 요청 본문이 아니라 토큰에서 얻습니다.
+        AuthenticatedActor actor = AuthenticatedActor.from(principal);
 
-        // 2. 생성된 예약번호(reservationId)를 프론트엔드에게 JSON으로 던져주기!
+        // 2. 서비스에게 일 시키기 (이 안에서 DB 락 + 예약 생성 + 웹소켓 방송이 한 방에 일어납니다!)
+        ReservationResponseDTO response = reservationCommandService.createPendingReservation(request, actor);
+
+        // 3. 생성된 예약번호(reservationId)를 프론트엔드(결제 페이지)로 던져주기
         return ResponseEntity.ok(response);
     }
 }

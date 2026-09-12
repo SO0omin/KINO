@@ -1,6 +1,6 @@
 import { useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import axios from 'axios';
+import { api } from '../../api/api';
 import { useAuth } from '../../contexts/AuthContext';
 import { cinemaAlert } from '../../utils/alert';
 
@@ -27,7 +27,7 @@ const GoogleCallbackPage = () => {
     if (code) {
       isProcessed.current = true;
       
-      axios.post('/api/auth/google', { code })
+      api.post('/api/auth/google', { code })
         .then(res => {
           const data = res.data;
           

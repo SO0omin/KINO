@@ -7,7 +7,7 @@ pages/SeatBooking의 기능을 분산시킵니다.
 =================================== */
 
 import { useMemo, useState, useEffect, useCallback } from "react";
-import type { SeatBookingResponseDto, SeatInfoDto } from "../types/dtos/seatBooking.dto";
+import type { SeatBookingResponseDto, SeatStatusMessage, PriceTypeCode } from "../types/dtos/seatBooking.dto";
 import type { SeatViewModel, ScreeningInfoViewModel } from "../types/models/SeatBookingViewModel";
 import { toSeatViewModels, toScreeningInfoViewModel } from "../mappers/seatBookingMapper";
 import { seatSocketService } from "../services/seatSocketService";
@@ -205,7 +205,7 @@ export const useSeatBooking = (screeningId: number) => {
 
     return sortedSeats.map((seat, index) => ({
       seatId: seat.id,
-      priceType: priceTypes[index] || "ADULT"
+      priceType: (priceTypes[index] || "ADULT") as PriceTypeCode
     }));
   }, [selectedSeats, personnel]);
 
@@ -229,16 +229,11 @@ export const useSeatBooking = (screeningId: number) => {
 
     try {
       const tickets = getFormattedTickets();
-      
-      let safeGuestId = null;
-      if (isGuest && guestId) {
-        safeGuestId = Number(String(guestId).replace(/\D/g, '')); 
-      } //숫자가 아닌 모든 문자(GUEST_ 등)를 제거
 
+      // 예약 주체(회원/비회원)는 서버가 JWT에서 직접 꺼내 씁니다.
+      // 여기서 id를 실어 보내면 위조가 가능하므로 좌석 정보만 보냅니다.
       const data = await reservationApi.holdSeats({
         screeningId,
-        memberId: isGuest ? null : memberId,
-        guestId: safeGuestId,
         tickets
       });
 
@@ -279,19 +274,22 @@ export const useSeatBooking = (screeningId: number) => {
   }, [screeningId]);
 
   useEffect(() => {
-    seatSocketService.connect(screeningId, (updatedSeats: SeatInfoDto[]) => {
-      setSeats(prevSeats => {
-        return prevSeats.map(seat => {
-          const newData = updatedSeats.find(updated => updated.seatId === seat.id);
-          if (newData) {
-            return {
-              ...seat,
-              status: newData.status,
-            };
-          }
-          return seat;
-        });
-      });
+    seatSocketService.connect(screeningId, (updatedSeats: SeatStatusMessage[]) => {
+      // 변경된 좌석만 내려오므로 id로 빠르게 찾도록 Map으로 만든 뒤 병합합니다.
+      const statusById = new Map(updatedSeats.map(u => [u.seatId, u.status]));
+
+      setSeats(prevSeats =>
+        prevSeats.map(seat => {
+          const nextStatus = statusById.get(seat.id);
+          return nextStatus ? { ...seat, status: nextStatus } : seat;
+        })
+      );
+
+      // 내가 고르고 있던 좌석을 남이 먼저 가져갔다면 선택에서 빼줍니다.
+      setSelectedSeats(prev => prev.filter(seat => {
+        const nextStatus = statusById.get(seat.id);
+        return !nextStatus || nextStatus === "AVAILABLE";
+      }));
     });
 
     return () => {

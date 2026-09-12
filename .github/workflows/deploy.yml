@@ -39,6 +39,7 @@ jobs:
             echo "RDS_PASSWORD=${{ secrets.RDS_PASSWORD }}" > .env
             echo "RDS_USERNAME=${{ secrets.RDS_USERNAME }}" >> .env
             echo "RDS_HOST=${{ secrets.RDS_HOST }}" >> .env
+            echo "JWT_SECRET=${{ secrets.JWT_SECRET }}" >> .env
             
             # 최신 이미지 받고 컨테이너 재시작
             sudo docker pull so0omin/backend

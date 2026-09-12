@@ -83,8 +83,8 @@ export const Gnb: React.FC = () => {
         
         {/* 로고 영역 (이제 .font-display가 항상 작동합니다) */}
         <Link to="/" className="flex flex-col leading-none cursor-pointer" onClick={() => setIsSearchOpen(false)}>
-          <span className="font-display text-4xl tracking-tighter text-[#B91C1C] uppercase">Kino</span>
-          <span className="font-bold text-[10px] tracking-[0.5em] text-black/20 ml-1">ARCHIVE</span>
+          <img src="/kino.png" alt="KINO" className="h-8 w-auto select-none" />
+          <span className="font-bold text-[10px] tracking-[0.5em] text-black/20 ml-1 mt-1.5">ARCHIVE</span>
         </Link>
 
         {/* 중앙 라우팅 링크 */}

@@ -6,13 +6,13 @@ import lombok.Getter;
 
 public class KakaoDTO {
 
-    // 1. 프론트에서 넘어오는 코드
+    // 프론트에서 넘어오는 코드
     @Getter
     public static class LoginRequest {
         private String code;
     }
 
-    // 2. 카카오 토큰 응답
+    //카카오 토큰 응답
     @Getter
     @JsonIgnoreProperties(ignoreUnknown = true)
     public static class KakaoTokenResponse {
@@ -20,7 +20,7 @@ public class KakaoDTO {
         private String accessToken;
     }
 
-    // 3. 카카오 유저 정보 응답
+    //카카오 유저 정보 응답
     @Getter
     @JsonIgnoreProperties(ignoreUnknown = true)
     public static class KakaoUserInfoResponse {
@@ -39,8 +39,6 @@ public class KakaoDTO {
         @JsonIgnoreProperties(ignoreUnknown = true)
         public static class Profile {
             private String nickname;
-
-            // 💡 이 줄을 추가하세요! (카카오에서 주는 프로필 이미지 URL)
             @JsonProperty("profile_image_url")
             private String profileImageUrl;
         }

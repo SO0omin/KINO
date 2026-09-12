@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import axios from 'axios';
+import { api } from '../api/api';
 import { cinemaAlert } from '../utils/alert';
 
 const SignupPage: React.FC = () => {
@@ -139,7 +139,7 @@ const SignupPage: React.FC = () => {
             return;
         }
         try {
-            const response = await axios.get('/api/auth/check-username', {
+            const response = await api.get('/api/auth/check-username', {
                 params: { username: memberData.username }
             });
             if (response.data.available) {
@@ -175,7 +175,7 @@ const SignupPage: React.FC = () => {
             }
 
             try {
-                await axios.post('/api/auth/signup', memberData);
+                await api.post('/api/auth/signup', memberData);
                 cinemaAlert("회원가입이 완료되었습니다! 환영합니다.", "WELCOME", () => navigate('/login'));
             } catch (error: any) {
                 if (error.response && error.response.status === 400) {
@@ -195,7 +195,7 @@ const SignupPage: React.FC = () => {
                 return;
             }
             try {
-                await axios.post('/api/auth/guest-signup', {
+                await api.post('/api/auth/guest-signup', {
                     name: guestData.guestName,
                     tel: guestData.guestTel,
                     password: guestData.guestPassword

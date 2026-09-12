@@ -16,7 +16,7 @@ export const StyledSeat = styled.button<SeatProps>`
   width: 20px;  /* 요청하신 20px 고정 */
   height: 20px;
   font-size: 9px; /* 크기에 맞춰 폰트 소폭 축소 */
-  border: 1px solid #999;
+  border: 1px solid #aaaaaa;
   border-radius: 2px;
   display: flex;
   align-items: center;

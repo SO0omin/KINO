@@ -11,7 +11,9 @@ import org.hibernate.annotations.SQLRestriction;
 @Entity
 @SQLRestriction("is_deleted = false")
 @Table(name = "members")
-@Getter @Setter @Builder
+@Getter
+@Setter
+@Builder
 @AllArgsConstructor
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class Member {
@@ -68,12 +70,12 @@ public class Member {
     }
 
     public void withdrawMember() {
-        // 1. 아이디 식별 불가능하게 변경 (중복 방지를 위해 UUID 조합)
+        //아이디 식별 불가능하게 변경 (중복 방지를 위해 UUID 조합)
         this.username = "withdrawn_" + java.util.UUID.randomUUID().toString().substring(0, 8);
         this.password = "";
         this.name = "탈퇴회원";
 
-        // 2. 유니크 제약 조건 충돌 방지를 위해 null 처리 💡
+        //유니크 제약 조건 충돌 방지를 위해 null 처리
         this.email = null;
         this.tel = null;
         this.uuid = "withdrawn_" + java.util.UUID.randomUUID().toString(); // UUID도 유니크하므로 변경
@@ -81,7 +83,7 @@ public class Member {
         this.profileImage = "default";
         this.pointPassword = null;
 
-        // 3. 삭제 상태 변경
+        //삭제 상태 변경
         this.isDeleted = true;
     }
 }
