@@ -15,4 +15,16 @@ const ratingImages: Record<AgeRatingType, string> = {
     AGE_18,
 };
 
+// 백엔드에서 어떤 텍스트가 오든 숫자를 감지해서 알맞은 이미지를 반환
+export const resolveRatingImage = (ratingStr?: string): string => {
+    if (!ratingStr) return ratingImages.ALL;
+    
+    const str = ratingStr.toUpperCase();
+    if (str.includes('12')) return ratingImages.AGE_12;
+    if (str.includes('15')) return ratingImages.AGE_15;
+    if (str.includes('18') || str.includes('청불') || str.includes('ADULT')) return ratingImages.AGE_18;
+    
+    return ratingImages.ALL; // 위 조건에 안 맞으면 무조건 전체관람가(ALL)
+};
+
 export default ratingImages;

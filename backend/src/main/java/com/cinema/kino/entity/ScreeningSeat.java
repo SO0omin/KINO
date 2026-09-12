@@ -61,6 +61,7 @@ public class ScreeningSeat {
         }
 
         this.status = SeatStatus.HELD;
+        this.holdExpiresAt = LocalDateTime.now().plusMinutes(10);
 
         if (memberId != null) {
             this.heldByMember = new Member(memberId); // 프록시
@@ -75,12 +76,15 @@ public class ScreeningSeat {
         this.status = SeatStatus.AVAILABLE;
         this.heldByMember = null;
         this.heldByGuest = null;
+        this.holdExpiresAt = null;
+        this.reservation = null; // 예약 연결 해제
     }
 
-    public void reserve() {
+    public void reserve(Reservation reservation) {
         if (this.status != SeatStatus.HELD) {
             throw new IllegalStateException("선택되지 않은 좌석은 예약할 수 없습니다.");
         }
         this.status = SeatStatus.RESERVED;
+        this.reservation = reservation;
     }
 }

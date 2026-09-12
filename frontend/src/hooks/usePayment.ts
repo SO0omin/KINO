@@ -11,9 +11,10 @@ import type {
   PrepareRequest,
   ConfirmRequest,
   ReservationDetailResponse,
-} from '../types/dto/payment.dto';
+} from '../types/dtos/payment.dto';
+import { cinemaAlert } from '../utils/alert';
 
-const CLIENT_KEY = 'test_ck_D5GePWvyJnrK0W0k6q8gLzN97Eoq';
+const CLIENT_KEY = import.meta.env.VITE_TOSS_CLIENT_KEY ?? '';
 
 export type TossPaymentType = 'CARD' | 'TRANSFER' | 'VIRTUAL_ACCOUNT' | 'MOBILE_PHONE';
 
@@ -41,17 +42,22 @@ export function usePayment() {
     setIsLoading(true);
 
     try {
+      if (!CLIENT_KEY) {
+        throw new Error('토스 클라이언트 키가 설정되지 않았습니다. (.env의 VITE_TOSS_CLIENT_KEY 확인)');
+      }
+
       const prepareResponse = await preparePayment(prepareData);
 
       const tossPayments: any = await loadTossPayments(CLIENT_KEY);
+      const reservationId = prepareData.reservationId;
 
       await tossPayments.requestPayment(paymentType, {
         amount: prepareResponse.finalAmount,
         orderId: prepareResponse.orderId,
         orderName: prepareResponse.orderName,
 
-        successUrl: `${window.location.origin}/payment/success`,
-        failUrl: `${window.location.origin}/payment/fail`,
+        successUrl: `${window.location.origin}/payment/success?reservationId=${reservationId}`,
+        failUrl: `${window.location.origin}/payment/fail?reservationId=${reservationId}`,
 
         customerName: 'KINO 고객',
       });
@@ -63,7 +69,7 @@ export function usePayment() {
         return;
       }
 
-      alert(`결제 실패: ${error?.message ?? '알 수 없는 오류'}`);
+      cinemaAlert(`결제 실패: ${error?.message ?? '알 수 없는 오류'}`,"알람");
     } finally {
       setIsLoading(false);
     }

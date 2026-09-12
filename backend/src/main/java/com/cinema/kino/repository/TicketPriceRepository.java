@@ -6,6 +6,7 @@ import com.cinema.kino.entity.enums.ScreenType;
 import com.cinema.kino.entity.enums.ScreeningType;
 import org.springframework.data.jpa.repository.JpaRepository;
 
+import java.util.List;
 import java.util.Optional;
 
 /**
@@ -23,6 +24,8 @@ import java.util.Optional;
  * - 요금 정책 변경 시 코드 수정 없이 데이터 변경으로 대응 가능
  */
 public interface TicketPriceRepository extends JpaRepository<TicketPrice, Long> {
+
+    List<TicketPrice> findByScreenTypeAndScreeningType(ScreenType screenType, ScreeningType screeningType);
 
     /**
      * 상영관 타입 + 요금 타입 + 상영 타입 조합에 해당하는 티켓 가격 조회

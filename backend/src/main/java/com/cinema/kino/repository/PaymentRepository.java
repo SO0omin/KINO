@@ -8,6 +8,8 @@ import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Optional;
 
 /**
@@ -35,6 +37,11 @@ public interface PaymentRepository extends JpaRepository<Payment, Long> {
      * @return 해당 예약에 연결된 결제(Optional)
      */
     Optional<Payment> findByReservation(Reservation reservation);
+    Optional<Payment> findByReservationId(Long reservationId);
+
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("select p from Payment p where p.reservation.id = :reservationId")
+    Optional<Payment> findByReservationIdForUpdate(@Param("reservationId") Long reservationId);
 
     /**
      * 주문번호(merchantUid)로 결제를 조회합니다.
@@ -65,4 +72,15 @@ public interface PaymentRepository extends JpaRepository<Payment, Long> {
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("select p from Payment p where p.merchantUid = :merchantUid")
     Optional<Payment> findByMerchantUidForUpdate(@Param("merchantUid") String merchantUid);
+
+    @Query("""
+            SELECT p
+            FROM Payment p
+            WHERE p.member.id = :memberId
+              AND p.paymentStatus = com.cinema.kino.entity.enums.PaymentStatus.PAID
+              AND p.paidAt IS NOT NULL
+              AND p.paidAt >= :fromDateTime
+            """)
+    List<Payment> findPaidPaymentsByMemberIdFrom(@Param("memberId") Long memberId,
+                                                 @Param("fromDateTime") LocalDateTime fromDateTime);
 }

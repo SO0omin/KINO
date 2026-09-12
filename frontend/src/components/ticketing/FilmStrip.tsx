@@ -1,10 +1,13 @@
 import React from 'react';
 
-const FilmStrip: React.FC = () => {
+const FilmStrip = () => {
   return (
-    <div className="w-full bg-black h-8 flex items-center justify-around overflow-hidden">
-      {Array.from({ length: 40 }).map((_, i) => (
-        <div key={i} className="w-4 h-4 bg-white/90 rounded-[2px] shrink-0"></div>
+    <div className="flex gap-2 overflow-hidden opacity-20 select-none pointer-events-none">
+      {[...Array(20)].map((_, i) => (
+        <div key={i} className="flex-shrink-0 w-12 h-8 border-x border-white/30 flex flex-col justify-between py-1">
+          <div className="w-full h-1 bg-white/20"></div>
+          <div className="w-full h-1 bg-white/20"></div>
+        </div>
       ))}
     </div>
   );

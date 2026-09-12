@@ -9,25 +9,17 @@
 ### 1. 설정 파일 수정
 
 #### 백엔드 API URL 설정
-`/api/paymentApi.ts` 파일의 상단에서 백엔드 URL을 수정하세요:
+`frontend/.env` 파일에서 백엔드 URL을 수정하세요:
 
 ```typescript
-// 로컬 개발
-const API_BASE_URL = 'http://localhost:8080';
-
-// 프로덕션
-// const API_BASE_URL = 'https://your-api.com';
+VITE_API_BASE_URL=http://localhost:8080
 ```
 
 #### 토스페이먼츠 클라이언트 키 설정
-`/pages/PaymentPage.tsx` 파일의 상단에서 키를 수정하세요:
+`frontend/.env` 파일에서 키를 수정하세요:
 
 ```typescript
-// 테스트 키 (실제 결제 안됨)
-const TOSS_CLIENT_KEY = 'test_ck_D5GePWvyJnrK0W0k6q8gLzN97Eoq';
-
-// 프로덕션 (실제 결제용)
-// const TOSS_CLIENT_KEY = 'live_ck_YOUR_REAL_KEY';
+VITE_TOSS_CLIENT_KEY=test_ck_YOUR_KEY
 ```
 
 ### 2. 패키지 설치

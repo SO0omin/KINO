@@ -1,31 +1,26 @@
-import axios from 'axios';
+import { api } from '../api/api'; 
 import type { Region, Theater, Movie, Screening } from '../types/ticketing';
 
-const api = axios.create({
-  baseURL: 'http://localhost:8080/api/ticketing',
-});
+const BASE_PATH = '/api/ticketing';
 
 export const ticketingApi = {
-  // 1. 모든 지역 조회
-  getRegions: () => api.get<Region[]>('/regions'),
+  getRegions: () => api.get<Region[]>(`${BASE_PATH}/regions`),
 
-  // 2. 스페셜관 목록 조회
-  getSpecialTypes: () => api.get<string[]>('/special-types'),
+  getSpecialTypes: () => api.get<string[]>(`${BASE_PATH}/special-types`),
 
-  // 3. 지역별 영화관 조회
   getTheaters: (regionId?: number | null, specialType?: string | null) => {
     const params: any = {};
     if (regionId) params.regionId = regionId;
     if (specialType) params.specialType = specialType;
-    return api.get<Theater[]>('/theaters', { params });
+    return api.get<Theater[]>(`${BASE_PATH}/theaters`, { params });
   },
 
   // 4. 모든 영화 조회 (필터용 목록)
-  getMovies: () => api.get<Movie[]>('/movies'),
+  getMovies: () => api.get<Movie[]>(`${BASE_PATH}/movies`),
 
   // 5. 특정 조건에서 상영 중인 영화 ID 목록 조회
   getAvailableMovieIds: (theaterIds: number[], date: string, specialType?: string | null) =>
-    api.get<number[]>('/available-movies', {
+    api.get<number[]>(`${BASE_PATH}/available-movies`, {
       params: {
         theaterIds: theaterIds.length > 0 ? theaterIds.join(',') : null,
         date,
@@ -38,7 +33,7 @@ export const ticketingApi = {
     const params = new URLSearchParams();
     movieIds.forEach(id => params.append('movieIds', id.toString()));
     params.append('date', date);
-    return api.get<number[]>(`/available-theaters?${params.toString()}`);
+    return api.get<number[]>(`${BASE_PATH}/available-theaters?${params.toString()}`);
   },
 
   // 7. 최종 상세 시간표 조회
@@ -49,11 +44,11 @@ export const ticketingApi = {
       date 
     };
     if (specialType) params.specialType = specialType;
-    return api.get<Screening[]>('/screenings', { params });
+    return api.get<Screening[]>(`${BASE_PATH}/screenings`, { params });
   },
 
   // a. 특정 상영 일정의 좌석 상태 조회 API
   getScreeningSeats: (screeningId: number) => {
-    return api.get(`/screenings/${screeningId}/seats`);
+    return api.get(`${BASE_PATH}/screenings/${screeningId}/seats`);
   },
 };

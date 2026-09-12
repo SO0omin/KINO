@@ -1,8 +1,14 @@
 name: CI/CD Pipeline
 
+# 배포 대상 EC2를 상시 운영하지 않으므로 수동 실행으로 둡니다.
+# Actions 탭 > CI/CD Pipeline > Run workflow 로 실행합니다.
+# 다시 자동 배포하려면 아래 workflow_dispatch를 push 트리거로 바꾸세요.
+#
+#   on:
+#     push:
+#       branches: [ main ]
 on:
-  push:
-    branches: [ main ]
+  workflow_dispatch:
 
 jobs:
   build-and-deploy:
@@ -39,6 +45,7 @@ jobs:
             echo "RDS_PASSWORD=${{ secrets.RDS_PASSWORD }}" > .env
             echo "RDS_USERNAME=${{ secrets.RDS_USERNAME }}" >> .env
             echo "RDS_HOST=${{ secrets.RDS_HOST }}" >> .env
+            echo "JWT_SECRET=${{ secrets.JWT_SECRET }}" >> .env
             
             # 최신 이미지 받고 컨테이너 재시작
             sudo docker pull so0omin/backend

@@ -15,7 +15,7 @@ export const mapRatingToStyle = (rating: string) => {
 export const getSeatColor = (status: string) => {
   switch (status) {
     case 'AVAILABLE': return 'bg-[#2c2c2c] border-black';
-    case 'HELD': return 'bg-[#70299d] border-[#4b1b6b]';
+    case 'HELD': return 'bg-[#dcdcd7] border-gray-400 opacity-40';
     case 'RESERVED': return 'bg-[#dcdcd7] border-gray-400 opacity-40';
     default: return 'bg-gray-100';
   }
