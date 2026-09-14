@@ -1,0 +1,6 @@
+# 로컬 비밀 설정이 이미지에 구워지지 않도록 차단
+src/main/resources/application-secret.properties
+
+build/
+.gradle/
+.idea/
